@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Severl — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+
+<!--
+  Auth page — Editorial Command theme
+  Split screen: 55% brand left (aubergine) / 45% form right (warm cream)
+  Inspired by: Linear, HoneyBook, Later, Loom auth patterns
+  Open-source component patterns: Radix-style inputs, shadcn button shapes
+  Features: sign-in / sign-up tab toggle, Google SSO, mini product preview,
+            testimonial, animated tab transition
+-->
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:              #F0EBE3;
+  --bg-panel:        #FAF7F4;
+  --surface:         #FFFFFF;
+  --bg-hover:        #E8E2D9;
+  --bg-input:        #EDE7DF;
+
+  --sidebar:         #1E1B24;
+  --sidebar-mid:     #2A2533;
+  --sidebar-light:   #352E40;
+
+  --border:          #DDD7CE;
+  --border-subtle:   #E8E2D9;
+  --border-strong:   #C8C0B5;
+
+  --text-1:          #1A1714;
+  --text-2:          #6B6560;
+  --text-3:          #A09890;
+  --text-4:          #C4BAB0;
+
+  --rose:            #C4909A;
+  --rose-dim:        #F7ECED;
+  --rose-mid:        #DDB4BC;
+  --rose-deep:       #8C5562;
+  --rose-border:     rgba(196,144,154,0.25);
+
+  --plum:            #6B6178;
+  --plum-dim:        #EDEBF2;
+  --plum-mid:        #9B92A8;
+  --plum-deep:       #3D3649;
+
+  --success:         #5A8A6A;
+  --success-bg:      #EEF5F0;
+  --warning:         #B5803A;
+  --warning-bg:      #FBF3E8;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Shell ─── */
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════
+   LEFT PANEL — Brand
+══════════════════════════════════════════ */
+.brand-panel {
+  width: 55%;
+  flex-shrink: 0;
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  padding: 40px 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle grain texture overlay */
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Decorative rose glow — top right */
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(196,144,154,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Plum glow — bottom left */
+.glow-bl {
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(107,97,120,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Brand header ─── */
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--rose) 0%, var(--plum) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.90);
+  letter-spacing: -0.01em;
+}
+
+/* ─── Brand headline ─── */
+.brand-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: 20px 0;
+}
+
+.brand-eyebrow {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rose-mid);
+  margin-bottom: 14px;
+}
+
+.brand-headline {
+  font-family: 'Fraunces', serif;
+  font-size: 38px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.95);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin-bottom: 16px;
+}
+
+.brand-headline em {
+  font-style: italic;
+  color: var(--rose-mid);
+}
+
+.brand-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.40);
+  line-height: 1.6;
+  max-width: 360px;
+  font-weight: 300;
+}
+
+/* ─── Mini dashboard preview ─── */
+.preview-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 28px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.preview-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 12px 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 8px 8px 0 0;
+}
+
+.preview-card:nth-child(1)::before { background: var(--rose); }
+.preview-card:nth-child(2)::before { background: var(--plum-mid); }
+.preview-card:nth-child(3)::before { background: var(--success); }
+
+.preview-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.30);
+  margin-bottom: 6px;
+}
+
+.preview-value {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.preview-delta {
+  margin-top: 5px;
+  font-size: 9px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-delta.up   { color: var(--success); }
+.preview-delta.rose { color: var(--rose-mid); }
+.preview-delta.muted{ color: rgba(255,255,255,0.25); }
+
+/* Mini chart bars */
+.preview-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 24px;
+  margin-top: 8px;
+}
+
+.preview-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: rgba(255,255,255,0.10);
+  min-height: 2px;
+}
+
+.preview-bar.lit  { background: rgba(196,144,154,0.50); }
+.preview-bar.peak { background: var(--rose); }
+
+/* ─── Testimonial ─── */
+.testimonial {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-left: 2px solid var(--rose);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.testimonial-quote {
+  font-family: 'Fraunces', serif;
+  font-size: 13px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.55;
+  margin-bottom: 10px;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.testimonial-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose-dim), var(--plum-dim));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--rose-deep);
+  flex-shrink: 0;
+}
+
+.testimonial-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+}
+
+.testimonial-role {
+  font-size: 10px;
+  color: rgba(255,255,255,0.28);
+}
+
+/* ─── Brand footer ─── */
+.brand-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.brand-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-stat-val {
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.80);
+  letter-spacing: -0.02em;
+}
+
+.brand-stat-label {
+  font-size: 9px;
+  color: rgba(255,255,255,0.28);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.brand-stat-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.08);
+}
+
+/* ══════════════════════════════════════════
+   RIGHT PANEL — Auth form
+══════════════════════════════════════════ */
+.form-panel {
+  flex: 1;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  overflow-y: auto;
+}
+
+.form-wrap {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Form header ─── */
+.form-title {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--text-1);
+  letter-spacing: -0.025em;
+  margin-bottom: 4px;
+}
+
+.form-subtitle {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 400;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+/* ─── Tab toggle (sign in / sign up) ─── */
+.tab-row {
+  display: flex;
+  background: var(--bg-input);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 24px;
+  gap: 2px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.tab-btn.active {
+  background: var(--surface);
+  color: var(--text-1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px var(--border);
+}
+
+/* ─── Social sign in ─── */
+.social-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-1);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.15s, background 0.15s;
+  margin-bottom: 16px;
+}
+
+.social-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-panel);
+}
+
+.google-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ─── Divider ─── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.divider-text {
+  font-size: 10.5px;
+  color: var(--text-4);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* ─── Form fields ─── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: 0.01em;
+}
+
+.field-input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-1);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+}
+
+.field-input::placeholder { color: var(--text-4); }
+
+.field-input:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(196,144,154,0.12);
+}
+
+/* Password field wrapper */
+.field-input-wrap {
+  position: relative;
+}
+
+.field-input-wrap .field-input {
+  padding-right: 38px;
+}
+
+.input-suffix {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.input-suffix:hover { color: var(--rose-deep); }
+
+/* ─── Forgot password ─── */
+.field-meta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.link-subtle {
+  font-size: 11px;
+  color: var(--text-3);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.link-subtle:hover { color: var(--rose-deep); }
+
+/* ─── Name row (sign up only) ─── */
+.name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* ─── Submit button ─── */
+.submit-btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  border: none;
+  background: var(--rose);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  margin-bottom: 14px;
+  letter-spacing: 0.01em;
+}
+
+.submit-btn:hover   { background: var(--rose-deep); }
+.submit-btn:active  { transform: scale(0.99); }
+
+/* ─── Toggle link ─── */
+.form-toggle {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.form-toggle a {
+  color: var(--rose-deep);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.form-toggle a:hover { text-decoration: underline; }
+
+/* ─── Terms ─── */
+.form-terms {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-4);
+  line-height: 1.6;
+  margin-top: 20px;
+}
+
+.form-terms a {
+  color: var(--text-3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ─── Sign-up extras (hidden by default) ─── */
+.signup-only { display: none; }
+.signin-only { display: block; }
+
+/* Active state toggling */
+body.signup .signup-only { display: block; }
+body.signup .signin-only { display: none; }
+
+/* ─── Field hint ─── */
+.field-hint {
+  font-size: 10px;
+  color: var(--text-4);
+  margin-top: -4px;
+}
+
+/* ─── Scrollbar ─── */
+.form-panel::-webkit-scrollbar { width: 4px; }
+.form-panel::-webkit-scrollbar-track { background: transparent; }
+.form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ════ LEFT: Brand panel ════ -->
+  <div class="brand-panel">
+    <div class="glow-bl"></div>
+
+    <!-- Logo -->
+    <div class="brand-header">
+      <div class="brand-logo">S</div>
+      <span class="brand-name">Severl</span>
+    </div>
+
+    <!-- Headline -->
+    <div class="brand-body">
+      <div class="brand-eyebrow">SMM Operating System</div>
+      <h1 class="brand-headline">
+        Your practice,<br>
+        <em>running itself.</em>
+      </h1>
+      <p class="brand-sub">
+        Manage clients, deliverables, and invoices in one place —
+        built specifically for social media managers who run a real business.
+      </p>
+
+      <!-- Mini product preview -->
+      <div class="preview-cards">
+        <div class="preview-card">
+          <div class="preview-label">MRR</div>
+          <div class="preview-value">$8.4k</div>
+          <div class="preview-delta up">↑ 12% this month</div>
+        </div>
+        <div class="preview-card">
+          <div class="preview-label">Active Clients</div>
+          <div class="preview-value">11</div>
+          <div class="preview-delta rose">2 renewals due</div>
+        </div>
+        <div class="preview-card">
+          <div class="preview-label">Deliverables</div>
+          <div class="preview-value">34</div>
+          <div class="preview-delta muted">this month</div>
+          <div class="preview-bars">
+            <div class="preview-bar" style="height:40%"></div>
+            <div class="preview-bar" style="height:55%"></div>
+            <div class="preview-bar lit" style="height:70%"></div>
+            <div class="preview-bar lit" style="height:85%"></div>
+            <div class="preview-bar peak" style="height:100%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Testimonial -->
+      <div class="testimonial">
+        <div class="testimonial-quote">
+          "Severl replaced three separate tools for me. I finally know exactly what I'm owed, what's overdue, and what needs to go out this week."
+        </div>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">JL</div>
+          <div>
+            <div class="testimonial-name">Jade L.</div>
+            <div class="testimonial-role">SMM Freelancer · 9 clients</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand stats -->
+    <div class="brand-footer">
+      <div class="brand-stat">
+        <div class="brand-stat-val">2,400+</div>
+        <div class="brand-stat-label">SMMs on platform</div>
+      </div>
+      <div class="brand-stat-divider"></div>
+      <div class="brand-stat">
+        <div class="brand-stat-val">$14M+</div>
+        <div class="brand-stat-label">invoiced through Severl</div>
+      </div>
+      <div class="brand-stat-divider"></div>
+      <div class="brand-stat">
+        <div class="brand-stat-val">4.9 ★</div>
+        <div class="brand-stat-label">average rating</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ RIGHT: Form panel ════ -->
+  <div class="form-panel">
+    <div class="form-wrap">
+
+      <!-- Title -->
+      <h2 class="form-title" id="form-title">Welcome back</h2>
+      <p class="form-subtitle" id="form-sub">Sign in to your Severl workspace.</p>
+
+      <!-- Tab toggle -->
+      <div class="tab-row">
+        <button class="tab-btn active" id="tab-signin" onclick="setMode('signin')">Sign in</button>
+        <button class="tab-btn"        id="tab-signup" onclick="setMode('signup')">Create account</button>
+      </div>
+
+      <!-- Google SSO -->
+      <button class="social-btn">
+        <!-- Google G icon inline SVG -->
+        <svg class="google-icon" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <!-- Divider -->
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">or continue with email</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Form fields -->
+      <div class="field-group">
+
+        <!-- Sign-up only: name row -->
+        <div class="name-row signup-only">
+          <div class="field">
+            <label class="field-label">First name</label>
+            <input class="field-input" type="text" placeholder="Maya" autocomplete="given-name" />
+          </div>
+          <div class="field">
+            <label class="field-label">Last name</label>
+            <input class="field-input" type="text" placeholder="Chen" autocomplete="family-name" />
+          </div>
+        </div>
+
+        <!-- Sign-up only: business name -->
+        <div class="field signup-only">
+          <label class="field-label">Business / agency name</label>
+          <input class="field-input" type="text" placeholder="Maya Chen Media" autocomplete="organization" />
+          <div class="field-hint">This becomes your workspace name — you can change it later.</div>
+        </div>
+
+        <!-- Email -->
+        <div class="field">
+          <label class="field-label">Email</label>
+          <input class="field-input" type="email" placeholder="you@yourdomain.com" autocomplete="email" />
+        </div>
+
+        <!-- Password -->
+        <div class="field">
+          <label class="field-label">Password</label>
+          <div class="field-input-wrap">
+            <input class="field-input" type="password" placeholder="••••••••" autocomplete="current-password" id="pw-input" />
+            <span class="input-suffix" onclick="togglePw()">Show</span>
+          </div>
+        </div>
+
+        <!-- Forgot password — sign in only -->
+        <div class="field-meta signin-only">
+          <a class="link-subtle" href="#">Forgot password?</a>
+        </div>
+
+      </div>
+
+      <!-- Submit -->
+      <button class="submit-btn" id="submit-btn">Sign in</button>
+
+      <!-- Toggle -->
+      <div class="form-toggle signin-only">
+        Don't have an account? <a href="#" onclick="setMode('signup'); return false;">Create one free</a>
+      </div>
+      <div class="form-toggle signup-only">
+        Already have an account? <a href="#" onclick="setMode('signin'); return false;">Sign in</a>
+      </div>
+
+      <!-- Terms — sign up only -->
+      <div class="form-terms signup-only">
+        By creating an account you agree to our
+        <a href="/terms">Terms of Service</a> and
+        <a href="/privacy">Privacy Policy</a>.
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function setMode(mode) {
+    const isSignup = mode === 'signup';
+    document.body.classList.toggle('signup', isSignup);
+
+    document.getElementById('tab-signin').classList.toggle('active', !isSignup);
+    document.getElementById('tab-signup').classList.toggle('active',  isSignup);
+
+    document.getElementById('form-title').textContent = isSignup
+      ? 'Create your account'
+      : 'Welcome back';
+
+    document.getElementById('form-sub').textContent = isSignup
+      ? 'Set up your Severl workspace in under a minute.'
+      : 'Sign in to your Severl workspace.';
+
+    document.getElementById('submit-btn').textContent = isSignup
+      ? 'Create account'
+      : 'Sign in';
+  }
+
+  function togglePw() {
+    const input  = document.getElementById('pw-input');
+    const suffix = input.nextElementSibling;
+    const isHidden = input.type === 'password';
+    input.type    = isHidden ? 'text' : 'password';
+    suffix.textContent = isHidden ? 'Hide' : 'Show';
+  }
+</script>
+
+</body>
+</html>
