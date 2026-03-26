@@ -11,21 +11,19 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 
 const fraunces = Fraunces({
-  subsets: ["latin"],
-  axes: ["opsz"],
-  weight: ["300", "400", "500"],
-  style: ["normal", "italic"],
-  variable: "--font-fraunces",
-  display: "swap",
-});
+  subsets: ['latin'],
+  axes: ['opsz'],
+  style: ['normal', 'italic'],
+  variable: '--font-fraunces',
+  display: 'swap',
+})
 
 const dmSans = DM_Sans({
-  subsets: ["latin"],
-  axes: ["opsz"],
-  weight: ["300", "400", "500", "600"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
+  subsets: ['latin'],
+  axes: ['opsz'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+})
 
 const clerkAppearance = {
   variables: {
