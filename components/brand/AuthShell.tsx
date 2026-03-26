@@ -49,7 +49,7 @@ export default function AuthShell({ mode, children }: AuthShellProps) {
           </div>
 
           {/* Headline */}
-          <div className="mt-16">
+          <div className="mt-48">
             <p className="mb-3.5 font-sans text-[9px] font-semibold uppercase tracking-[0.12em] text-brand-rose-mid">
               SMM Operating System
             </p>
@@ -106,7 +106,7 @@ export default function AuthShell({ mode, children }: AuthShellProps) {
               </div>
               <div>
                 <p className="font-sans text-[11px] font-medium text-white/55">Jade L.</p>
-                <p className="font-sans text-[10px] text-white/28">SMM Freelancer · 9 clients</p>
+                <p className="font-sans text-[10px] text-white/55">SMM Freelancer · 9 clients</p>
               </div>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function AuthShell({ mode, children }: AuthShellProps) {
                   <p className="font-display text-[20px] font-normal leading-none text-white/80">
                     {stat.value}
                   </p>
-                  <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.06em] text-white/28">
+                  <p className="mt-1 font-sans text-[9px] uppercase tracking-[0.06em] text-white/55">
                     {stat.label}
                   </p>
                 </div>
