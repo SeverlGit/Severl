@@ -1,0 +1,163 @@
+{
+  "project": {
+    "name": "Severl",
+    "description": "Social media manager operating system — retainer, deliverable, and invoice management for SMM freelancers and agencies",
+    "audience": "SMM freelancers and small agency owners who manage multiple brand clients"
+  },
+  "aesthetic": {
+    "archetype": "dashboard",
+    "subtype": "command-center",
+    "mood": ["precise", "dense", "confident", "dark", "operational"],
+    "references": [
+      "Linear (density and keyboard-first feel)",
+      "Bloomberg Terminal (data density without clutter)",
+      "Raycast (dark UI with green accents, icon-driven nav)"
+    ],
+    "avoid": [
+      "corporate blue gradients",
+      "white card on gray background",
+      "rounded-everything friendly SaaS",
+      "glassmorphism",
+      "purple-to-blue gradients",
+      "generic shadcn defaults without restyling",
+      "light mode corporate dashboards"
+    ]
+  },
+  "color": {
+    "strategy": "dark-accent",
+    "palette": {
+      "background": {
+        "primary": "#0a0a0a",
+        "secondary": "#0c0c0c",
+        "tertiary": "#111111"
+      },
+      "foreground": {
+        "primary": "#ffffff",
+        "secondary": "rgba(255,255,255,0.60)",
+        "muted": "rgba(255,255,255,0.35)",
+        "hint": "rgba(255,255,255,0.18)"
+      },
+      "accent": {
+        "primary": "#4ade80",
+        "secondary": null
+      },
+      "semantic": {
+        "success": "#4ade80",
+        "warning": "#facc15",
+        "danger": "#f87171",
+        "info": "#4ade80"
+      }
+    },
+    "mode": "dark",
+    "contrast_ratio_minimum": 4.5
+  },
+  "typography": {
+    "philosophy": "Clean geometric sans for UI clarity — Poppins carries warmth without being casual. Mono for all data, metrics, and financial figures to reinforce precision.",
+    "display": {
+      "family": "Poppins",
+      "weights": [500, 600],
+      "source": "google"
+    },
+    "body": {
+      "family": "Poppins",
+      "weights": [300, 400, 500],
+      "source": "google"
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "weights": [400, 500],
+      "source": "google"
+    },
+    "scale": {
+      "base_size": "14px",
+      "ratio": 1.25,
+      "line_height": {
+        "tight": 1.1,
+        "normal": 1.5,
+        "relaxed": 1.7
+      }
+    },
+    "letter_spacing": {
+      "headings": "-0.01em",
+      "body": "0",
+      "labels": "0.04em"
+    }
+  },
+  "spacing": {
+    "rhythm": "tight",
+    "base_unit": 4,
+    "scale": [1, 2, 3, 4, 6, 8, 12, 16, 24],
+    "section_gap": "32px",
+    "component_padding": {
+      "compact": "6px 10px",
+      "default": "12px 16px",
+      "spacious": "24px 32px"
+    }
+  },
+  "components": {
+    "density": "compact",
+    "border_radius": {
+      "none": "0",
+      "sm": "4px",
+      "md": "8px",
+      "lg": "12px",
+      "full": "9999px"
+    },
+    "border_treatment": "Subtle 1px borders using #1a1a1a — borders define structure, not decoration. Panels separated by border, not shadow. Use accent border-left strips for status indication on rows.",
+    "elevation": {
+      "style": "none",
+      "levels": {
+        "low": "none",
+        "medium": "none",
+        "high": "0 8px 32px rgba(0,0,0,0.4)"
+      }
+    },
+    "interactive_states": {
+      "hover": "Background shift to surface-hover (#111111) — no scale transform, no shadow lift",
+      "active": "Accent border or accent text color — not background fill",
+      "focus": "1px accent (#4ade80) ring with 2px offset on dark background",
+      "disabled": "Opacity 0.35 with no pointer events"
+    }
+  },
+  "motion": {
+    "philosophy": "subtle",
+    "duration": {
+      "instant": "100ms",
+      "fast": "200ms",
+      "normal": "300ms",
+      "slow": "500ms"
+    },
+    "easing": {
+      "default": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "enter": "cubic-bezier(0, 0, 0.2, 1)",
+      "exit": "cubic-bezier(0.4, 0, 1, 1)",
+      "spring": "{ stiffness: 300, damping: 30 }"
+    },
+    "page_transitions": true,
+    "stagger_children": true
+  },
+  "layout": {
+    "max_width": "none",
+    "grid": {
+      "type": "fluid",
+      "gap": "16px"
+    },
+    "sidebar": {
+      "style": "icon-rail",
+      "width": "56px",
+      "position": "left"
+    },
+    "breakpoints": {
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px"
+    }
+  },
+  "framework": {
+    "css": "tailwind",
+    "component_library": "radix-ui",
+    "animation_library": "framer-motion",
+    "icon_set": "lucide"
+  }
+}

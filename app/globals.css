@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg-primary:   #0D1B2A;
+  --color-text-primary: #FFFFFF;
+  --color-accent:       #6EE7B7;
+  --color-bg-canvas:    #FFFFFF;
+
+  --bg:            #0D1B2A;
+  --bg-panel:      #0D1B2A;
+  --bg-nav:        #0D1B2A;
+  --bg-hover:      #162336;
+  --bg-subtle:     #0D1B2A;
+  --bg-input:      rgba(255,255,255,0.05);
+
+  --border:        #1e2d3d;
+  --border-subtle: #182232;
+  --border-hover:  #253648;
+  --border-green:  rgba(110,231,183,0.25);
+  --border-red:    rgba(248,113,113,0.25);
+  --border-amber:  rgba(250,204,21,0.25);
+
+  --green:         #6EE7B7;
+  --green-dim:     rgba(110,231,183,0.10);
+  --green-border:  rgba(110,231,183,0.20);
+  --red:           #f87171;
+  --red-dim:       rgba(248,113,113,0.10);
+  --amber:         #facc15;
+  --amber-dim:     rgba(250,204,21,0.10);
+
+  --text-1:        #ffffff;
+  --text-2:        rgba(255,255,255,0.60);
+  --text-3:        rgba(255,255,255,0.35);
+  --text-4:        rgba(255,255,255,0.18);
+
+  --font-mono:     'Poppins', system-ui, sans-serif;
+  --font-sans:     'Poppins', system-ui, sans-serif;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-poppins, var(--font-sans));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Form controls and interactive elements inherit Poppins (browsers often use system font by default) */
+input,
+button,
+select,
+textarea,
+optgroup,
+[role="button"],
+[role="combobox"],
+[role="listbox"],
+[role="menuitem"] {
+  font-family: inherit;
+}
+
+a { text-decoration: none; }
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+@layer utilities {
+  .tag-green {
+    background: rgba(110,231,183,0.08);
+    color: #6EE7B7;
+    border: 1px solid rgba(110,231,183,0.18);
+  }
+  .tag-red {
+    background: rgba(248,113,113,0.08);
+    color: #f87171;
+    border: 1px solid rgba(248,113,113,0.18);
+  }
+  .tag-amber {
+    background: rgba(250,204,21,0.08);
+    color: #facc15;
+    border: 1px solid rgba(250,204,21,0.18);
+  }
+  .tag-muted {
+    background: #0D1B2A;
+    color: rgba(255,255,255,0.35);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+}
+
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}

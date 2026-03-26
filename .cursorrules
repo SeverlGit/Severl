@@ -1,0 +1,113 @@
+# UI Architect — Cursor Rules
+
+## When These Rules Apply
+
+These rules apply whenever you are asked to:
+- Design, mock up, prototype, or visualize any UI component, page, or layout
+- Create or modify React/JSX components with styling
+- Generate HTML/SVG mockups
+- Create or update design tokens
+- Restyle or redesign existing interfaces
+- "Make it look better", "make it unique", or any request to improve visual design
+
+## Rule 1: Always Read the Design Config
+
+Before generating ANY UI code, check for `design.config.json` in the project root.
+
+- **If it exists:** Read it. Every design decision must align with the config's aesthetic archetype, color strategy, typography, spacing, and component rules. Summarize the design direction in a one-line comment before generating.
+- **If it doesn't exist:** Ask the user to define their design direction before proceeding. At minimum you need: aesthetic archetype, color strategy, typography philosophy, and spacing rhythm. Generate the config file.
+
+## Rule 2: Anti-Pattern Enforcement
+
+Before finalizing any UI output, verify it does NOT match these patterns:
+
+**Typography:** Don't default to Inter, Roboto, Open Sans, Lato, or Poppins without the config specifying them. Don't use uniform text sizing with no dramatic contrast. Don't use 1.5 line-height on headings.
+
+**Color:** Don't use blue-to-purple gradients. Don't distribute 3-4 colors equally. Don't use pure white cards (#FFFFFF) on gray backgrounds (#F5F5F5). Don't use unmodified Tailwind semantic colors.
+
+**Layout:** Don't default to 240px sidebar + top bar + centered content. Don't use 3 equal-width feature cards. Don't center everything symmetrically. Don't use uniform card heights or uniform spacing.
+
+**Components:** Don't use cookie-cutter rounded-rectangle cards with subtle shadows. Don't use identical status badges (colored pill + text). Don't use generic form inputs without matching the aesthetic. Don't apply `scale(1.02)` hover on everything.
+
+**Animation:** Don't fade-in every element on load. Don't use spring bounce on every component entrance. Don't animate things that don't need animation.
+
+If your output matches any of these, redesign the affected elements.
+
+## Rule 3: Design Rationale
+
+Every generated component must include a comment block explaining:
+1. Which aesthetic archetype it follows
+2. What makes it distinct from a generic implementation
+3. Any deliberate rule-breaking and why
+
+Example:
+```tsx
+/**
+ * Design: editorial archetype — magazine-spread metric card
+ * Distinction: oversized number (48px) with tiny uppercase label,
+ *   no card wrapper, left-aligned with accent underline instead of border
+ * Rule-break: no border-radius on metric cards (editorial sharpness)
+ */
+```
+
+## Rule 4: Output Format Rules
+
+### React/JSX
+- Use the project's CSS framework (check package.json)
+- If Tailwind: use config values via custom classes, not arbitrary values
+- Component must be self-contained
+- Include all states (default, hover, active, disabled, loading) in the component
+- Motion/animation only if config.motion.philosophy is not "none"
+
+### HTML/SVG Mockups
+- Self-contained single file
+- Inline all styles via CSS custom properties
+- Include responsive breakpoints
+- No external dependencies
+
+### Figma Specs
+- Exact measurements in px and rem
+- Color values in hex + HSL
+- Full typography specs (font, weight, size, line-height, letter-spacing)
+- Component state variants
+- ASCII layout diagram
+
+### Design Tokens
+- W3C Design Tokens format
+- Organized: color → spacing → typography → motion → elevation → border
+- Semantic aliases with $description fields
+
+## Rule 5: Layout Decisions
+
+When designing pages or complex layouts, do NOT start from a standard sidebar-plus-content template. Instead:
+
+1. Identify the page's primary purpose (data display? content reading? form completion? monitoring?)
+2. Choose a layout archetype that serves that purpose from the config's aesthetic
+3. Build from the archetype, not from a template
+
+Layout archetypes to consider:
+- **Command Center** — icon rail, status bar, dense metric stacks (for dashboards)
+- **Magazine Spread** — asymmetric columns, oversized headings, editorial flow (for content/reports)
+- **Data Wall** — metric strip, full-width viz, side-by-side tables (for analytics)
+- **Offset Grid** — alternating-side content blocks, zig-zag reading path (for landing pages)
+- **Split Screen** — fixed brand panel + scrollable content (for auth, onboarding)
+- **Stacked Sections** — full-bleed alternating sections with varied widths (for marketing)
+
+## Rule 6: Typography Selection
+
+When the config specifies fonts, use them. When you need to recommend fonts:
+
+- Never recommend Inter, Roboto, or Open Sans as a first choice
+- Pair a distinctive display font with a readable body font
+- Always include a monospace font for data, metrics, and code
+- Max 3 font families total
+- Match the archetype (editorial → serifs, terminal → monospace-heavy, luxury → thin weights)
+
+## Rule 7: Responsive Design
+
+Don't just stack columns vertically on mobile. Consider:
+- **Priority collapse** — show only the key content on mobile, expand on desktop
+- **Horizontal scroll** — for data tables and metric strips
+- **Progressive disclosure** — summary on mobile, full detail on desktop
+- **Component transformation** — tables become cards, tabs become accordions
+- **Typography reduction** — not just wrapping, actually reduce the scale

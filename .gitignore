@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build / cache
+dist/
+.turbo/
+*.tsbuildinfo
+.eslintcache
+.prettiercache
+
+# Vercel
+.vercel/
+
+# Test / coverage
+coverage/
+
+# Environment & secrets — never commit real keys (template stays tracked)
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# JetBrains / VS Code (local user state — remove if you commit shared workspace settings)
+.idea/
+
+# Local AI / editor state (machine paths, API keys in local config)
+.claude/
+.cursor/
+
+# Accidental local binaries in repo root
+claude.exe
+
+# Certificates & private keys
+*.pem
+*.key
+*.p12
+
+# Sentry CLI local auth (if you use sentry-cli outside env vars)
+.sentryclirc
