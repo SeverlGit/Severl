@@ -40,14 +40,14 @@ function formatInvoiceType(t: string): string {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { userId } = await auth();
   if (!userId) {
     return new NextResponse('Unauthorized', { status: 401, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   }
 
-  const invoiceId = params.id;
+  const { id: invoiceId } = await params;
   const supabase = getSupabaseAdminClient();
 
   const { data: org, error: orgErr } = await supabase

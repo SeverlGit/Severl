@@ -1,18 +1,12 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import { getCurrentOrg } from "@/lib/auth";
 import { getVerticalConfig } from "@/config/verticals";
 import { getAnalyticsMetrics, getRevenueByClient, getRenewalPipeline, getDeliveryRateByClient } from "@/lib/analytics/getAnalyticsData";
 import { getMRRTrend } from "@/lib/dashboard/getHomeData";
-import { AnalyticsSkeleton } from "@/components/shared/AnalyticsSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
-
-const AnalyticsClient = dynamic(() => import("./AnalyticsClient"), {
-  ssr: false,
-  loading: () => <AnalyticsSkeleton />,
-});
+import { AnalyticsClientLoader } from "./AnalyticsClientLoader";
 
 export default async function AnalyticsPage() {
   const org = await getCurrentOrg();
@@ -60,7 +54,7 @@ export default async function AnalyticsPage() {
   const vertical = getVerticalConfig(org.vertical);
 
   return (
-    <AnalyticsClient
+    <AnalyticsClientLoader
       vertical={vertical}
       metrics={metrics}
       mrrTrend={mrrTrend}

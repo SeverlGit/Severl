@@ -1,5 +1,4 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import { getCurrentOrg } from "@/lib/auth";
 import { getVerticalConfig } from "@/config/verticals";
 import {
@@ -9,25 +8,21 @@ import {
   getClientsForInvoiceCreation,
 } from "@/lib/invoicing/getInvoicesData";
 import { getBatchBillingClients } from "@/lib/invoicing/getBatchBillingData";
-import { InvoicesSkeleton } from "@/components/shared/InvoicesSkeleton";
-
-const InvoicesClient = dynamic(
-  () => import("./InvoicesClient"),
-  { ssr: false, loading: () => <InvoicesSkeleton /> },
-);
+import { InvoicesClientLoader } from "./InvoicesClientLoader";
 
 type Props = {
-  searchParams: {
+  searchParams: Promise<{
     status?: string;
     search?: string;
-  };
+  }>;
 };
 
 export default async function InvoicesPage({ searchParams }: Props) {
+  const sp = await searchParams;
   const org = await getCurrentOrg();
   const vertical = getVerticalConfig(org.vertical);
-  const status = searchParams.status || "all";
-  const search = searchParams.search || "";
+  const status = sp.status || "all";
+  const search = sp.search || "";
 
   const [invoices, summary, counts, batchClients, invoiceClients] = await Promise.all([
     getInvoices(org.id, status, search),
@@ -38,7 +33,7 @@ export default async function InvoicesPage({ searchParams }: Props) {
   ]);
 
   return (
-    <InvoicesClient
+    <InvoicesClientLoader
       invoices={invoices}
       summary={summary}
       counts={counts}

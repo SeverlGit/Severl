@@ -1,15 +1,9 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import { currentUser } from "@clerk/nextjs/server";
 import { getCurrentOrg } from "@/lib/auth";
 import { getVerticalConfig } from "@/config/verticals";
 import { getHomeData } from "@/lib/dashboard/getHomeData";
-import { DashboardSkeleton } from "@/components/shared/DashboardSkeleton";
-
-const DashboardClient = dynamic(
-  () => import("@/components/dashboard/DashboardClient").then((m) => m.DashboardClient),
-  { ssr: false, loading: () => <DashboardSkeleton /> },
-);
+import { DashboardClientLoader } from "./DashboardClientLoader";
 
 export default async function DashboardHomePage() {
   const org = await getCurrentOrg();
@@ -40,7 +34,7 @@ export default async function DashboardHomePage() {
   const avgRetainer = activeClients > 0 ? Math.round(mrr / activeClients) : 0;
 
   return (
-    <DashboardClient
+    <DashboardClientLoader
       firstName={firstName}
       mrr={mrr}
       activeClients={activeClients}
@@ -61,3 +55,4 @@ export default async function DashboardHomePage() {
     />
   );
 }
+

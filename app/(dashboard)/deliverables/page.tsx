@@ -1,5 +1,4 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { CheckSquare } from "lucide-react";
 import { getCurrentOrg } from "@/lib/auth";
@@ -15,30 +14,23 @@ import { MonthNav } from "@/components/deliverables/MonthNav";
 import { ClientSection } from "@/components/deliverables/ClientSection";
 import { AlertStrip } from "@/components/dashboard/AlertStrip";
 import { EmptyState } from "@/components/shared/EmptyState";
-
-const StatusBoard = dynamic(
-  () => import("@/components/deliverables/StatusBoard").then((m) => m.StatusBoard),
-  { ssr: false, loading: () => <div className="h-96 animate-pulse rounded-lg bg-brand-navy" /> },
-);
-const CloseOutDialog = dynamic(
-  () => import("@/components/deliverables/CloseOutDialog").then((m) => m.CloseOutDialog),
-  { ssr: false, loading: () => null },
-);
+import { CloseOutDialogDynamic, StatusBoardDynamic } from "./DeliverablesDynamic";
 
 type Props = {
-  searchParams: {
+  searchParams: Promise<{
     month?: string;
     view?: "client" | "status";
-  };
+  }>;
 };
 
 export default async function DeliverablesPage({ searchParams }: Props) {
+  const sp = await searchParams;
   const org = await getCurrentOrg();
   const vertical = getVerticalConfig(org.vertical);
-  const view = searchParams.view === "status" ? "status" : "client";
+  const view = sp.view === "status" ? "status" : "client";
 
   const now = new Date();
-  const monthParam = searchParams.month;
+  const monthParam = sp.month;
   const currentMonth = (() => {
     if (monthParam) {
       const parts = monthParam.split("-");
@@ -117,7 +109,7 @@ export default async function DeliverablesPage({ searchParams }: Props) {
               By status
             </a>
           </div>
-          <CloseOutDialog
+          <CloseOutDialogDynamic
             orgId={org.id}
             month={currentMonth}
             verticalSlug={org.vertical}
@@ -180,7 +172,7 @@ export default async function DeliverablesPage({ searchParams }: Props) {
 
           {view === "status" && (
             <div className="rounded-md border border-border bg-brand-navy px-3.5 py-3.5">
-              <StatusBoard
+              <StatusBoardDynamic
                 orgId={org.id}
                 verticalSlug={org.vertical}
                 deliverables={deliverables}

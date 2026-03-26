@@ -7,20 +7,21 @@ import { ClientTable } from "@/components/clients/ClientTable";
 import { ClientSearchInput } from "@/components/clients/ClientSearchInput";
 
 type Props = {
-  searchParams: {
+  searchParams: Promise<{
     filter?: string;
     search?: string;
-  };
+  }>;
 };
 
 const TAG_ORDER = ["all", "active", "at_risk", "prospect", "onboarding", "paused", "churned"] as const;
 
 export default async function ClientsPage({ searchParams }: Props) {
+  const sp = await searchParams;
   const org = await getCurrentOrg();
   const vertical = getVerticalConfig(org.vertical);
 
-  const filter = (searchParams.filter as string) || "all";
-  const search = searchParams.search || "";
+  const filter = (sp.filter as string) || "all";
+  const search = sp.search || "";
 
   const clients = await getClients(org.id, filter, search);
 
