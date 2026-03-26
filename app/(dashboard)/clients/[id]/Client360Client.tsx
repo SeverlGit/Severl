@@ -81,6 +81,8 @@ type Props = {
   teamDeliverableCounts: Record<string, number>;
 };
 
+export type Client360ClientProps = Props;
+
 export default function Client360Client({ client, activity, deliverables, invoices, notes, vertical, orgId, verticalSlug, clientId, activeTab, teamMembers, teamMembersForManagement = [], teamDeliverableCounts }: Props) {
   const router = useRouter();
   const { setDetailTitle } = useTopbarDetailTitle();

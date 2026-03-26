@@ -87,6 +87,8 @@ type Props = {
   clientSparkline: number[];
 };
 
+export type DashboardClientProps = Props;
+
 const ease = [0.16, 1, 0.3, 1] as const;
 
 function RevenueBarChart({ data }: { data: MRRTrendPoint[] }) {

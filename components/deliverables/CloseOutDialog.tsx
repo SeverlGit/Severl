@@ -41,6 +41,8 @@ type Props = {
   closeOutData: CloseOutClient[];
 };
 
+export type CloseOutDialogProps = Props;
+
 export function CloseOutDialog({
   orgId,
   month,

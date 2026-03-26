@@ -21,6 +21,8 @@ type Props = {
   deliverables: DeliverableWithClient[];
 };
 
+export type StatusBoardProps = Props;
+
 const STATUS_KEYS = [
   "not_started",
   "in_progress",

@@ -25,6 +25,8 @@ type Props = {
   deliveryRate: DeliveryRateByClientItem[];
 };
 
+export type AnalyticsClientProps = Props;
+
 export default function AnalyticsClient({
   vertical,
   metrics,

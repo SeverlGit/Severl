@@ -71,6 +71,8 @@ type Props = {
   invoiceClients: InvoiceClientOption[];
 };
 
+export type InvoicesClientProps = Props;
+
 const EMPTY_MESSAGES: Record<string, { heading: string; body: string; cta?: { label: string; href: string } }> = {
   all: { heading: "No invoices yet.", body: "Close out a month to generate your first retainer invoices automatically.", cta: { label: "Go to deliverables →", href: "/deliverables" } },
   overdue: { heading: "No overdue invoices.", body: "Your billing is clean." },
