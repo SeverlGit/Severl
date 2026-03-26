@@ -1,7 +1,7 @@
 # CURSOR_CONTEXT.md
 
 ## Project
-Severl (SMM OS) — Next.js 14 App Router, TypeScript strict, Clerk v6, Supabase, Resend, Tailwind CSS, Radix UI.
+Severl (SMM OS) — **Next.js 15** App Router, TypeScript strict (**~5.8**), Clerk v6, Supabase, Resend, Tailwind CSS, Radix UI.
 Social media manager operating system for freelancers and agencies.
 
 ## Key Files
@@ -11,7 +11,7 @@ Social media manager operating system for freelancers and agencies.
 - `lib/database.types.ts` — Row types and composite types for all 8 tables
 - `lib/vertical-config.tsx` — `VerticalConfigProvider` + `useVerticalConfig()` React context
 - `db/schema.sql` — DDL source of truth (8 tables, 5 enums, RLS via auth.jwt()->>'sub')
-- `middleware.ts` — Clerk v6 `clerkMiddleware()` route protection
+- `middleware.ts` — Clerk v6 `clerkMiddleware()`; **`export const config` includes `runtime: 'nodejs'`** (Next.js 15.5+) so auth runs on the Node middleware runtime (avoids Vercel Edge bundler issues with Clerk). Public routes include `/api/cron(.*)` for cron endpoints.
 - `instrumentation.ts` — Sentry init for Node.js + Edge runtimes
 - `app/layout.tsx` — root metadata (`title`/`description`), `app/icon.png` favicon (App Router convention)
 
@@ -21,6 +21,11 @@ Social media manager operating system for freelancers and agencies.
 3. Server actions call `requireOrgAccess(orgId)` as first line → verifies auth AND org ownership → returns `userId`
 4. Session client (`getSupabaseServerClient`) uses Clerk JWT via native `accessToken` callback — no JWT template
 5. Admin client (`getSupabaseAdminClient`) uses service role key — only called after `requireOrgAccess` or in `getCurrentOrg`
+
+## Next.js 15 Conventions (pages & API)
+- **Page props:** `params` and `searchParams` are **`Promise<…>`** in server `page.tsx` files — `await` them before use (e.g. `/clients/[id]`, `/clients`, `/deliverables`, `/invoices`).
+- **Route handlers:** dynamic segments use **`params: Promise<{ id: string }>`** and `await params` (e.g. `GET /api/invoices/[id]`).
+- **Heavy client shells:** `next/dynamic` with **`ssr: false`** must live in **`"use client"`** modules. Server pages import thin **loader** components: `DashboardClientLoader`, `AnalyticsClientLoader`, `Client360ClientLoader`, `InvoicesClientLoader`, and `DeliverablesDynamic` (`StatusBoardDynamic`, `CloseOutDialogDynamic`) under `app/(dashboard)/`. Shell components export explicit `*Props` types where needed.
 
 ## Database
 8 tables: `orgs`, `team_members`, `clients`, `client_notes`, `deliverables`, `invoices`, `invoice_line_items`, `events`
@@ -39,7 +44,7 @@ All RLS policies use `auth.jwt()->>'sub'` for Clerk user ID. Admin client bypass
 Sentry via `@sentry/nextjs` v8. Init in `instrumentation.ts` (server/edge) and `sentry.client.config.ts` (browser + Replay). `captureException` / `captureMessage` across actions and data layers (including analytics/invoice query failures). `global-error.tsx` catches unhandled errors.
 
 ## Testing
-Vitest: auth guards, client-note tests, batch invoice tests, and related action coverage. Deliverable/team UI remains mostly untested.
+Vitest: auth guards, client-note tests, batch invoice tests, invoice action tests, and related action coverage. Deliverable/team UI remains mostly untested.
 
 ## Verticals
 Two verticals in `config/verticals/`: `smm_freelance` (solo) and `smm_agency` (team). Vertical resolved at org load, distributed via React context. Agency adds: team management, deliverable assignees, extra deliverable types. **`team_capacity` is configured but `show: false`** in agency analytics (metric not computed yet).
@@ -55,7 +60,7 @@ All other mutations use Server Actions.
 - RLS on all tables via `auth.jwt()->>'sub'`
 - Auth guards on server actions; type safety via `lib/database.types.ts`
 - Dashboard caching with `unstable_cache` + `revalidateTag`
-- Dynamic imports with `next/dynamic` on heavy client shells + skeletons (DashboardClient, Client360Client, InvoicesClient, AnalyticsClient, StatusBoard, CloseOutDialog)
+- Client loaders + `next/dynamic` (`ssr: false`) for heavy shells (home, client 360, invoices, analytics, deliverables board/close-out)
 - Team member CRUD + `TeamManagementDialog` (agency)
 - **Invoices:** `batchCreateRetainerInvoices` + line items; **`createInvoice`** (single draft invoice + line item); invoice list actions (send, paid, void); **`CreateInvoiceDialog`** on `/invoices`
 - **`GET /api/invoices/[id]`** — client-facing HTML invoice for print/PDF
@@ -72,10 +77,10 @@ All other mutations use Server Actions.
 - `markInvoiceSent` / batch flow can send Resend email when client email exists — verify deliverability in prod
 - `team_capacity` metric: hidden, not computed (flip `show: true` when logic exists)
 - Broader test coverage for deliverables, team, and invoice UI
-- ESLint: `next lint` may prompt interactive setup if no eslint config committed
+- ESLint: migrate off deprecated `next lint` when adopting flat `eslint.config` (Next 16 direction)
 
 ## Infrastructure Status
 - Clerk / Supabase / Sentry / Resend: configure per environment via `.env` (see `.env.example`)
 - Production deploy (e.g. Vercel): set env vars, `CRON_SECRET`, connect domain as needed
 
-**Last reviewed:** 2026-03-20 — bump with [`architecture-overview.md`](./architecture-overview.md) on release or material changes.
+**Last reviewed:** 2026-03-26 — bump with [`architecture-overview.md`](./architecture-overview.md) on release or material changes.

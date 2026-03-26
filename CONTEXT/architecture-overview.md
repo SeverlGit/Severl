@@ -1,6 +1,6 @@
 # Architecture Overview — Severl (SMM OS)
 
-**Date:** 2026-03-20 · **Last reviewed:** 2026-03-20
+**Date:** 2026-03-20 · **Last reviewed:** 2026-03-26
 **Auditor:** Claude Code (read-only, all source files read)
 **App name:** `severl-smm-os` (`package.json`)
 **Purpose:** Social media manager operating system — retainer, deliverable, and invoice management for SMM freelancers and agencies.
@@ -13,16 +13,16 @@
 
 | Layer | Choice | Version |
 |---|---|---|
-| Framework | Next.js (App Router) | `^14.2.25` |
-| Language | TypeScript (strict) | `^5.4.0` |
-| Runtime | Node.js | Inferred from Next.js 14 |
+| Framework | Next.js (App Router) | `^15.5.14` |
+| Language | TypeScript (strict) | `~5.8.3` |
+| Runtime | Node.js | Inferred from Next.js 15 |
 | React | React 18 | `^18.3.0` |
 
 ### All Dependencies
 
 | Package | Version | Purpose |
 |---|---|---|
-| `@clerk/nextjs` | `^6.0.0` | Authentication — session, middleware, server identity, `UserButton` |
+| `@clerk/nextjs` | `^6.39.1` | Authentication — session, middleware (Node runtime), server identity, `UserButton` |
 | `@supabase/supabase-js` | `^2.48.0` | Postgres DB client (both session-scoped and service-role) |
 | `@sentry/nextjs` | `^8.0.0` | Error monitoring — client, server, edge, `global-error.tsx` |
 | `resend` | `^3.2.0` | Transactional email (welcome email on org creation) |
@@ -38,7 +38,7 @@
 | `tailwind-merge` | `^3.5.0` | Tailwind class deduplication |
 | `class-variance-authority` | `^0.7.1` | Variant-based component styling (ui/ primitives) |
 | `tailwindcss-animate` | `^1.0.7` | CSS animation plugin (accordion keyframes) |
-| `next` | `^14.2.25` | Framework |
+| `next` | `^15.5.14` | Framework |
 | `react-dom` | `^18.3.0` | React DOM + `useFormState`/`useFormStatus` |
 
 **Dev dependencies:**
@@ -47,9 +47,10 @@
 |---|---|
 | `vitest ^2.0.0` | Unit test runner |
 | `@vitejs/plugin-react ^4.2.0` | React support for Vitest |
-| `typescript ^5.4.0` | Type checking |
+| `typescript ~5.8.3` | Type checking |
 | `tailwindcss ^3.4.0` | CSS framework |
-| `eslint ^8.57.0`, `eslint-config-next 14.2.25` | Linting |
+| `eslint ^8.57.0`, `eslint-config-next ^15.5.14` | Linting |
+| `@next/bundle-analyzer ^15.5.14` | Optional bundle analysis (`ANALYZE=true`) |
 | `@types/node`, `@types/react`, `@types/react-dom` | Type definitions |
 | `autoprefixer`, `postcss` | CSS processing |
 
@@ -81,7 +82,7 @@
 
 ### Deployment Target
 
-Next.js App Router, server-rendered on demand (all routes are `ƒ` dynamic). Suitable for Vercel or any Node.js host.
+Next.js App Router, server-rendered on demand (all routes are `ƒ` dynamic). Suitable for Vercel or any Node.js host. **Auth middleware** uses the **Node.js middleware** runtime (`runtime: 'nodejs'` in `middleware.ts` config).
 
 ### Environment Variables
 
@@ -120,19 +121,24 @@ Business Dashboard/
 │   │   └── cron/overdue-invoices/   GET — mark overdue (Bearer CRON_SECRET)
 │   ├── (dashboard)/                   Route group — auth-gated dashboard shell
 │   │   ├── layout.tsx                 Dashboard layout — getCurrentOrg(), VerticalConfigProvider, LabelNav, Topbar
-│   │   ├── page.tsx                   / — Home dashboard (server page + dynamic DashboardClient)
+│   │   ├── DashboardClientLoader.tsx  "use client" — next/dynamic wrapper for DashboardClient (ssr: false)
+│   │   ├── page.tsx                   / — Home dashboard (server page + DashboardClientLoader)
 │   │   ├── analytics/
-│   │   │   ├── page.tsx               /analytics — server page + AnalyticsClient
+│   │   │   ├── page.tsx               /analytics — server page + AnalyticsClientLoader
+│   │   │   ├── AnalyticsClientLoader.tsx  "use client" — dynamic wrapper for AnalyticsClient
 │   │   │   └── AnalyticsClient.tsx    Analytics charts client shell
 │   │   ├── clients/
-│   │   │   ├── page.tsx               /clients — server page, filter/search via searchParams
+│   │   │   ├── page.tsx               /clients — server page, filter/search via searchParams (Promise)
 │   │   │   └── [id]/
-│   │   │       ├── page.tsx           /clients/[id] — server page + dynamic Client360Client
+│   │   │       ├── page.tsx           /clients/[id] — server page + Client360ClientLoader; params/searchParams Promises
+│   │   │       ├── Client360ClientLoader.tsx  "use client" — dynamic wrapper for Client360Client
 │   │   │       └── Client360Client.tsx Client profile shell (6-tab view)
 │   │   ├── deliverables/
-│   │   │   └── page.tsx               /deliverables — server page, month nav, dual view
+│   │   │   ├── page.tsx               /deliverables — server page, month nav, dual view
+│   │   │   └── DeliverablesDynamic.tsx "use client" — StatusBoardDynamic + CloseOutDialogDynamic (ssr: false)
 │   │   └── invoices/
-│   │       ├── page.tsx               /invoices — server page + dynamic InvoicesClient
+│   │       ├── page.tsx               /invoices — server page + InvoicesClientLoader
+│   │       ├── InvoicesClientLoader.tsx  "use client" — dynamic wrapper for InvoicesClient
 │   │       └── InvoicesClient.tsx     Invoices list + CreateInvoiceDialog + batch billing
 │   ├── onboarding/
 │   │   ├── page.tsx                   /onboarding — server guard, redirects if org exists
@@ -233,13 +239,15 @@ Business Dashboard/
 │   └── schema.sql                     Postgres DDL source of truth (8 tables, 5 enums)
 ├── __tests__/
 │   ├── auth-guard.test.ts             5 tests for requireAuth/requireOrgAccess
-│   └── actions/client-note.test.ts    2 tests for createClientNote auth pattern
+│   ├── actions/client-note.test.ts    2 tests for createClientNote auth pattern
+│   ├── actions/batch-invoices.test.ts Batch retainer invoice tests
+│   └── actions/invoice-actions.test.ts Invoice server action tests
 ├── public/
 │   ├── SeverlLogo.png                 Logo image
 │   └── bg.mp4                         Auth page background video
 ├── docs/                              Internal planning docs (not served)
 ├── audits/                            Audit reports
-├── middleware.ts                      Clerk route protection
+├── middleware.ts                      Clerk route protection; `config.runtime: 'nodejs'` (Next 15.5+ Node middleware)
 ├── instrumentation.ts                 Sentry init for Node.js + Edge runtimes
 ├── sentry.client.config.ts            Sentry client init (also has replay integration)
 ├── sentry.server.config.ts            Legacy — superseded by instrumentation.ts ⚠️
@@ -257,12 +265,12 @@ Business Dashboard/
 | `/sign-in` | `app/sign-in/[[...sign-in]]/page.tsx` | Client | Clerk `<SignIn>` in branded `AuthShell` |
 | `/sign-up` | `app/sign-up/[[...sign-up]]/page.tsx` | Client | Clerk `<SignUp>` in branded `AuthShell` |
 | `/onboarding` | `app/onboarding/page.tsx` | Server | 2-step org creation — redirects if org exists |
-| `/` | `app/(dashboard)/page.tsx` | Server + dynamic client | Home dashboard — KPIs, 5 panels, ticker |
-| `/analytics` | `app/(dashboard)/analytics/page.tsx` | Server + client | MRR trend, revenue breakdown, delivery rate |
+| `/` | `app/(dashboard)/page.tsx` | Server + client loader | Home dashboard — KPIs, 5 panels, ticker (`DashboardClientLoader`) |
+| `/analytics` | `app/(dashboard)/analytics/page.tsx` | Server + client loader | MRR trend, revenue breakdown, delivery rate (`AnalyticsClientLoader`) |
 | `/clients` | `app/(dashboard)/clients/page.tsx` | Server | Client roster — filter by tag, full-text search |
-| `/clients/[id]` | `app/(dashboard)/clients/[id]/page.tsx` | Server + dynamic client | Client 360 profile — 5–6 tabs |
-| `/deliverables` | `app/(dashboard)/deliverables/page.tsx` | Server + dynamic client | Monthly deliverable board — by-client and kanban views |
-| `/invoices` | `app/(dashboard)/invoices/page.tsx` | Server + dynamic client | Invoice list, summary strip, create + batch billing |
+| `/clients/[id]` | `app/(dashboard)/clients/[id]/page.tsx` | Server + client loader | Client 360 profile — 5–6 tabs (`Client360ClientLoader`) |
+| `/deliverables` | `app/(dashboard)/deliverables/page.tsx` | Server + client loaders | Monthly deliverable board — `DeliverablesDynamic` for kanban + close-out |
+| `/invoices` | `app/(dashboard)/invoices/page.tsx` | Server + client loader | Invoice list, summary strip, create + batch billing (`InvoicesClientLoader`) |
 | `/privacy` | `app/privacy/page.tsx` | Server | Public stub — privacy policy |
 | `/terms` | `app/terms/page.tsx` | Server | Public stub — terms of service |
 
@@ -277,17 +285,24 @@ Business Dashboard/
 ```ts
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)', '/sign-up(.*)', '/onboarding(.*)', '/privacy(.*)', '/terms(.*)',
+  '/api/cron(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) await auth.protect();
 });
+
+export const config = {
+  runtime: 'nodejs',
+  matcher: [ /* app routes + api|trpc */ ],
+};
 ```
 
 - Uses `clerkMiddleware` (v6, not deprecated `authMiddleware`)
+- **`config.runtime: 'nodejs'`** — middleware runs on the **Node.js middleware runtime** (Next.js 15.5+), not the Edge runtime, avoiding Vercel Edge bundler failures with Clerk’s transitive imports
 - `auth.protect()` returns 401/redirect for unauthenticated requests to protected routes
-- Matcher excludes static assets, images, fonts, and media files
-- Middleware bundle: 84.5 kB
+- **`/api/cron(.*)`** is public so cron routes can authenticate via `Authorization: Bearer` instead of Clerk session
+- Matcher excludes static assets, images, fonts, and media files (see `matcher` in repo)
 
 ### Identity Flow
 
@@ -658,26 +673,28 @@ The vertical config is resolved at org load time in `DashboardLayout` and provid
 
 ### Server vs Client Split
 
-The dominant pattern is **server page → dynamic client shell**:
+The dominant pattern is **server page → client loader → dynamic client shell** (Next.js 15 does not allow `next/dynamic` with `ssr: false` directly in Server Components):
 
 ```
 Server page (async, fetches all data)
   ↓ passes all data as props
-  Dynamic client shell ("use client", ssr: false, loading skeleton)
-    ↓ renders interactive UI with framer-motion, state, event handlers
-    ↓ calls server actions for mutations
+  Client loader ("use client") — imports next/dynamic(..., { ssr: false, loading })
+    ↓ lazy-loads shell component
+  Client shell — framer-motion, state, server actions
 ```
 
-| Route | Server Page | Client Shell | Skeleton |
-|---|---|---|---|
-| `/` | `app/(dashboard)/page.tsx` | `DashboardClient` | `DashboardSkeleton` |
-| `/clients/[id]` | `app/(dashboard)/clients/[id]/page.tsx` | `Client360Client` | `Client360Skeleton` |
-| `/invoices` | `app/(dashboard)/invoices/page.tsx` | `InvoicesClient` | `InvoicesSkeleton` |
-| `/analytics` | `app/(dashboard)/analytics/page.tsx` | `AnalyticsClient` | `AnalyticsSkeleton` |
-| `/clients` | `app/(dashboard)/clients/page.tsx` | None (pure server) | None |
-| `/deliverables` | `app/(dashboard)/deliverables/page.tsx` | `StatusBoard` (partial) | Inline pulse |
+| Route | Server Page | Loader (client) | Shell | Skeleton |
+|---|---|---|---|---|
+| `/` | `app/(dashboard)/page.tsx` | `DashboardClientLoader` | `DashboardClient` | `DashboardSkeleton` |
+| `/clients/[id]` | `app/(dashboard)/clients/[id]/page.tsx` | `Client360ClientLoader` | `Client360Client` | `Client360Skeleton` |
+| `/invoices` | `app/(dashboard)/invoices/page.tsx` | `InvoicesClientLoader` | `InvoicesClient` | `InvoicesSkeleton` |
+| `/analytics` | `app/(dashboard)/analytics/page.tsx` | `AnalyticsClientLoader` | `AnalyticsClient` | `AnalyticsSkeleton` |
+| `/clients` | `app/(dashboard)/clients/page.tsx` | None (pure server) | — | None |
+| `/deliverables` | `app/(dashboard)/deliverables/page.tsx` | `DeliverablesDynamic` (`StatusBoardDynamic`, `CloseOutDialogDynamic`) | `StatusBoard`, `CloseOutDialog` | Inline pulse / null |
 
-`CloseOutDialog` and `StatusBoard` are dynamically imported on the deliverables page with `ssr: false`.
+Shell components export explicit prop types (e.g. `DashboardClientProps`, `AnalyticsClientProps`) for loaders; avoid `ComponentProps<typeof dynamic(...)>` on heavy `dynamic()` imports.
+
+**Page props (Next.js 15):** `params` and `searchParams` in server pages are **Promises** — await before use. API route handlers use **`params: Promise<{ id: string }>`** for dynamic segments.
 
 ### Navigation Shell
 
@@ -696,7 +713,7 @@ RootLayout (app/layout.tsx)
 - **No global state library** (no Redux, Zustand, Jotai)
 - Server state: fetched at page level, passed as props to client shells
 - Local UI state: `useState`/`useTransition` in client components
-- URL state: `searchParams` used for filter, search, tab, month, view parameters
+- URL state: `searchParams` used for filter, search, tab, month, view parameters (in server pages, `searchParams` is a **Promise** — await in the page)
 - Vertical config: React context (`VerticalConfigProvider` / `useVerticalConfig()`)
 - Toast: `sonner` for mutation feedback
 
@@ -728,14 +745,14 @@ components/
 
 | Service | Package | Version | Purpose | Config |
 |---|---|---|---|---|
-| **Clerk** | `@clerk/nextjs` | `^6.0.0` | Authentication — sign-in/up, session, middleware | `clerkMiddleware`, `auth()`, `currentUser()`, `UserButton`, `SignIn`, `SignUp`, `ClerkProvider`. Env: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` |
+| **Clerk** | `@clerk/nextjs` | `^6.39.1` | Authentication — sign-in/up, session, **Node middleware** | `clerkMiddleware`, `auth()`, `currentUser()`, `UserButton`, `SignIn`, `SignUp`, `ClerkProvider`. Middleware `config.runtime: 'nodejs'`. Env: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` |
 | **Supabase** | `@supabase/supabase-js` | `^2.48.0` | Postgres database | Two clients: session (Clerk JWT JWKS) + admin (service role). Env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
 | **Resend** | `resend` | `^3.2.0` | Transactional email | `lib/email/welcome.ts` — welcome email on org creation. Non-fatal if `RESEND_API_KEY` absent. Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` |
 | **Sentry** | `@sentry/nextjs` | `^8.0.0` | Error monitoring | `instrumentation.ts` (Node.js + Edge), `sentry.client.config.ts` (browser + Replay), `withSentryConfig` in `next.config.mjs`, `global-error.tsx`. Widespread `captureException` / `captureMessage` in actions and data loaders. Env: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` |
 
 **`withSentryConfig` options:**
 ```js
-{ org: 'severl', project: 'smm-os', silent: true,
+{ org: 'severl', project: 'smm', silent: true,
   widenClientFileUpload: true, hideSourceMaps: true, disableLogger: true }
 ```
 
@@ -755,7 +772,7 @@ Note: `next.config.mjs` sets `sourcemaps.deleteSourcemapsAfterUpload: true` for 
 
 ### Test Coverage
 
-Unit tests cover auth guards, client notes, and batch invoice flows. **Gaps:** `lib/team/actions.ts`, deliverable actions, non-batch invoice actions, and most UI — **0 tests**.
+Unit tests cover auth guards, client notes, batch invoice flows, and invoice server actions. **Gaps:** `lib/team/actions.ts`, deliverable actions, and most UI — **0 tests**.
 
 ### Operational
 
@@ -772,6 +789,20 @@ Legacy `sentry.server.config.ts` / `sentry.edge.config.ts` may duplicate `instru
 ### No TODO / FIXME sweep
 
 Occasional `TODO` in components (e.g. logo SVG); no systematic FIXME backlog.
+
+---
+
+## Delta from Previous Audit (2026-03-26)
+
+| Item | Details |
+|---|---|
+| `next` | Upgraded to **15.5.x** (App Router). |
+| `@clerk/nextjs` | Pinned to **^6.39.x**; middleware uses **`runtime: 'nodejs'`** (Node middleware, Next 15.5+). |
+| Public middleware | `/api/cron(.*)` added to `createRouteMatcher` for cron auth. |
+| TypeScript | **`~5.8.3`** in devDependencies (toolchain stability). |
+| `eslint-config-next` / `@next/bundle-analyzer` | Aligned to **15.5.x**. |
+| Client loaders | `app/(dashboard)/` **`*ClientLoader.tsx`** and **`DeliverablesDynamic.tsx`** — `next/dynamic` + `ssr: false` in client modules only; exported `*Props` types on shells. |
+| Page / API route props | **`params` / `searchParams` as `Promise`** in server `page.tsx`; **`params` Promise** in `GET /api/invoices/[id]`. |
 
 ---
 
@@ -817,7 +848,7 @@ Compared to `audits/architecture-overview.md` (2026-03-18, same date — first v
 |---|---|
 | `package.json` scripts | Added `"test": "vitest run"`, `"test:watch": "vitest"` |
 | `lib/clients/actions.ts` `createClientNote` | `authorId` param removed; now uses server-derived `userId` from `requireOrgAccess` |
-| `CONTEXT/CURSOR_CONTEXT.md` | Updated 2026-03-20 — reflects API routes, invoicing, analytics, legal stubs |
+| `CONTEXT/CURSOR_CONTEXT.md` | Updated 2026-03-26 — Next 15, Node middleware, loaders, async page props |
 
 ---
 

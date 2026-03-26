@@ -10,6 +10,11 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+
+  "engines": {
+  "node": "22.x"
+},
+
   "dependencies": {
     "@clerk/nextjs": "^6.39.1",
     "@dnd-kit/core": "^6.1.0",
