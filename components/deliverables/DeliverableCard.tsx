@@ -58,8 +58,8 @@ export function DeliverableCard({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`group relative rounded-lg border border-border bg-brand-navy text-[13px] text-txt-secondary transition-colors ${
-        isDragging ? "scale-[1.02] opacity-50" : "hover:border-border-hover"
+      className={`group relative rounded-lg border border-border bg-surface text-[13px] text-txt-secondary transition-colors ${
+        isDragging ? "scale-[1.02] opacity-50" : "hover:border-border-strong"
       }`}
     >
       <button

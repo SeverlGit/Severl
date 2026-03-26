@@ -6,7 +6,7 @@ import type { StatusBoardProps } from "@/components/deliverables/StatusBoard";
 
 const StatusBoard = dynamic(
   () => import("@/components/deliverables/StatusBoard").then((m) => m.StatusBoard),
-  { ssr: false, loading: () => <div className="h-96 animate-pulse rounded-lg bg-brand-navy" /> },
+  { ssr: false, loading: () => <div className="h-96 animate-pulse rounded-lg bg-surface" /> },
 );
 
 const CloseOutDialog = dynamic(

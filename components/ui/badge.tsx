@@ -7,18 +7,12 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        green:
-          "bg-brand-mint/10 text-brand-mint",
-        red:
-          "bg-danger/8 text-danger",
-        amber:
-          "bg-warning/8 text-warning",
-        blue:
-          "bg-brand-mint/10 text-brand-mint",
-        muted:
-          "bg-border text-txt-muted",
-        default:
-          "bg-border text-txt-muted",
+        green:   "bg-success-bg text-success",
+        red:     "bg-danger-bg text-danger",
+        amber:   "bg-warning-bg text-warning",
+        blue:    "bg-brand-plum-dim text-brand-plum-deep",
+        muted:   "bg-surface-hover text-txt-muted",
+        default: "bg-surface-hover text-txt-muted",
       },
     },
     defaultVariants: {

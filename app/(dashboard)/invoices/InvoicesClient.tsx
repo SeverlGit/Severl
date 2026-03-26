@@ -51,7 +51,7 @@ const cardTransition = {
 };
 
 const INVOICE_STATUS_CHIP: Record<string, string> = {
-  paid: "bg-brand-mint/10 text-brand-mint",
+  paid: "bg-success/10 text-success",
   overdue: "bg-danger/10 text-danger",
   sent: "bg-warning/10 text-warning",
   draft: "bg-txt-muted/10 text-txt-muted",
@@ -182,25 +182,25 @@ export default function InvoicesClient({
       </header>
 
       <div className="grid gap-px rounded-lg border border-border bg-border-subtle md:grid-cols-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0 }} className="border-l-2 border-brand-mint bg-brand-navy first:rounded-l-lg px-4 py-3.5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0 }} className="border-l-2 border-success bg-surface first:rounded-l-lg px-4 py-3.5">
           <div className="text-[10px] font-medium uppercase tracking-wider text-txt-muted">MRR collected</div>
-          <div className={`mt-1 font-mono text-2xl font-medium tabular-nums ${summary.collected_this_month > 0 ? "text-brand-mint" : "text-txt-muted"}`}>{formatCurrency(summary.collected_this_month)}</div>
+          <div className={`mt-1 font-mono text-2xl font-medium tabular-nums ${summary.collected_this_month > 0 ? "text-success" : "text-txt-muted"}`}>{formatCurrency(summary.collected_this_month)}</div>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0.06 }} className="bg-brand-navy px-4 py-3.5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0.06 }} className="bg-surface px-4 py-3.5">
           <div className="text-[10px] font-medium uppercase tracking-wider text-txt-muted">Outstanding</div>
           <div className="mt-1 font-mono text-2xl font-medium tabular-nums text-txt-primary">{formatCurrency(summary.outstanding)}</div>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0.12 }} className="border-l-2 border-l-danger bg-brand-navy px-4 py-3.5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0.12 }} className="border-l-2 border-l-danger bg-surface px-4 py-3.5">
           <div className="text-[10px] font-medium uppercase tracking-wider text-txt-muted">Overdue</div>
           <div className={`mt-1 font-mono text-2xl font-medium tabular-nums ${summary.overdue_total > 0 ? "text-danger" : "text-txt-muted"}`}>{formatCurrency(summary.overdue_total)}</div>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0.18 }} className="bg-brand-navy last:rounded-r-lg px-4 py-3.5">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...cardTransition, delay: 0.18 }} className="bg-surface last:rounded-r-lg px-4 py-3.5">
           <div className="text-[10px] font-medium uppercase tracking-wider text-txt-muted">Active retainers</div>
           <div className="mt-1 font-mono text-2xl font-medium tabular-nums text-txt-primary">{summary.active_retainers}</div>
         </motion.div>
       </div>
 
-      <div className="rounded-lg border border-border bg-brand-navy p-4">
+      <div className="rounded-lg border border-border bg-surface p-4">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <Tabs value={activeStatus} onValueChange={navigateTab}>
             <TabsList className="border-b border-border-subtle">
@@ -208,7 +208,7 @@ export default function InvoicesClient({
                 const label = status === "all" ? "All" : status[0].toUpperCase() + status.slice(1);
                 const count = counts[status] ?? 0;
                 return (
-                  <TabsTrigger key={status} value={status} className="text-sm font-medium text-txt-muted transition-colors hover:text-txt-secondary data-[state=active]:border-b-2 data-[state=active]:border-brand-mint data-[state=active]:text-brand-mint data-[state=active]:-mb-px">
+                  <TabsTrigger key={status} value={status} className="text-sm font-medium text-txt-muted transition-colors hover:text-txt-secondary data-[state=active]:border-b-2 data-[state=active]:border-success data-[state=active]:text-success data-[state=active]:-mb-px">
                     {label}
                     {count > 0 && <Badge variant="muted" className="ml-1.5 font-mono text-[10px] tabular-nums">{count}</Badge>}
                   </TabsTrigger>
@@ -234,7 +234,7 @@ export default function InvoicesClient({
 
         <div className="overflow-hidden rounded-lg border border-border">
           <table className="min-w-full border-collapse text-[13px]">
-            <thead className="border-b border-border-subtle bg-brand-navy text-left text-[10px] font-medium uppercase tracking-wider text-txt-hint">
+            <thead className="border-b border-border-subtle bg-surface text-left text-[10px] font-medium uppercase tracking-wider text-txt-hint">
               <tr>
                 <th className="px-3 py-3 font-medium">#</th>
                 <th className="px-3 py-3 font-medium">{vertical.crm.clientLabel}</th>
@@ -264,7 +264,7 @@ export default function InvoicesClient({
                 const billingLabel = inv.billing_month ? new Date(inv.billing_month).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : "—";
                 const dueLabel = inv.due_date ? new Date(inv.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—";
                 return (
-                  <motion.tr key={inv.id} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: "easeOut", delay: idx * 0.03 }} className={`border-b border-border-subtle transition-colors hover:bg-brand-navy ${isOverdue ? "border-l-2 border-l-danger" : ""}`}>
+                  <motion.tr key={inv.id} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: "easeOut", delay: idx * 0.03 }} className={`border-b border-border-subtle transition-colors hover:bg-surface ${isOverdue ? "border-l-2 border-l-danger" : ""}`}>
                     <td className="px-3 py-3 font-mono text-[12px] tabular-nums text-txt-muted">{inv.invoice_number || "—"}</td>
                     <td className="px-3 py-3 text-[14px] text-txt-primary">{inv.clients?.brand_name ?? "—"}</td>
                     <td className="px-3 py-3"><Badge variant="muted" className="capitalize">{inv.invoice_type ?? "—"}</Badge></td>

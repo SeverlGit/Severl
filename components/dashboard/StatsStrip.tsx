@@ -14,6 +14,7 @@ type StatCell = {
   href?: string;
   sparkline?: number[];
   sparklineColor?: string;
+  accentClass?: string;
 };
 
 type Props = {
@@ -36,7 +37,7 @@ function useCountUp(target: number, duration: number = 1000) {
   return current;
 }
 
-function StatCellDisplay({ stat, isLast }: { stat: StatCell; isLast: boolean }) {
+function StatCellDisplay({ stat }: { stat: StatCell }) {
   const animatedValue = useCountUp(
     stat.format === "text" ? 0 : stat.value,
     1000,
@@ -49,48 +50,63 @@ function StatCellDisplay({ stat, isLast }: { stat: StatCell; isLast: boolean }) 
         ? `$${animatedValue.toLocaleString()}`
         : String(animatedValue);
 
-  const deltaColor =
-    stat.deltaTone === "green"
-      ? "text-brand-mint"
-      : stat.deltaTone === "red"
-        ? "text-danger"
-        : "text-txt-muted";
+  const isOnTrack = stat.format === "text";
 
   const inner = (
-    <div className="relative">
-      <div className="text-[10px] font-medium uppercase tracking-wider text-txt-muted">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-surface p-4 group">
+      {/* Top accent strip */}
+      {stat.accentClass && (
+        <span className={`absolute inset-x-0 top-0 h-[2px] ${stat.accentClass}`} />
+      )}
+      <div className="mb-2 font-sans text-[9px] font-semibold uppercase tracking-[0.10em] text-txt-muted">
         {stat.label}
       </div>
-      <div className="flex items-baseline gap-1 text-3xl font-mono font-medium tabular-nums text-txt-primary">
+      <div
+        className={
+          isOnTrack
+            ? "font-display font-light italic text-[24px] leading-none text-success"
+            : "font-display font-normal text-[36px] leading-none tracking-[-0.03em] text-txt-primary tabular-nums"
+        }
+      >
         {displayValue}
-        {stat.href && <span className="text-[12px] text-txt-hint opacity-0 transition-opacity group-hover:opacity-100">→</span>}
+        {stat.href && (
+          <span className="ml-1 text-[12px] text-txt-hint opacity-0 transition-opacity group-hover:opacity-100">
+            →
+          </span>
+        )}
       </div>
       {stat.delta && (
-        <div className={`mt-0.5 text-xs font-mono tabular-nums ${deltaColor}`}>
+        <div
+          className={`mt-1.5 font-sans text-[10px] tabular-nums ${
+            stat.deltaTone === "green"
+              ? "text-success"
+              : stat.deltaTone === "red"
+                ? "text-danger"
+                : "text-txt-muted"
+          }`}
+        >
           {stat.delta}
         </div>
       )}
       {stat.sparkline && stat.sparkline.length >= 2 && (
-        <div className="pointer-events-none absolute bottom-1 right-2 opacity-50">
-          <Sparkline data={stat.sparkline} color={stat.sparklineColor ?? "#6EE7B7"} />
+        <div className="pointer-events-none absolute bottom-2 right-3 opacity-40">
+          <Sparkline data={stat.sparkline} color={stat.sparklineColor ?? "#C4909A"} />
         </div>
       )}
     </div>
   );
 
-  const cls = `px-4 py-2.5 ${isLast ? "" : "border-r border-border-subtle"} group cursor-pointer border-b border-transparent transition-colors hover:border-b-[rgba(255,255,255,0.10)]`;
-
   if (stat.href) {
-    return <Link href={stat.href} className={cls}>{inner}</Link>;
+    return <Link href={stat.href}>{inner}</Link>;
   }
-  return <div className={cls}>{inner}</div>;
+  return <div>{inner}</div>;
 }
 
 export function StatsStrip({ stats }: Props) {
   return (
-    <div className="grid shrink-0 grid-cols-3 border-b border-border-subtle bg-brand-navy">
-      {stats.map((stat, i) => (
-        <StatCellDisplay key={stat.label} stat={stat} isLast={i === stats.length - 1} />
+    <div className="grid shrink-0 grid-cols-3 gap-3 px-4 py-3">
+      {stats.map((stat) => (
+        <StatCellDisplay key={stat.label} stat={stat} />
       ))}
     </div>
   );

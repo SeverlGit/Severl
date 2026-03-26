@@ -95,16 +95,16 @@ export default async function DeliverablesPage({ searchParams }: Props) {
       <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <MonthNav currentMonth={currentMonth} />
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex border border-border bg-brand-navy text-[14px] uppercase tracking-[0.04em]">
+          <div className="flex border border-border bg-surface text-[14px] uppercase tracking-[0.04em]">
             <a
               href={`/deliverables?month=${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}&view=client`}
-              className={`px-3 py-1.5 ${view === "client" ? "bg-surface-hover text-brand-mint" : "text-txt-muted"}`}
+              className={`px-3 py-1.5 ${view === "client" ? "bg-surface-hover text-brand-rose-deep" : "text-txt-muted"}`}
             >
               By {vertical.crm.clientLabel.toLowerCase()}
             </a>
             <a
               href={`/deliverables?month=${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}&view=status`}
-              className={`px-3 py-1.5 ${view === "status" ? "bg-surface-hover text-brand-mint" : "text-txt-muted"}`}
+              className={`px-3 py-1.5 ${view === "status" ? "bg-surface-hover text-brand-rose-deep" : "text-txt-muted"}`}
             >
               By status
             </a>
@@ -127,13 +127,13 @@ export default async function DeliverablesPage({ searchParams }: Props) {
       />
 
       {activeClients.length === 0 ? (
-        <div className="flex min-h-[min(360px,55vh)] items-center justify-center rounded-lg border border-border bg-brand-navy px-6 py-16">
+        <div className="flex min-h-[min(360px,55vh)] items-center justify-center rounded-lg border border-border bg-surface px-6 py-16">
           <EmptyState
             icon={<CheckSquare className="h-10 w-10 text-txt-muted" />}
             title="No deliverables yet"
             description="Add clients to start managing their monthly deliverables."
             action={
-              <Link href="/clients" className="text-sm text-brand-mint hover:underline">
+              <Link href="/clients" className="text-sm text-brand-rose hover:underline">
                 Add your first client →
               </Link>
             }
@@ -144,7 +144,7 @@ export default async function DeliverablesPage({ searchParams }: Props) {
           {deliverables.length === 0 && (
             <div
               role="status"
-              className="rounded-md border border-border bg-brand-navy px-4 py-3 text-sm text-txt-secondary"
+              className="rounded-md border border-border bg-surface px-4 py-3 text-sm text-txt-secondary"
             >
               No deliverables for {monthLabel}. Add deliverables to your clients to get started.
             </div>
@@ -171,7 +171,7 @@ export default async function DeliverablesPage({ searchParams }: Props) {
           )}
 
           {view === "status" && (
-            <div className="rounded-md border border-border bg-brand-navy px-3.5 py-3.5">
+            <div className="rounded-md border border-border bg-surface px-3.5 py-3.5">
               <StatusBoardDynamic
                 orgId={org.id}
                 verticalSlug={org.vertical}

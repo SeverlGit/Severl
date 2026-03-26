@@ -53,7 +53,7 @@ function Column({
   const baseHeader =
     "flex items-center justify-between border-b border-border px-2.5 py-2";
   const headerClass = isWithClient
-    ? `${baseHeader} bg-warning-bg text-warning border-b-2 border-warning-border`
+    ? `${baseHeader} bg-warning-bg text-warning border-b-2 border-warning/20`
     : baseHeader;
 
   const badge =
@@ -62,10 +62,10 @@ function Column({
   const zoneBase =
     "flex flex-col gap-2 rounded-b-lg px-2.5 py-2 min-h-[400px] transition-colors border border-border border-t-0";
   const zoneClass = isOver
-    ? `${zoneBase} bg-brand-navy border-2 border-dashed border-border-hover`
+    ? `${zoneBase} bg-surface border-2 border-dashed border-border-strong`
     : items.length === 0
-    ? `${zoneBase} bg-brand-navy`
-    : `${zoneBase} bg-brand-navy`;
+    ? `${zoneBase} bg-surface`
+    : `${zoneBase} bg-surface`;
 
   return (
     <div className="flex flex-col rounded-lg">

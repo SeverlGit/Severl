@@ -39,7 +39,7 @@ export default async function ClientsPage({ searchParams }: Props) {
         <AddClientDialog orgId={org.id} verticalSlug={org.vertical} verticalConfig={vertical} />
       </header>
 
-      <div className="flex flex-col gap-2 rounded-md border border-border bg-brand-navy px-3.5 py-3.5">
+      <div className="flex flex-col gap-2 rounded-md border border-border bg-surface px-3.5 py-3.5">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <ClientSearchInput
             search={search}
@@ -69,8 +69,8 @@ export default async function ClientsPage({ searchParams }: Props) {
                   href={href}
                   className={`border-b px-2 py-1 transition-colors ${
                     isActive
-                      ? "border-brand-mint text-brand-mint"
-                      : "border-transparent text-txt-muted hover:text-txt-hint"
+                      ? "border-brand-rose text-brand-rose-deep"
+                      : "border-transparent text-txt-muted hover:text-txt-secondary"
                   }`}
                 >
                   {label}
@@ -95,7 +95,7 @@ export default async function ClientsPage({ searchParams }: Props) {
                 trigger={
                   <button
                     type="button"
-                    className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90"
+                    className="rounded bg-brand-rose px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-rose-deep"
                   >
                     Add your first client
                   </button>

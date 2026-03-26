@@ -22,7 +22,7 @@ import type { ClientWithManager } from "@/lib/database.types";
 const TAG_BORDER_COLORS: Record<string, string> = {
   prospect: "border-l-zinc-600",
   onboarding: "border-l-blue-400",
-  active: "border-l-brand-mint",
+  active: "border-l-success",
   at_risk: "border-l-warning",
   paused: "border-l-zinc-600",
   churned: "border-l-danger",
@@ -75,7 +75,7 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
       initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25, ease: "easeOut", delay: index * 0.04 }}
-      className="transition-colors hover:bg-brand-navy"
+      className="transition-colors hover:bg-surface"
     >
       <td
         className={cn(
@@ -110,7 +110,7 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
       <td className="px-3 py-2.5">
         <div className="flex flex-wrap gap-1">
           {platforms.slice(0, 3).map((p: string) => (
-            <PlatformChip key={p} label={p} className="bg-brand-navy text-txt-secondary px-2 py-0.5 text-[10px] rounded" />
+            <PlatformChip key={p} label={p} className="bg-surface text-txt-secondary px-2 py-0.5 text-[10px] rounded" />
           ))}
           {platforms.length > 3 && (
             <span className="text-[12px] text-txt-muted">+{platforms.length - 3}</span>
@@ -129,7 +129,7 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
         </td>
       )}
       <td className="px-3 py-2.5 text-right text-[13px]">
-        <Link href={`/clients/${client.id}`} className="text-brand-mint transition-colors hover:text-brand-white hover:underline">
+        <Link href={`/clients/${client.id}`} className="text-brand-rose transition-colors hover:text-white hover:underline">
           View →
         </Link>
       </td>

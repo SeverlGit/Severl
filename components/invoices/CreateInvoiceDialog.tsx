@@ -120,7 +120,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90"
+          className="rounded bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90"
         >
           Create invoice
         </button>
@@ -197,7 +197,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
                 placeholder="0.00"
                 value={amountStr}
                 onChange={(e) => setAmountStr(e.target.value)}
-                className="border-border bg-brand-navy font-mono tabular-nums"
+                className="border-border bg-surface font-mono tabular-nums"
               />
               {amountPreview != null && (
                 <p className="mt-1 text-xs text-txt-muted">{formatCurrency(amountPreview)}</p>
@@ -214,7 +214,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="border-border bg-brand-navy"
+                  className="border-border bg-surface"
                 />
               </div>
               <div>
@@ -226,7 +226,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
                   type="month"
                   value={billingMonth}
                   onChange={(e) => setBillingMonth(e.target.value)}
-                  className="border-border bg-brand-navy"
+                  className="border-border bg-surface"
                 />
               </div>
             </div>
@@ -241,7 +241,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
                 placeholder="Shown on the line item"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="resize-none border-border bg-brand-navy text-sm"
+                className="resize-none border-border bg-surface text-sm"
               />
             </div>
 
@@ -257,7 +257,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
               <button
                 type="submit"
                 disabled={isPending || !clientId}
-                className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPending ? "···" : "Create invoice"}
               </button>

@@ -3,40 +3,54 @@
 @tailwind utilities;
 
 :root {
-  --color-bg-primary:   #0D1B2A;
-  --color-text-primary: #FFFFFF;
-  --color-accent:       #6EE7B7;
-  --color-bg-canvas:    #FFFFFF;
+  /* Canvas */
+  --bg:              #F0EBE3;
+  --bg-panel:        #FAF7F4;
+  --bg-white:        #FFFFFF;
+  --bg-hover:        #E8E2D9;
+  --bg-input:        #EDE7DF;
 
-  --bg:            #0D1B2A;
-  --bg-panel:      #0D1B2A;
-  --bg-nav:        #0D1B2A;
-  --bg-hover:      #162336;
-  --bg-subtle:     #0D1B2A;
-  --bg-input:      rgba(255,255,255,0.05);
+  /* Sidebar */
+  --sidebar-bg:      #1E1B24;
+  --sidebar-icon:    rgba(255,255,255,0.30);
+  --sidebar-active:  #DDB4BC;
+  --sidebar-border:  rgba(255,255,255,0.05);
 
-  --border:        #1e2d3d;
-  --border-subtle: #182232;
-  --border-hover:  #253648;
-  --border-green:  rgba(110,231,183,0.25);
-  --border-red:    rgba(248,113,113,0.25);
-  --border-amber:  rgba(250,204,21,0.25);
+  /* Borders */
+  --border:          #DDD7CE;
+  --border-subtle:   #E8E2D9;
+  --border-strong:   #C8C0B5;
+  --border-rose:     rgba(196,144,154,0.25);
+  --border-plum:     rgba(107,97,120,0.20);
 
-  --green:         #6EE7B7;
-  --green-dim:     rgba(110,231,183,0.10);
-  --green-border:  rgba(110,231,183,0.20);
-  --red:           #f87171;
-  --red-dim:       rgba(248,113,113,0.10);
-  --amber:         #facc15;
-  --amber-dim:     rgba(250,204,21,0.10);
+  /* Text */
+  --text-1:          #1A1714;
+  --text-2:          #6B6560;
+  --text-3:          #A09890;
+  --text-4:          #C4BAB0;
 
-  --text-1:        #ffffff;
-  --text-2:        rgba(255,255,255,0.60);
-  --text-3:        rgba(255,255,255,0.35);
-  --text-4:        rgba(255,255,255,0.18);
+  /* Rose — primary accent */
+  --rose:            #C4909A;
+  --rose-dim:        #F7ECED;
+  --rose-mid:        #DDB4BC;
+  --rose-deep:       #8C5562;
 
-  --font-mono:     'Poppins', system-ui, sans-serif;
-  --font-sans:     'Poppins', system-ui, sans-serif;
+  /* Plum — secondary accent */
+  --plum:            #6B6178;
+  --plum-dim:        #EDEBF2;
+  --plum-mid:        #9B92A8;
+  --plum-deep:       #3D3649;
+
+  /* Semantic */
+  --success:         #5A8A6A;
+  --success-bg:      #EEF5F0;
+  --success-border:  rgba(90,138,106,0.20);
+  --danger:          #C05A48;
+  --danger-bg:       #FBF0EE;
+  --danger-border:   rgba(192,90,72,0.20);
+  --warning:         #B5803A;
+  --warning-bg:      #FBF3E8;
+  --warning-border:  rgba(181,128,58,0.20);
 }
 
 html, body {
@@ -46,52 +60,31 @@ html, body {
 body {
   background-color: var(--bg);
   color: var(--text-1);
-  font-family: var(--font-poppins, var(--font-sans));
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Form controls and interactive elements inherit Poppins (browsers often use system font by default) */
-input,
-button,
-select,
-textarea,
-optgroup,
-[role="button"],
-[role="combobox"],
-[role="listbox"],
-[role="menuitem"] {
+/* Scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* Form font inheritance */
+input, button, select, textarea, [role='button'], [role='listbox'] {
   font-family: inherit;
 }
 
 a { text-decoration: none; }
 
-/* Custom scrollbar for dark theme */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
-
 @layer utilities {
-  .tag-green {
-    background: rgba(110,231,183,0.08);
-    color: #6EE7B7;
-    border: 1px solid rgba(110,231,183,0.18);
-  }
-  .tag-red {
-    background: rgba(248,113,113,0.08);
-    color: #f87171;
-    border: 1px solid rgba(248,113,113,0.18);
-  }
-  .tag-amber {
-    background: rgba(250,204,21,0.08);
-    color: #facc15;
-    border: 1px solid rgba(250,204,21,0.18);
-  }
-  .tag-muted {
-    background: #0D1B2A;
-    color: rgba(255,255,255,0.35);
-    border: 1px solid rgba(255,255,255,0.08);
-  }
+  .tag-rose  { @apply bg-brand-rose-dim text-brand-rose-deep border border-brand-rose/25 text-xs font-medium rounded px-2 py-0.5; }
+  .tag-plum  { @apply bg-brand-plum-dim text-brand-plum-deep border border-brand-plum/20 text-xs font-medium rounded px-2 py-0.5; }
+  .tag-green { @apply bg-success-bg text-success border border-success/20 text-xs font-medium rounded px-2 py-0.5; }
+  .tag-red   { @apply bg-danger-bg text-danger border border-danger/20 text-xs font-medium rounded px-2 py-0.5; }
+  .tag-amber { @apply bg-warning-bg text-warning border border-warning/20 text-xs font-medium rounded px-2 py-0.5; }
+  .tag-muted { @apply bg-surface-hover text-txt-muted text-xs font-medium rounded px-2 py-0.5; }
 }
 
 @keyframes drawLine {

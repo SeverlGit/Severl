@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   return (
     <VerticalConfigProvider verticalSlug={org.vertical}>
       <TopbarTitleProvider>
-        <div className="flex h-screen overflow-hidden bg-brand-navy">
+        <div className="flex h-screen overflow-hidden bg-page">
           <LabelNav org={org} orgId={org.id} />
           <div className="flex flex-1 flex-col overflow-hidden">
             <Topbar />

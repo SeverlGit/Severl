@@ -213,7 +213,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
         <span>Back to {vertical.crm.clientsLabel}</span>
       </Link>
 
-      <header className="flex flex-col gap-3 rounded-lg border border-border bg-brand-navy p-4">
+      <header className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <ClientAvatar name={client.brand_name} tag={client.tag} size="lg" />
@@ -227,7 +227,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
           </div>
           <div className="flex flex-col items-end gap-1">
             <span className="text-[12px] font-medium uppercase tracking-[0.06em] text-txt-muted">Retainer</span>
-            <span className="font-mono text-[16px] font-medium tabular-nums tracking-[-0.03em] text-brand-mint">
+            <span className="font-mono text-[16px] font-medium tabular-nums tracking-[-0.03em] text-success">
               {client.retainer_amount ? `${formatCurrency(Number(client.retainer_amount))}/mo` : "No retainer"}
             </span>
             <span className="font-mono text-[13px] tabular-nums text-txt-muted">
@@ -237,7 +237,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
               <button
                 type="button"
                 onClick={() => setEditOpen(true)}
-                className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-txt-secondary transition-colors hover:bg-brand-navy"
+                className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-txt-secondary transition-colors hover:bg-surface"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Edit
@@ -299,14 +299,14 @@ export default function Client360Client({ client, activity, deliverables, invoic
         onOpenChange={setEditOpen}
       />
 
-      <section className="grid gap-px rounded-lg border border-border bg-brand-navy md:grid-cols-4">
+      <section className="grid gap-px rounded-lg border border-border bg-surface md:grid-cols-4">
         {[
           { label: "Platforms", value: String(platforms.length), sub: platforms.join(", ") || "No platforms set", mono: true },
           { label: "This month", value: `${client.deliverables_done}/${client.deliverables_total}`, sub: "deliverables", mono: true },
           { label: "Revenue to date", value: formatCurrency(client.revenue_to_date), sub: "total billed", mono: true },
           { label: "Balance owed", value: formatCurrency(client.balance_owed), sub: "outstanding", tone: client.balance_owed > 0 ? "danger" : "neutral" as const, mono: true },
         ].map((card) => (
-          <div key={card.label} className="bg-brand-navy/80 first:rounded-l-lg last:rounded-r-lg px-4 py-3">
+          <div key={card.label} className="bg-surface/80 first:rounded-l-lg last:rounded-r-lg px-4 py-3">
             <div className="text-[12px] font-medium uppercase tracking-[0.06em] text-txt-muted">{card.label}</div>
             <div className={`mt-1 font-mono text-[16px] font-medium tabular-nums tracking-[-0.03em] ${card.tone === "danger" ? "text-[#f87171]" : "text-white"}`}>{card.value}</div>
             <div className="mt-0.5 text-[13px] text-txt-muted">{card.sub}</div>
@@ -314,7 +314,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
         ))}
       </section>
 
-      <section className="rounded-lg border border-border bg-brand-navy p-4">
+      <section className="rounded-lg border border-border bg-surface p-4">
         <Tabs value={activeTab} onValueChange={setTab}>
           <TabsList className="w-full justify-start">
             {tabs.map((tab) => (
@@ -353,7 +353,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                   <div className="flex items-center justify-end">
                     <Link
                       href={`/deliverables?month=${deliverablesMonthParam}`}
-                      className="inline-flex items-center gap-1 text-sm text-txt-secondary transition-colors hover:text-brand-mint"
+                      className="inline-flex items-center gap-1 text-sm text-txt-secondary transition-colors hover:text-brand-rose"
                     >
                       View all in Deliverables
                       <ArrowRight className="h-3.5 w-3.5" />
@@ -435,7 +435,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                   <div className="flex items-center justify-end">
                     <Link
                       href="/invoices"
-                      className="inline-flex items-center gap-1 text-sm text-txt-secondary transition-colors hover:text-brand-mint"
+                      className="inline-flex items-center gap-1 text-sm text-txt-secondary transition-colors hover:text-brand-rose"
                     >
                       View all in Invoices
                       <ArrowRight className="h-3.5 w-3.5" />
@@ -487,7 +487,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                                     type="button"
                                     disabled={busy}
                                     onClick={() => handleInvoiceSend(inv.id)}
-                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-mint disabled:opacity-40"
+                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-rose disabled:opacity-40"
                                   >
                                     Send
                                   </button>
@@ -500,7 +500,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                                         invoice_number: inv.invoice_number,
                                       })
                                     }
-                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-mint disabled:opacity-40"
+                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-rose disabled:opacity-40"
                                   >
                                     Void
                                   </button>
@@ -512,7 +512,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                                     type="button"
                                     disabled={busy}
                                     onClick={() => handleInvoiceMarkPaid(inv.id)}
-                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-mint disabled:opacity-40"
+                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-rose disabled:opacity-40"
                                   >
                                     Mark paid
                                   </button>
@@ -525,7 +525,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                                         invoice_number: inv.invoice_number,
                                       })
                                     }
-                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-mint disabled:opacity-40"
+                                    className="text-xs text-txt-secondary transition-colors hover:text-brand-rose disabled:opacity-40"
                                   >
                                     Void
                                   </button>
@@ -536,7 +536,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                                   type="button"
                                   disabled={busy}
                                   onClick={() => handleInvoiceMarkPaid(inv.id)}
-                                  className="text-xs text-txt-secondary transition-colors hover:text-brand-mint disabled:opacity-40"
+                                  className="text-xs text-txt-secondary transition-colors hover:text-brand-rose disabled:opacity-40"
                                 >
                                   Mark paid
                                 </button>
@@ -577,7 +577,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                           </PopoverTrigger>
                           <PopoverContent align="end" className="w-52 p-1">
                             {teamMembers.map((m) => (
-                              <button key={m.id} type="button" className="flex w-full items-center gap-2 rounded-[5px] px-2.5 py-1.5 text-left text-[13px] text-txt-secondary transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-white" onClick={() => handleReassign(m.id)}>
+                              <button key={m.id} type="button" className="flex w-full items-center gap-2 rounded-[5px] px-2.5 py-1.5 text-left text-[13px] text-txt-secondary transition-colors hover:bg-[#F0EBE3] hover:text-white" onClick={() => handleReassign(m.id)}>
                                 <ClientAvatar name={m.name} size="sm" />
                                 {m.name}
                               </button>
@@ -594,7 +594,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                           </PopoverTrigger>
                           <PopoverContent className="w-52 p-1">
                             {teamMembers.map((m) => (
-                              <button key={m.id} type="button" className="flex w-full items-center gap-2 rounded-[5px] px-2.5 py-1.5 text-left text-[13px] text-txt-secondary transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-white" onClick={() => handleReassign(m.id)}>
+                              <button key={m.id} type="button" className="flex w-full items-center gap-2 rounded-[5px] px-2.5 py-1.5 text-left text-[13px] text-txt-secondary transition-colors hover:bg-[#F0EBE3] hover:text-white" onClick={() => handleReassign(m.id)}>
                                 <ClientAvatar name={m.name} size="sm" />
                                 {m.name}
                               </button>
@@ -615,7 +615,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
                           const count = teamDeliverableCounts[m.id] ?? 0;
                           const countVariant = count > 15 ? "red" as const : count > 10 ? "amber" as const : "green" as const;
                           return (
-                            <div key={m.id} className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-[rgba(255,255,255,0.04)]">
+                            <div key={m.id} className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-[#F0EBE3]">
                               <ClientAvatar name={m.name} size="sm" />
                               <span className="flex-1 text-[14px] text-white">{m.name}</span>
                               <span className="text-[12px] text-txt-muted">{m.role}</span>

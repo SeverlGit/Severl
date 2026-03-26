@@ -60,7 +60,7 @@ const ROLE_OPTIONS = [
 const labelClass =
   "block text-[10px] uppercase tracking-wider font-medium text-txt-muted mb-1.5";
 const inputClass =
-  "bg-brand-navy border border-border rounded px-3 py-2 text-sm text-txt-primary placeholder:text-txt-hint focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint/50 w-full";
+  "bg-panel border border-border rounded px-3 py-2 text-sm text-txt-primary placeholder:text-txt-hint focus:border-success focus:outline-none focus:ring-1 focus:ring-success/50 w-full";
 
 type Member = Pick<
   TeamMemberRow,
@@ -297,7 +297,7 @@ export function TeamManagementDialog({
           </div>
 
           {showAddForm && (
-            <div className="rounded-lg border border-border bg-brand-navy p-4">
+            <div className="rounded-lg border border-border bg-panel p-4">
               <h4 className="mb-3 text-[13px] font-medium text-txt-secondary">
                 New member
               </h4>
@@ -372,7 +372,7 @@ export function TeamManagementDialog({
               members.map((m) => (
                 <div
                   key={m.id}
-                  className="rounded-lg border border-border bg-brand-navy px-3 py-2.5"
+                  className="rounded-lg border border-border bg-panel px-3 py-2.5"
                 >
                   {editingId === m.id ? (
                     <div className="flex flex-col gap-3">
@@ -456,7 +456,7 @@ export function TeamManagementDialog({
                         </span>
                       </div>
                       {!m.active && (
-                        <span className="rounded-md border border-border-hover bg-brand-navy px-2 py-0.5 text-[11px] text-txt-hint">
+                        <span className="rounded-md border border-border bg-panel px-2 py-0.5 text-[11px] text-txt-hint">
                           Inactive
                         </span>
                       )}

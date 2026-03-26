@@ -38,7 +38,7 @@ export function ClientTable({ clients, filter, orgId, verticalSlug, showAccountM
   return (
     <div className="mt-2 overflow-hidden rounded-lg border border-border">
       <table className="min-w-full border-collapse text-[14px]">
-        <thead className="border-b border-border bg-brand-navy text-left">
+        <thead className="border-b border-border bg-surface text-left">
           <tr>
             <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">Brand</th>
             <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">Tag</th>

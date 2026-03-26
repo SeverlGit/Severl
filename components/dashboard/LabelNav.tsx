@@ -50,12 +50,13 @@ export default function LabelNav({ org, orgId }: Props) {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <aside className="flex h-screen w-[56px] shrink-0 flex-col items-center border-r border-border-subtle bg-brand-navy">
-        <div className="flex h-[50px] w-full items-center justify-center border-b border-border-subtle">
+      <aside className="flex h-screen w-[54px] shrink-0 flex-col items-center border-r border-white/5 bg-sidebar">
+        {/* Logo mark */}
+        <div className="flex h-[50px] w-full items-center justify-center">
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-mint/10 text-[11px] font-medium text-brand-mint">
-                {(org.name || "S").charAt(0).toUpperCase()}
+              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-md bg-gradient-to-br from-brand-rose to-brand-plum font-display text-[13px] font-medium text-white">
+                S
               </span>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -79,19 +80,20 @@ export default function LabelNav({ org, orgId }: Props) {
                   <TooltipTrigger asChild>
                     <Link
                       href={item.href}
-                      className={`flex h-9 w-full items-center justify-center rounded-lg border-l-2 transition-colors duration-150 ease-out ${
+                      className={`relative flex h-9 w-full items-center justify-center transition-colors duration-150 ease-out ${
                         isActive
-                          ? "border-brand-mint text-brand-mint"
-                          : "border-transparent text-txt-muted hover:text-brand-white"
+                          ? "bg-[rgba(221,180,188,0.10)] text-[#DDB4BC]"
+                          : "text-white/30 hover:text-white/60"
                       }`}
                       aria-label={label}
                     >
+                      {isActive && (
+                        <span className="absolute left-0 h-5 w-[3px] rounded-r bg-brand-rose" />
+                      )}
                       <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2 : 1.5} />
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
-                    {label}
-                  </TooltipContent>
+                  <TooltipContent side="right">{label}</TooltipContent>
                 </Tooltip>
 
                 {item.key === "clients" && showTeamNav && (
@@ -100,7 +102,7 @@ export default function LabelNav({ org, orgId }: Props) {
                       <button
                         type="button"
                         onClick={() => setTeamDialogOpen(true)}
-                        className="flex h-9 w-full items-center justify-center rounded-lg border-l-2 border-transparent text-txt-muted transition-colors duration-150 ease-out hover:text-txt-secondary"
+                        className="relative flex h-9 w-full items-center justify-center text-white/30 transition-colors duration-150 ease-out hover:text-white/60"
                         aria-label="Team"
                       >
                         <Users className="h-[18px] w-[18px]" strokeWidth={1.5} />
@@ -135,9 +137,7 @@ export default function LabelNav({ org, orgId }: Props) {
                 />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              Account
-            </TooltipContent>
+            <TooltipContent side="right">Account</TooltipContent>
           </Tooltip>
         </div>
       </aside>

@@ -30,11 +30,11 @@ const STATUS_KEYS = [
 ] as const;
 
 const statusDot: Record<string, string> = {
-  not_started: "bg-txt-hint",
-  in_progress: "bg-[#6EE7B7]",
-  pending_approval: "bg-[#facc15]",
-  approved: "bg-[#6EE7B7]",
-  published: "bg-[#6EE7B7]",
+  not_started:      "bg-txt-hint",
+  in_progress:      "bg-brand-plum",
+  pending_approval: "bg-warning",
+  approved:         "bg-brand-rose",
+  published:        "bg-success",
 };
 
 export function StatusDropdown({ deliverableId, orgId, verticalSlug, status }: Props) {

@@ -35,13 +35,13 @@ export default async function AnalyticsPage() {
             </p>
           </div>
         </header>
-        <div className="flex min-h-[min(480px,70vh)] items-center justify-center rounded-lg border border-border bg-brand-navy px-6 py-16">
+        <div className="flex min-h-[min(480px,70vh)] items-center justify-center rounded-lg border border-border bg-surface px-6 py-16">
           <EmptyState
             icon={<BarChart3 className="h-10 w-10 text-txt-muted" />}
             title="No analytics yet"
             description="Add your first client and start tracking deliverables to see your metrics here."
             action={
-              <Link href="/clients" className="text-sm text-brand-mint hover:underline">
+              <Link href="/clients" className="text-sm text-brand-rose hover:underline">
                 Go to Clients →
               </Link>
             }

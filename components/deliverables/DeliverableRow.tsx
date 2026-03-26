@@ -207,7 +207,7 @@ export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, ind
       initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25, ease: "easeOut", delay: index * 0.04 }}
-      className={`group flex items-center gap-3 rounded-lg border border-border bg-brand-navy px-3 py-2 text-[14px] text-txt-secondary transition-colors hover:bg-[rgba(255,255,255,0.04)] ${leftBorderClass}`}
+      className={`group flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-[14px] text-txt-secondary transition-colors hover:bg-[#F0EBE3] ${leftBorderClass}`}
     >
       <div className="w-28 text-[12px] font-medium uppercase tracking-[0.05em] text-[rgba(255,255,255,0.35)]">
         {typeLabel}
@@ -331,7 +331,7 @@ function AssigneePicker({ deliverableId, orgId, currentName, currentId, teamMemb
             <button
               key={m.id}
               type="button"
-              className="flex w-full items-center gap-2 rounded-[5px] px-2 py-1.5 text-left text-[13px] text-txt-secondary transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-txt-primary"
+              className="flex w-full items-center gap-2 rounded-[5px] px-2 py-1.5 text-left text-[13px] text-txt-secondary transition-colors hover:bg-[#F0EBE3] hover:text-txt-primary"
               onClick={() => assign(m.id, m.name)}
             >
               <ClientAvatar name={m.name} size="sm" />

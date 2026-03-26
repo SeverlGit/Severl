@@ -11,7 +11,7 @@ type Props = {
 
 export function CompletionBar({ total, published, className }: Props) {
   const pct = total === 0 ? 0 : (published / total) * 100;
-  const indicatorClass = pct >= 90 ? "bg-[#6EE7B7]" : pct >= 70 ? "bg-[#facc15]" : "bg-[#f87171]";
+  const indicatorClass = pct >= 90 ? "bg-success" : pct >= 70 ? "bg-warning" : "bg-danger";
 
   return (
     <Progress

@@ -234,7 +234,7 @@ export function NotesTab({ clientId, orgId, notes }: Props) {
             type="button"
             onClick={handleSave}
             disabled={isPending || !body.trim()}
-            className="text-sm text-brand-mint transition-colors hover:underline disabled:pointer-events-none disabled:opacity-40"
+            className="text-sm text-brand-rose transition-colors hover:underline disabled:pointer-events-none disabled:opacity-40"
           >
             Save
           </button>

@@ -13,9 +13,9 @@ type AlertStripProps = {
 };
 
 const toneMap = {
-  danger: "border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.06)] text-[#f87171]",
-  warning: "border-[rgba(250,204,21,0.25)] bg-[rgba(250,204,21,0.06)] text-[#facc15]",
-  info: "border-brand-mint/25 bg-brand-mint/5 text-brand-mint",
+  danger:  "border-danger/20 bg-danger-bg text-danger",
+  warning: "border-warning/20 bg-warning-bg text-warning",
+  info:    "border-brand-rose/25 bg-brand-rose-dim text-brand-rose-deep",
 };
 
 export function AlertStrip({ show, tone, message, href, linkLabel }: AlertStripProps) {

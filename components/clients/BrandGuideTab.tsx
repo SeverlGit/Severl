@@ -74,7 +74,7 @@ export function BrandGuideTab({ clientId, orgId, vertical, verticalData }: Props
           </label>
         );
 
-        const card = "flex flex-col gap-2 rounded-lg border border-border bg-brand-navy p-4";
+        const card = "flex flex-col gap-2 rounded-lg border border-border bg-surface p-4";
 
         if (field.type === "multi_select" || field.type === "key_value") {
           return (

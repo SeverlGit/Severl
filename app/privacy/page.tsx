@@ -2,7 +2,7 @@ export const metadata = { title: "Privacy Policy — Severl" };
 
 export default function PrivacyPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-brand-navy p-8 text-brand-white">
+    <div className="flex min-h-screen items-center justify-center bg-panel p-8 text-txt-primary">
       <div className="max-w-2xl">
         <h1 className="mb-4 text-2xl font-medium">Privacy Policy</h1>
         <p className="text-sm leading-relaxed text-txt-secondary">

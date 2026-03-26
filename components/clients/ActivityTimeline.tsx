@@ -26,7 +26,7 @@ type Props = {
 };
 
 function getEventDotColor(eventType: string): string {
-  if (eventType.startsWith("client.")) return "bg-brand-mint";
+  if (eventType.startsWith("client.")) return "bg-success";
   if (eventType.startsWith("deliverable.")) return "bg-purple-400";
   if (eventType.startsWith("invoice.")) return "bg-blue-400";
   if (eventType.startsWith("payment.")) return "bg-emerald-400";
@@ -118,7 +118,7 @@ export function ActivityTimeline({ events }: Props) {
           {event.amount != null && event.amount !== 0 && (
             <span
               className={`mt-1 font-mono text-[11px] tabular-nums shrink-0 ${
-                event.event_type.includes("refund") ? "text-danger" : "text-brand-mint"
+                event.event_type.includes("refund") ? "text-danger" : "text-success"
               }`}
             >
               {formatCurrency(event.amount)}

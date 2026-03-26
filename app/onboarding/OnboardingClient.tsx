@@ -14,10 +14,10 @@ const ease = [0.16, 1, 0.3, 1] as const;
 function SoloIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="5" r="3" stroke="#6EE7B7" strokeWidth="1.5" />
+      <circle cx="8" cy="5" r="3" stroke="#C4909A" strokeWidth="1.5" />
       <path
         d="M2.5 14.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"
-        stroke="#6EE7B7"
+        stroke="#C4909A"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
@@ -28,17 +28,17 @@ function SoloIcon() {
 function TeamIcon() {
   return (
     <svg width="18" height="16" viewBox="0 0 18 16" fill="none">
-      <circle cx="7" cy="4.5" r="2.5" stroke="#6EE7B7" strokeWidth="1.5" />
+      <circle cx="7" cy="4.5" r="2.5" stroke="#C4909A" strokeWidth="1.5" />
       <path
         d="M2 14c0-2.5 2-4.5 5-4.5s5 2 5 4.5"
-        stroke="#6EE7B7"
+        stroke="#C4909A"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
-      <circle cx="13" cy="5.5" r="2" stroke="#6EE7B7" strokeWidth="1.2" />
+      <circle cx="13" cy="5.5" r="2" stroke="#C4909A" strokeWidth="1.2" />
       <path
         d="M13.5 9.5c1.8.3 3.5 1.5 3.5 3.5"
-        stroke="#6EE7B7"
+        stroke="#C4909A"
         strokeWidth="1.2"
         strokeLinecap="round"
       />
@@ -179,7 +179,7 @@ export default function OnboardingClient() {
               type="button"
               onClick={handleContinue}
               disabled={touched && !isNameValid}
-              className="mt-3 h-11 w-full rounded-lg bg-[#6EE7B7] text-[13px] font-medium text-[#0D1B2A] transition-colors hover:bg-[#5DD4A4] disabled:cursor-default disabled:bg-[rgba(110,231,183,0.3)] disabled:hover:bg-[rgba(110,231,183,0.3)]"
+              className="mt-3 h-11 w-full rounded-lg bg-brand-rose text-[13px] font-medium text-white transition-colors hover:bg-brand-rose-deep disabled:cursor-default disabled:opacity-40"
             >
               Continue
             </button>

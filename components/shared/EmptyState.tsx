@@ -56,7 +56,7 @@ export function EmptyState({
         isActionLink(action) ? (
           <Link
             href={action.href}
-            className="mt-3 text-sm text-brand-mint hover:underline"
+            className="mt-3 text-sm text-brand-rose hover:underline"
           >
             {action.label}
           </Link>

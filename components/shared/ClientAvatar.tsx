@@ -14,10 +14,10 @@ type Props = {
 };
 
 const tagStyles: Record<string, string> = {
-  active: "bg-[rgba(110,231,183,0.10)] text-[#6EE7B7]",
+  active: "bg-[rgba(90,138,106,0.10)] text-success",
   at_risk: "bg-[rgba(248,113,113,0.10)] text-[#f87171]",
   prospect: "bg-[rgba(255,255,255,0.06)] text-txt-hint",
-  onboarding: "bg-[rgba(110,231,183,0.10)] text-brand-mint",
+  onboarding: "bg-[rgba(90,138,106,0.10)] text-success",
   paused: "bg-[rgba(255,255,255,0.06)] text-txt-hint",
   churned: "bg-[rgba(255,255,255,0.06)] text-txt-hint",
 };

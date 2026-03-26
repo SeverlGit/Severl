@@ -98,7 +98,7 @@ export function BatchBillingDialog({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90"
+          className="rounded bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90"
         >
           {batchBillingLabel}
         </button>
@@ -113,8 +113,8 @@ export function BatchBillingDialog({
 
         {clients.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-brand-mint/20 bg-brand-mint/10">
-              <Check className="h-5 w-5 text-brand-mint" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-success/20 bg-success/10">
+              <Check className="h-5 w-5 text-success" />
             </div>
             <span className="text-base text-txt-primary">
               All clients invoiced for {monthLabel}.
@@ -179,7 +179,7 @@ export function BatchBillingDialog({
                 type="button"
                 onClick={handleSend}
                 disabled={isPending || selectedCount === 0}
-                className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending
                   ? "···"

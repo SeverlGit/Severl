@@ -34,7 +34,7 @@ type Props = {
 const labelClass =
   "block text-[10px] uppercase tracking-wider font-medium text-txt-muted mb-1.5";
 const inputClass =
-  "bg-brand-navy border border-border rounded px-3 py-2 text-sm text-txt-primary placeholder:text-txt-hint focus:border-brand-mint focus:outline-none focus:ring-1 focus:ring-brand-mint/50 w-full";
+  "bg-surface border border-border rounded px-3 py-2 text-sm text-txt-primary placeholder:text-txt-hint focus:border-success focus:outline-none focus:ring-1 focus:ring-success/50 w-full";
 
 export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }: Props) {
   const [open, setOpen] = useState(false);
@@ -116,7 +116,7 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
         {trigger ?? (
           <button
             type="button"
-            className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90"
+            className="rounded bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90"
           >
             Add {verticalConfig.crm.clientLabel.toLowerCase()}
           </button>
@@ -176,7 +176,7 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
                   className={cn(
                     "rounded border px-2.5 py-1 text-xs font-medium uppercase tracking-wider transition-colors",
                     platforms.includes(p)
-                      ? "border-brand-mint bg-brand-mint/15 text-brand-mint"
+                      ? "border-success bg-success/15 text-success"
                       : "border-border bg-transparent text-txt-muted hover:border-txt-hint"
                   )}
                 >
@@ -240,7 +240,7 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
               !contactName.trim() ||
               !contactEmail.trim()
             }
-            className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending ? "···" : `Add ${verticalConfig.crm.clientLabel.toLowerCase()}`}
           </button>

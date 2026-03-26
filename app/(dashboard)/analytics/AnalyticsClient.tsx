@@ -77,7 +77,7 @@ export default function AnalyticsClient({
               <button
                 key={opt.key}
                 onClick={() => router.push(`/analytics?period=${opt.key}`)}
-                className={`rounded px-3 py-1 font-mono text-xs font-medium transition-colors ${isActive ? "bg-brand-mint text-brand-navy" : "border border-border bg-transparent text-txt-muted hover:text-txt-secondary"}`}
+                className={`rounded px-3 py-1 font-mono text-xs font-medium transition-colors ${isActive ? "bg-success text-white" : "border border-border bg-transparent text-txt-muted hover:text-txt-secondary"}`}
               >
                 {opt.label}
               </button>
@@ -89,7 +89,7 @@ export default function AnalyticsClient({
       <section className="flex flex-col gap-3">
         <div className="grid gap-px bg-border-subtle md:grid-cols-3">
           {metricsToShow.slice(0, 3).map((metric, index) => (
-            <motion.div key={metric.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease, delay: index * 0.06 }} className="bg-brand-navy px-5 py-4">
+            <motion.div key={metric.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease, delay: index * 0.06 }} className="bg-surface px-5 py-4">
               <div className="text-[10px] font-medium uppercase tracking-wider text-txt-muted">{metric.label}</div>
               <div className="mt-1 font-mono text-4xl font-medium tabular-nums text-txt-primary">{metricValue(metric.key)}</div>
             </motion.div>
@@ -97,7 +97,7 @@ export default function AnalyticsClient({
         </div>
         <div className="grid gap-px bg-border-subtle md:grid-cols-3">
           {metricsToShow.slice(3).map((metric, index) => (
-            <motion.div key={metric.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease, delay: (index + 3) * 0.06 }} className="bg-brand-navy px-4 py-3.5">
+            <motion.div key={metric.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease, delay: (index + 3) * 0.06 }} className="bg-surface px-4 py-3.5">
               <div className="text-[10px] font-medium uppercase tracking-wider text-txt-muted">{metric.label}</div>
               <div className="mt-1 font-mono text-2xl font-medium tabular-nums text-txt-primary">{metricValue(metric.key)}</div>
             </motion.div>
@@ -105,7 +105,7 @@ export default function AnalyticsClient({
         </div>
 
         <div className="grid gap-3 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-brand-navy px-4 py-4">
+          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-surface px-4 py-4">
             <h2 className="mb-3 text-[12px] font-medium text-txt-secondary">MRR trend</h2>
             {mrrTrend.length === 0 ? (
               <div className="flex h-[220px] items-center justify-center px-2">
@@ -131,11 +131,11 @@ export default function AnalyticsClient({
                             initial={{ height: 0 }}
                             animate={{ height: `${Math.max(pct, 2)}%` }}
                             transition={{ duration: 0.6, ease, delay: i * 0.05 }}
-                            className={`w-full rounded-t-sm transition-colors ${isLast ? "bg-brand-mint shadow-[0_0_8px_rgba(110,231,183,0.30)]" : "bg-brand-mint/15 hover:bg-brand-mint/30"}`}
+                            className={`w-full rounded-t-sm transition-colors ${isLast ? "bg-success shadow-[0_0_8px_rgba(90,138,106,0.30)]" : "bg-success/15 hover:bg-success/30"}`}
                             style={{ minHeight: 2 }}
                           />
                         </div>
-                        <span className={`font-mono text-[10px] tracking-wide ${isLast ? "text-brand-mint" : "text-txt-hint"}`}>{month}</span>
+                        <span className={`font-mono text-[10px] tracking-wide ${isLast ? "text-success" : "text-txt-hint"}`}>{month}</span>
                       </div>
                     );
                   })}
@@ -150,7 +150,7 @@ export default function AnalyticsClient({
           </motion.section>
 
           {vertical.analytics.revenueByClientChart && (
-            <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-brand-navy px-4 py-4">
+            <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-surface px-4 py-4">
               <h2 className="mb-3 text-[12px] font-medium text-txt-secondary">Revenue by {vertical.crm.clientLabel.toLowerCase()}</h2>
               {revenueByClient.length === 0 ? (
                 <div className="flex h-[220px] items-center justify-center">
@@ -170,7 +170,7 @@ export default function AnalyticsClient({
                       <div key={c.id} className="flex items-center gap-2">
                         <span className="min-w-0 flex-1 truncate text-[14px] text-txt-secondary">{c.brand_name}</span>
                         <div className="h-[6px] min-w-[60px] flex-1 rounded-full bg-border">
-                          <div className="h-full rounded-full bg-brand-mint" style={{ width: `${widthPct}%`, opacity }} />
+                          <div className="h-full rounded-full bg-success" style={{ width: `${widthPct}%`, opacity }} />
                         </div>
                         <span className="w-20 shrink-0 text-right font-mono text-[13px] tabular-nums text-txt-primary">{formatCurrency(rev)}</span>
                       </div>
@@ -184,7 +184,7 @@ export default function AnalyticsClient({
 
         <div className="grid gap-3 md:grid-cols-2">
           {vertical.analytics.renewalPipelineWidget && (
-            <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-brand-navy px-4 py-4">
+            <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-surface px-4 py-4">
               <h2 className="mb-3 text-[12px] font-medium text-txt-secondary">Renewal pipeline</h2>
               {renewalPipeline.length === 0 ? (
                 <div className="flex h-[180px] items-center justify-center">
@@ -215,7 +215,7 @@ export default function AnalyticsClient({
             </motion.section>
           )}
 
-          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-brand-navy px-4 py-4">
+          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-surface px-4 py-4">
             <h2 className="mb-3 text-[12px] font-medium text-txt-secondary">Delivery completion</h2>
             {deliveryRate.length === 0 ? (
               <div className="flex h-[180px] items-center justify-center">
@@ -228,7 +228,7 @@ export default function AnalyticsClient({
             ) : (
               <div className="flex flex-col gap-2">
                 {deliveryRate.map((c) => {
-                  const color = c.pct >= 90 ? "bg-brand-mint" : c.pct >= 70 ? "bg-warning" : "bg-danger";
+                  const color = c.pct >= 90 ? "bg-success" : c.pct >= 70 ? "bg-warning" : "bg-danger";
                   return (
                     <div key={c.id} className="flex items-center gap-2">
                       <span className="w-24 truncate text-[14px] text-txt-secondary">{c.brand_name}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useVerticalConfig } from "@/lib/vertical-config";
 import type { AnyVerticalConfig } from "@/lib/vertical-config";
@@ -50,15 +51,29 @@ export default function Topbar() {
   });
 
   return (
-    <div className="flex h-[50px] shrink-0 items-center border-b border-border-subtle bg-brand-navy px-4">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <span key={path} className="truncate text-sm font-medium text-txt-primary">
+    <div className="flex h-12 shrink-0 items-center border-b border-border bg-panel px-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <span key={path} className="truncate font-sans font-semibold text-[13px] text-txt-primary tracking-tight">
           {title}
         </span>
-        <span className="shrink-0 font-mono text-xs text-txt-muted" suppressHydrationWarning>
+        <span className="shrink-0 text-border-strong">·</span>
+        <span
+          className="shrink-0 font-sans text-[10.5px] text-txt-muted tabular-nums"
+          suppressHydrationWarning
+        >
           {dateStr}
         </span>
+        <span className="relative ml-1 flex h-[5px] w-[5px] shrink-0">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-success-bg opacity-75" />
+          <span className="relative inline-flex h-[5px] w-[5px] rounded-full bg-success" />
+        </span>
       </div>
+      <Link
+        href="/clients"
+        className="text-[11px] font-medium px-3 py-1 rounded-sm border border-brand-rose/25 bg-brand-rose-dim text-brand-rose-deep transition-colors hover:bg-brand-rose/10"
+      >
+        + Add client
+      </Link>
     </div>
   );
 }

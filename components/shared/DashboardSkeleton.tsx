@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function DashboardSkeleton() {
   return (
     <div className="flex h-full flex-col overflow-hidden animate-pulse">
-      <div className="grid shrink-0 grid-cols-3 border-b border-border-subtle bg-brand-navy">
+      <div className="grid shrink-0 grid-cols-3 border-b border-border-subtle bg-surface">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
@@ -15,7 +15,7 @@ export function DashboardSkeleton() {
         ))}
       </div>
       <div className="grid flex-1 grid-cols-3 grid-rows-2 gap-px overflow-hidden bg-border-subtle">
-        <div className="col-span-2 flex flex-col gap-2 bg-brand-navy p-3">
+        <div className="col-span-2 flex flex-col gap-2 bg-surface p-3">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-20" />
@@ -26,7 +26,7 @@ export function DashboardSkeleton() {
             ))}
           </div>
         </div>
-        <div className="flex flex-col gap-2 bg-brand-navy p-3">
+        <div className="flex flex-col gap-2 bg-surface p-3">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-5 w-8 rounded-full" />
@@ -37,7 +37,7 @@ export function DashboardSkeleton() {
             ))}
           </div>
         </div>
-        <div className="flex flex-col gap-2 bg-brand-navy p-3">
+        <div className="flex flex-col gap-2 bg-surface p-3">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-5 w-16 rounded-full" />
@@ -48,7 +48,7 @@ export function DashboardSkeleton() {
             ))}
           </div>
         </div>
-        <div className="flex flex-col gap-2 bg-brand-navy p-3">
+        <div className="flex flex-col gap-2 bg-surface p-3">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-16" />
           </div>
@@ -58,7 +58,7 @@ export function DashboardSkeleton() {
             ))}
           </div>
         </div>
-        <div className="flex flex-col gap-2 bg-brand-navy p-3">
+        <div className="flex flex-col gap-2 bg-surface p-3">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-20" />
           </div>

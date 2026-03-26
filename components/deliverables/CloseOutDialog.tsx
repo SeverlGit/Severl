@@ -126,7 +126,7 @@ export function CloseOutDialog({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="rounded bg-brand-mint px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-mint/90"
+          className="rounded bg-brand-rose px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-rose-deep"
         >
           Close out {monthLabel}
         </button>
@@ -179,7 +179,7 @@ export function CloseOutDialog({
                       className={`flex items-center justify-between rounded-lg border px-3 py-2.5 ${
                         needsAck
                           ? "border-[rgba(250,204,21,0.25)] bg-[rgba(250,204,21,0.06)]"
-                          : "border-border bg-brand-navy"
+                          : "border-border bg-surface"
                       }`}
                     >
                       <div className="flex flex-col">
@@ -204,7 +204,7 @@ export function CloseOutDialog({
                           <span>Acknowledge</span>
                         </label>
                       ) : (
-                        <Check className="h-4 w-4 text-brand-mint" />
+                        <Check className="h-4 w-4 text-success" />
                       )}
                     </motion.div>
                   );
@@ -232,7 +232,7 @@ export function CloseOutDialog({
                 {invoiceClients.map((row) => (
                   <div
                     key={row.clientId}
-                    className="flex items-center justify-between rounded-lg border border-border bg-brand-navy px-3 py-2.5"
+                    className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5"
                   >
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-txt-primary">
@@ -283,11 +283,11 @@ export function CloseOutDialog({
                 className="flex flex-col items-center gap-4 py-6 text-center"
               >
                 <motion.div
-                  className="flex h-14 w-14 items-center justify-center rounded-full border border-brand-mint/20 bg-brand-mint/10"
+                  className="flex h-14 w-14 items-center justify-center rounded-full border border-success/20 bg-success/10"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                 >
-                  <Check className="h-6 w-6 text-brand-mint" />
+                  <Check className="h-6 w-6 text-success" />
                 </motion.div>
                 <div className="flex flex-col gap-3">
                   <Button
