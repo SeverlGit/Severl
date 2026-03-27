@@ -77,7 +77,10 @@ export async function createOrg(
     const user = await currentUser();
     const email = user?.emailAddresses?.[0]?.emailAddress;
     if (email) {
-      const template = getWelcomeEmail(email);
+      const template = getWelcomeEmail({
+        to: email,
+        firstName: user?.firstName ?? undefined,
+      });
       await sendEmail(template);
     }
   } catch (e) {

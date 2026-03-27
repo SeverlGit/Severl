@@ -1,25 +1,34 @@
+/**
+ * Verification email template.
+ *
+ * Usage with Clerk custom email provider (Resend):
+ *  - Configure Resend as a connected email provider in the Clerk Dashboard.
+ *  - Clerk will call your /api/clerk/email webhook; render this template and
+ *    send it via resend.emails.send().
+ *
+ * Alternatively, copy the rendered HTML into Clerk Dashboard → Emails → Verification.
+ */
+import * as Sentry from '@sentry/nextjs';
 import { Resend } from 'resend';
 
-const resendApiKey   = process.env.RESEND_API_KEY;
+const resendApiKey    = process.env.RESEND_API_KEY;
 const resendFromEmail = process.env.RESEND_FROM_EMAIL ?? 'noreply@severl.app';
 const appUrl          = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.severl.app';
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-export function getWelcomeEmail({
+export function getVerificationEmail({
   to,
-  firstName,
-  dashboardUrl = `${appUrl}/`,
+  code,
+  verificationUrl,
 }: {
   to: string;
-  firstName?: string;
-  dashboardUrl?: string;
+  code: string;
+  verificationUrl: string;
 }) {
-  const supportUrl      = `${appUrl}/support`;
-  const privacyUrl      = `${appUrl}/privacy`;
-  const termsUrl        = `${appUrl}/terms`;
-  const unsubscribeUrl  = `${appUrl}/unsubscribe`;
-  const displayName     = firstName ? firstName : 'there';
+  const privacyUrl     = `${appUrl}/privacy`;
+  const termsUrl       = `${appUrl}/terms`;
+  const unsubscribeUrl = `${appUrl}/unsubscribe`;
 
   const html = `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -28,7 +37,7 @@ export function getWelcomeEmail({
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="x-apple-disable-message-reformatting" />
-  <title>Welcome to Severl</title>
+  <title>Verify your Severl account</title>
   <style>
     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
@@ -44,7 +53,7 @@ export function getWelcomeEmail({
 <body style="margin:0;padding:0;background-color:#F0EBE3;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;">
 
   <span class="preview-text">
-    Your Severl workspace is ready. Here&rsquo;s how to get started. &#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;
+    Verify your email to finish setting up your Severl workspace. &#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;&#x200C;
   </span>
 
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
@@ -82,17 +91,13 @@ export function getWelcomeEmail({
                 <tr>
                   <td class="mobile-padding" style="padding:40px 48px 36px;">
 
-                    <!-- Eyebrow -->
-                    <p style="margin:0 0 10px;font-size:9.5px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:#C4909A;">You&rsquo;re in</p>
-
                     <!-- Headline -->
-                    <p style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#1A1714;line-height:1.15;letter-spacing:-0.02em;">Welcome to Severl, ${displayName}</p>
+                    <p style="margin:0 0 8px;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#1A1714;line-height:1.15;letter-spacing:-0.02em;">Verify your email</p>
 
                     <!-- Subhead -->
                     <p style="margin:0 0 28px;font-size:13px;color:#A09890;line-height:1.6;font-weight:400;">
-                      Your workspace is set up and ready to go. Severl is your operating system
-                      for running a social media practice &mdash; clients, deliverables, and invoicing,
-                      all in one place.
+                      You&rsquo;re almost set up. Confirm your email address to activate your
+                      Severl workspace and start managing your practice.
                     </p>
 
                     <!-- Divider -->
@@ -100,51 +105,15 @@ export function getWelcomeEmail({
                       <tr><td style="height:1px;background:#E8E2D9;font-size:0;line-height:0;">&nbsp;</td></tr>
                     </table>
 
-                    <!-- Steps -->
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:28px 0 24px;">
+                    <!-- Code block -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:28px 0;">
                       <tr>
-                        <td>
-                          <p style="margin:0 0 18px;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:#A09890;">Three things to do first</p>
-
-                          <!-- Step 1 -->
-                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom:14px;">
-                            <tr>
-                              <td style="width:36px;vertical-align:top;padding-top:1px;">
-                                <div style="width:26px;height:26px;border-radius:50%;background-color:#F7ECED;border:1px solid rgba(196,144,154,0.25);text-align:center;line-height:26px;font-family:Georgia,'Times New Roman',serif;font-size:12px;font-weight:400;color:#8C5562;">1</div>
-                              </td>
-                              <td style="padding-left:4px;vertical-align:top;">
-                                <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#1A1714;">Add your first client</p>
-                                <p style="margin:0;font-size:12px;color:#A09890;line-height:1.55;">Set up a brand account with retainer amount, platforms, and contract renewal date.</p>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Step 2 -->
-                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom:14px;">
-                            <tr>
-                              <td style="width:36px;vertical-align:top;padding-top:1px;">
-                                <div style="width:26px;height:26px;border-radius:50%;background-color:#FAF7F4;border:1px solid #E8E2D9;text-align:center;line-height:26px;font-family:Georgia,'Times New Roman',serif;font-size:12px;font-weight:400;color:#A09890;">2</div>
-                              </td>
-                              <td style="padding-left:4px;vertical-align:top;">
-                                <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#1A1714;">Plan your deliverables</p>
-                                <p style="margin:0;font-size:12px;color:#A09890;line-height:1.55;">Build a monthly content board. Track what&rsquo;s in progress, pending approval, and published.</p>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Step 3 -->
-                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                            <tr>
-                              <td style="width:36px;vertical-align:top;padding-top:1px;">
-                                <div style="width:26px;height:26px;border-radius:50%;background-color:#FAF7F4;border:1px solid #E8E2D9;text-align:center;line-height:26px;font-family:Georgia,'Times New Roman',serif;font-size:12px;font-weight:400;color:#A09890;">3</div>
-                              </td>
-                              <td style="padding-left:4px;vertical-align:top;">
-                                <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#1A1714;">Send your first invoice</p>
-                                <p style="margin:0;font-size:12px;color:#A09890;line-height:1.55;">Close out the month and batch-send retainer invoices in one click.</p>
-                              </td>
-                            </tr>
-                          </table>
-
+                        <td align="center">
+                          <p style="margin:0 0 10px;font-size:10px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:#A09890;">Your verification code</p>
+                          <div style="display:inline-block;background-color:#F7ECED;border:1px solid rgba(196,144,154,0.25);border-radius:10px;padding:18px 36px;">
+                            <span style="font-family:Georgia,'Times New Roman',serif;font-size:38px;font-weight:400;color:#1A1714;letter-spacing:0.18em;font-variant-numeric:tabular-nums;">${code}</span>
+                          </div>
+                          <p style="margin:12px 0 0;font-size:11px;color:#C4BAB0;font-weight:400;">Expires in 10 minutes</p>
                         </td>
                       </tr>
                     </table>
@@ -154,36 +123,26 @@ export function getWelcomeEmail({
                       <tr><td style="height:1px;background:#E8E2D9;font-size:0;line-height:0;">&nbsp;</td></tr>
                     </table>
 
-                    <!-- CTA -->
-                    <p style="margin:24px 0 16px;font-size:12px;color:#A09890;text-align:center;font-weight:400;">Your dashboard is ready</p>
+                    <!-- Or use button -->
+                    <p style="margin:24px 0 16px;font-size:12px;color:#A09890;text-align:center;font-weight:400;">Or click the button below to verify instantly</p>
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                       <tr>
                         <td align="center">
-                          <a href="${dashboardUrl}"
+                          <a href="${verificationUrl}"
                              style="display:inline-block;background-color:#C4909A;color:#ffffff;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:13px;font-weight:600;text-decoration:none;padding:12px 36px;border-radius:8px;letter-spacing:0.01em;"
-                          >Go to my dashboard</a>
+                          >Verify my email</a>
                         </td>
                       </tr>
                     </table>
 
-                    <!-- Secondary link -->
-                    <p style="margin:16px 0 0;font-size:11.5px;color:#C4BAB0;text-align:center;font-weight:400;">
-                      Need help getting started?
-                      <a href="${supportUrl}" style="color:#A09890;text-decoration:underline;">Visit our help centre</a>
-                    </p>
-
-                    <!-- Divider -->
+                    <!-- Security note -->
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top:28px;">
-                      <tr><td style="height:1px;background:#E8E2D9;font-size:0;line-height:0;">&nbsp;</td></tr>
-                    </table>
-
-                    <!-- Closing note -->
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top:20px;">
                       <tr>
                         <td style="background-color:#FAF7F4;border:1px solid #E8E2D9;border-radius:8px;padding:14px 16px;">
                           <p style="margin:0;font-size:11.5px;color:#A09890;line-height:1.55;">
-                            <strong style="color:#6B6560;font-weight:600;">Questions or feedback?</strong>
-                            Reply directly to this email &mdash; it goes straight to the Severl team. We read every message.
+                            <strong style="color:#6B6560;font-weight:600;">Didn&rsquo;t request this?</strong>
+                            You can safely ignore this email. Someone may have entered your email
+                            address by mistake. Your account won&rsquo;t be created unless you verify.
                           </p>
                         </td>
                       </tr>
@@ -229,26 +188,32 @@ export function getWelcomeEmail({
 </body>
 </html>`;
 
-  return { to, subject: 'Welcome to Severl — Your workspace is ready', html };
+  return {
+    to,
+    subject: 'Verify your Severl account',
+    html,
+  };
 }
 
-export async function sendEmail({
-  to,
-  subject,
-  html,
-}: {
+export async function sendVerificationEmail(params: {
   to: string;
-  subject: string;
-  html: string;
+  code: string;
+  verificationUrl: string;
 }) {
   if (!resend) {
-    console.warn('RESEND_API_KEY is not set; skipping email send.');
+    console.warn('RESEND_API_KEY is not set; skipping verification email send.');
     return;
   }
-  await resend.emails.send({
-    from: `Severl <${resendFromEmail}>`,
-    to,
-    subject,
-    html,
-  });
+
+  try {
+    const { to, subject, html } = getVerificationEmail(params);
+    await resend.emails.send({
+      from: `Severl <${resendFromEmail}>`,
+      to,
+      subject,
+      html,
+    });
+  } catch (err) {
+    Sentry.captureException(err);
+  }
 }

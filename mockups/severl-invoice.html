@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice INV-0042 — Severl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink-1:    #111111;
+      --ink-2:    #444444;
+      --ink-3:    #888888;
+      --ink-4:    #BBBBBB;
+      --line:     #DDDDDD;
+      --line-soft:#F0F0F0;
+      --bg-tint:  #FAFAFA;
+      --rose:     #C4909A;
+    }
+
+    html {
+      background: #E8E8E8;
+      font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 13px;
+      color: var(--ink-1);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+    }
+
+    .print-bar {
+      width: 720px;
+      max-width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 14px;
+    }
+
+    .print-btn {
+      background: var(--ink-1);
+      color: #fff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 5px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Page ── */
+    .page {
+      width: 720px;
+      max-width: 100%;
+      background: #fff;
+      border: 1px solid #CCCCCC;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .accent-line {
+      height: 3px;
+      background: var(--rose);
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 30px 40px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .sender-block { display: flex; flex-direction: column; gap: 8px; }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      background: linear-gradient(135deg, #C4909A 0%, #6B6178 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 12px;
+      font-weight: 400;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .business-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-1);
+      letter-spacing: -0.01em;
+    }
+
+    .sender-detail {
+      font-size: 11px;
+      color: var(--ink-3);
+      line-height: 1.75;
+      padding-left: 34px;
+    }
+
+    .invoice-id-block { text-align: right; }
+
+    .invoice-word {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 26px;
+      font-weight: 300;
+      color: var(--ink-1);
+      letter-spacing: -0.01em;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .invoice-number {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-3);
+      display: block;
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    .status-pill.draft   { background: #F2F2F2; color: #888; }
+    .status-pill.sent    { background: #FEF3E2; color: #A06010; }
+    .status-pill.paid    { background: #EAFAF0; color: #2A7048; }
+    .status-pill.overdue { background: #FEECEC; color: #A02020; }
+    .status-pill.voided  { background: #F2F2F2; color: #999; }
+
+    /* ── Two-column meta bar ── */
+    .meta-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .meta-col {
+      padding: 18px 40px;
+    }
+
+    .meta-col:first-child {
+      border-right: 1px solid var(--line);
+    }
+
+    .meta-col-title {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      margin-bottom: 9px;
+    }
+
+    .client-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-1);
+      margin-bottom: 2px;
+    }
+
+    .client-detail {
+      font-size: 11px;
+      color: var(--ink-3);
+      line-height: 1.75;
+    }
+
+    .meta-table { width: 100%; border-collapse: collapse; }
+
+    .meta-table td {
+      padding: 2.5px 0;
+      font-size: 11.5px;
+      vertical-align: top;
+    }
+
+    .meta-table .mk { color: var(--ink-3); width: 50%; padding-right: 8px; }
+    .meta-table .mv { color: var(--ink-1); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; }
+    .meta-table .mv.bold { font-weight: 600; }
+
+    /* ── Line items ── */
+    .items-wrap {
+      padding: 22px 40px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-title {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      margin-bottom: 11px;
+    }
+
+    table.items { width: 100%; border-collapse: collapse; }
+
+    .items thead tr { border-bottom: 1px solid var(--line); }
+
+    .items thead th {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding-bottom: 8px;
+      text-align: left;
+    }
+
+    .items thead th.r { text-align: right; }
+
+    .items tbody tr { border-bottom: 1px solid var(--line-soft); }
+    .items tbody tr:last-child { border-bottom: none; }
+
+    .items tbody td {
+      padding: 10px 0;
+      font-size: 12px;
+      color: var(--ink-1);
+      vertical-align: top;
+    }
+
+    .items tbody td.r {
+      text-align: right;
+      color: var(--ink-2);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .item-name { font-weight: 500; margin-bottom: 1px; }
+    .item-desc { font-size: 11px; color: var(--ink-3); line-height: 1.5; }
+
+    /* ── Totals + Tax note ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 210px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tax-col {
+      padding: 18px 40px;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tax-note {
+      font-size: 11px;
+      color: var(--ink-3);
+      line-height: 1.65;
+    }
+
+    .tax-note strong { color: var(--ink-2); font-weight: 500; }
+
+    .totals-col {
+      padding: 18px 40px 18px 20px;
+    }
+
+    .t-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 3.5px 0;
+    }
+
+    .t-row + .t-row { border-top: 1px solid var(--line-soft); }
+
+    .t-lbl { font-size: 11.5px; color: var(--ink-3); }
+    .t-val { font-size: 11.5px; color: var(--ink-2); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+    .t-divider { height: 1px; background: var(--line); margin: 7px 0; }
+
+    .t-row.grand .t-lbl { font-size: 12.5px; font-weight: 600; color: var(--ink-1); }
+    .t-row.grand .t-val {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--ink-1);
+      letter-spacing: -0.02em;
+    }
+
+    .t-row.paid .t-lbl,
+    .t-row.paid .t-val { color: #2A7048; font-size: 11.5px; }
+
+    .t-row.balance .t-lbl { font-size: 12.5px; font-weight: 600; color: var(--ink-1); }
+    .t-row.balance .t-val {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--ink-1);
+      letter-spacing: -0.02em;
+    }
+
+    /* ── Payment instructions ── */
+    .payment-section {
+      padding: 18px 40px;
+      background: var(--bg-tint);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .payment-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .p-label { font-size: 10px; font-weight: 600; color: var(--ink-3); letter-spacing: 0.03em; margin-bottom: 3px; }
+    .p-value { font-size: 12px; font-weight: 500; color: var(--ink-1); font-variant-numeric: tabular-nums; }
+
+    /* ── Terms ── */
+    .terms-section {
+      padding: 16px 40px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .terms-text {
+      font-size: 11px;
+      color: var(--ink-3);
+      line-height: 1.65;
+    }
+
+    .terms-text strong { color: var(--ink-2); font-weight: 500; }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 13px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-tint);
+    }
+
+    .footer-txt {
+      font-size: 10px;
+      color: var(--ink-4);
+      line-height: 1.6;
+    }
+
+    /* ── Print ── */
+    @media print {
+      html, body { background: #fff; padding: 0; }
+      .print-bar  { display: none !important; }
+      .page { border: none; border-radius: 0; box-shadow: none; width: 100%; }
+      @page { size: A4; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-bar">
+    <button class="print-btn" onclick="window.print()">⬇ Save as PDF</button>
+  </div>
+
+  <div class="page">
+
+    <div class="accent-line"></div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="sender-block">
+        <div class="logo-row">
+          <div class="logo-mark">S</div>
+          <span class="business-name">Maya Chen Media</span>
+        </div>
+        <div class="sender-detail">
+          123 Queen St W, Suite 400<br />
+          Toronto, ON &nbsp;M5H 2M9 · Canada<br />
+          maya@mayachenmedia.com<br />
+          Business No. 123 456 789
+        </div>
+      </div>
+
+      <div class="invoice-id-block">
+        <span class="invoice-word">Invoice</span>
+        <span class="invoice-number">INV-0042</span>
+        <span class="status-pill sent">Sent</span>
+      </div>
+    </div>
+
+    <!-- Meta bar -->
+    <div class="meta-bar">
+      <div class="meta-col">
+        <div class="meta-col-title">Billed to</div>
+        <div class="client-name">Bloom &amp; Co.</div>
+        <div class="client-detail">
+          Sarah Bloom · sarah@bloomandco.com<br />
+          45 West 25th Street, Floor 3<br />
+          New York, NY 10010 · USA
+        </div>
+      </div>
+
+      <div class="meta-col">
+        <div class="meta-col-title">Invoice details</div>
+        <table class="meta-table">
+          <tr><td class="mk">Invoice no.</td>  <td class="mv">INV-0042</td></tr>
+          <tr><td class="mk">Invoice date</td> <td class="mv">March 1, 2026</td></tr>
+          <tr><td class="mk">Due date</td>     <td class="mv bold">March 15, 2026</td></tr>
+          <tr><td class="mk">Billing period</td><td class="mv">March 2026</td></tr>
+          <tr><td class="mk">Service type</td> <td class="mv">Retainer</td></tr>
+          <tr><td class="mk">Currency</td>     <td class="mv">CAD</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Line items -->
+    <div class="items-wrap">
+      <div class="section-title">Services rendered</div>
+      <table class="items">
+        <thead>
+          <tr>
+            <th style="width:44%">Description</th>
+            <th style="width:13%" class="r">Qty</th>
+            <th style="width:16%" class="r">Unit price</th>
+            <th style="width:10%" class="r">Tax</th>
+            <th style="width:17%" class="r">Amount (CAD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="item-name">Monthly Social Media Retainer</div>
+              <div class="item-desc">Instagram, TikTok, LinkedIn — strategy, content creation,
+              scheduling &amp; community management</div>
+            </td>
+            <td class="r">1</td>
+            <td class="r">$2,400.00</td>
+            <td class="r">0%</td>
+            <td class="r">$2,400.00</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="item-name">Paid Ad Management</div>
+              <div class="item-desc">Meta Ads — campaign setup, audience targeting,
+              weekly performance reporting</div>
+            </td>
+            <td class="r">1</td>
+            <td class="r">$600.00</td>
+            <td class="r">0%</td>
+            <td class="r">$600.00</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="item-name">Content Shoot — March</div>
+              <div class="item-desc">On-location coordination + post-production editing</div>
+            </td>
+            <td class="r">4 hrs</td>
+            <td class="r">$150.00</td>
+            <td class="r">0%</td>
+            <td class="r">$600.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals + tax note -->
+    <div class="bottom-grid">
+      <div class="tax-col">
+        <p class="tax-note">
+          Services supplied by Maya Chen Media (sole proprietor, invoicing under legal name).
+        </p>
+        <p class="tax-note">
+          <strong>GST/HST:</strong> Maya Chen Media is a small supplier not required to register
+          for GST/HST (annual revenue below the $30,000 CAD threshold). No GST/HST is charged.
+        </p>
+        <p class="tax-note">
+          <strong>Cross-border note:</strong> Services provided to a US-based client are
+          zero-rated for Canadian tax purposes. W-8BEN available on request.
+        </p>
+      </div>
+
+      <div class="totals-col">
+        <div class="t-row">
+          <span class="t-lbl">Subtotal</span>
+          <span class="t-val">$3,600.00</span>
+        </div>
+        <div class="t-row">
+          <span class="t-lbl">GST/HST (0%)</span>
+          <span class="t-val">$0.00</span>
+        </div>
+        <div class="t-row">
+          <span class="t-lbl">Discount</span>
+          <span class="t-val">—</span>
+        </div>
+        <div class="t-divider"></div>
+        <div class="t-row grand">
+          <span class="t-lbl">Total (CAD)</span>
+          <span class="t-val">$3,600.00</span>
+        </div>
+        <div class="t-row paid">
+          <span class="t-lbl">Deposit paid</span>
+          <span class="t-val">— $0.00</span>
+        </div>
+        <div class="t-divider"></div>
+        <div class="t-row balance">
+          <span class="t-lbl">Balance due</span>
+          <span class="t-val">$3,600.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment instructions -->
+    <div class="payment-section">
+      <div class="section-title">Payment instructions</div>
+      <div class="payment-grid">
+        <div>
+          <div class="p-label">Interac e-Transfer</div>
+          <div class="p-value">maya@mayachenmedia.com</div>
+        </div>
+        <div>
+          <div class="p-label">Bank transfer (CAD)</div>
+          <div class="p-value">Details on request</div>
+        </div>
+        <div>
+          <div class="p-label">Reference</div>
+          <div class="p-value">INV-0042</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="terms-section">
+      <div class="section-title">Terms &amp; conditions</div>
+      <p class="terms-text">
+        Payment is due within 14 days of the invoice date (by <strong>March 15, 2026</strong>).
+        Invoices unpaid after the due date are subject to a late payment charge of
+        <strong>1.5% per month</strong> (18% per annum) on the outstanding balance, compounding monthly.
+        Please include the invoice number as your payment reference. Disputes must be raised
+        in writing within 7 days of receipt. All amounts are in Canadian dollars.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-txt">
+        Maya Chen Media · maya@mayachenmedia.com · Toronto, ON<br />
+        Generated via Severl · severl.app
+      </div>
+      <div class="footer-txt" style="text-align:right;">
+        INV-0042 · March 1, 2026<br />
+        Page 1 of 1
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
