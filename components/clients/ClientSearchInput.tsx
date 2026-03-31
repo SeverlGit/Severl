@@ -32,7 +32,7 @@ export function ClientSearchInput({ search, filter, placeholder }: Props) {
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="h-8 w-56 pl-8 font-sans text-[13px]"
+        className="h-8 w-56 pl-8 font-sans text-[13px] placeholder:text-gray-400"
         placeholder={placeholder}
       />
       {value && (

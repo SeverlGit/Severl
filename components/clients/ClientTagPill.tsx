@@ -24,7 +24,7 @@ export function ClientTagPill({ tag, className }: Props) {
   const extraClass = tag === "paused" ? "italic" : tag === "churned" ? "line-through" : "";
 
   return (
-    <Badge variant={variant} className={`${extraClass} ${className ?? ""}`}>
+    <Badge variant={variant} className={`${extraClass} ${className ?? ""} text-white`}>
       {tag.replace("_", " ")}
     </Badge>
   );
