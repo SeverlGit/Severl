@@ -5,6 +5,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 import { fireEvent } from '@/lib/analytics/fireEvent';
 import { requireOrgAccess } from '@/lib/auth-guard';
+import { checkClientLimit, TierLimitError } from '@/lib/auth/tier-limits';
 
 export async function createClient(params: {
   orgId: string;
@@ -22,6 +23,16 @@ export async function createClient(params: {
   };
 }) {
   await requireOrgAccess(params.orgId);
+
+  try {
+    await checkClientLimit(params.orgId);
+  } catch (error) {
+    if (error instanceof TierLimitError) {
+      throw new Error(error.userMessage);
+    }
+    throw error;
+  }
+
   const supabase = getSupabaseAdminClient();
 
   const { data, error } = await supabase

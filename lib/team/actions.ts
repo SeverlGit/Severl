@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { requireOrgAccess } from '@/lib/auth-guard';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 import type { TeamMemberRow } from '@/lib/database.types';
+import { syncStripeTeamSeat } from '@/lib/billing/sync-stripe-seat';
 
 export async function getTeamMembersForOrg(
   orgId: string
@@ -54,6 +55,10 @@ export async function createTeamMember(params: {
 
   revalidatePath('/clients');
   revalidatePath('/deliverables');
+
+  // Async seat sync in background
+  syncStripeTeamSeat(params.orgId).catch(console.error);
+
   return data;
 }
 
@@ -111,6 +116,9 @@ export async function deactivateTeamMember(params: {
 
   revalidatePath('/clients');
   revalidatePath('/deliverables');
+
+  // Async seat sync
+  syncStripeTeamSeat(params.orgId).catch(console.error);
 }
 
 export async function reactivateTeamMember(params: {
@@ -134,4 +142,7 @@ export async function reactivateTeamMember(params: {
 
   revalidatePath('/clients');
   revalidatePath('/deliverables');
+
+  // Async seat sync
+  syncStripeTeamSeat(params.orgId).catch(console.error);
 }

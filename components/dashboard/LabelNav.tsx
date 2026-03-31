@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import type { OrgRecord } from "@/lib/auth";
 import { useVerticalConfig } from "@/lib/vertical-config";
+import { usePlan } from "@/lib/billing/plan-context";
 import { TeamManagementDialog } from "@/components/clients/TeamManagementDialog";
 import {
   Tooltip,
@@ -35,6 +36,7 @@ type Props = { org: OrgRecord; orgId: string };
 export default function LabelNav({ org, orgId }: Props) {
   const pathname = usePathname();
   const vertical = useVerticalConfig();
+  const { planTier } = usePlan();
   const clientsLabel = vertical.crm.clientsLabel;
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const showTeamNav = vertical.slug === "smm_agency";
@@ -52,10 +54,10 @@ export default function LabelNav({ org, orgId }: Props) {
     <TooltipProvider delayDuration={200}>
       <aside className="flex h-screen w-[54px] shrink-0 flex-col items-center border-r border-white/5 bg-sidebar">
         {/* Logo mark */}
-        <div className="flex h-[50px] w-full items-center justify-center">
+        <div className="flex flex-col w-full items-center justify-center pt-3 pb-1 gap-1.5">
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-md bg-gradient-to-br from-brand-rose to-brand-plum font-display text-[13px] font-medium text-white">
+              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-md bg-gradient-to-br from-brand-rose to-brand-plum font-display text-[13px] font-medium text-white shadow-sm">
                 S
               </span>
             </TooltipTrigger>
@@ -64,9 +66,18 @@ export default function LabelNav({ org, orgId }: Props) {
               <p className="text-[11px] text-txt-muted">{vertical.name}</p>
             </TooltipContent>
           </Tooltip>
+          
+          <div className={`rounded px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider ${
+            planTier === 'essential' ? 'bg-surface-hover text-txt-muted' :
+            planTier === 'pro'       ? 'bg-brand-rose-dim text-brand-rose-deep' :
+            planTier === 'elite'     ? 'bg-brand-plum-dim text-brand-plum-deep' :
+                                       'bg-brand-plum text-white'
+          }`}>
+            {planTier}
+          </div>
         </div>
 
-        <nav className="flex w-full flex-col items-center gap-1 pt-3">
+        <nav className="flex w-full flex-col items-center gap-1 pt-2">
           {navItems.map((item) => {
             const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
             const isHome = item.href === "/" && pathname === "/";

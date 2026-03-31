@@ -9,6 +9,9 @@ export type OrgRecord = {
   vertical: 'smm_freelance' | 'smm_agency';
   owner_id: string;
   timezone: string;
+  plan_tier: 'essential' | 'pro' | 'elite' | 'agency';
+  stripe_customer_id: string | null;
+  subscription_status: string;
   created_at: string;
   updated_at: string;
 };

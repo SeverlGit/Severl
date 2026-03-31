@@ -6,6 +6,7 @@ import { getSupabaseAdminClient } from '@/lib/supabase/server';
 import { fireEvent } from '@/lib/analytics/fireEvent';
 import { requireOrgAccess } from '@/lib/auth-guard';
 import type { ClientRow } from '@/lib/database.types';
+import { checkDeliverableLimit, TierLimitError } from '@/lib/auth/tier-limits';
 
 export async function updateDeliverableStatus(params: {
   deliverableId: string;
@@ -64,6 +65,16 @@ export async function createDeliverable(params: {
   vertical: 'smm_freelance' | 'smm_agency';
 }) {
   await requireOrgAccess(params.orgId);
+
+  try {
+    await checkDeliverableLimit(params.orgId, params.month);
+  } catch (error) {
+    if (error instanceof TierLimitError) {
+      throw new Error(error.userMessage);
+    }
+    throw error;
+  }
+
   const supabase = getSupabaseAdminClient();
   const monthStart = new Date(params.month.getFullYear(), params.month.getMonth(), 1);
 

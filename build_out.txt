@@ -1,0 +1,58 @@
+﻿
+> severl-smm-os@1.0.0 build
+> next build
+
+   Γû▓ Next.js 15.5.14
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ┬╖ clientTraceMetadata
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 75s
+   Linting and checking validity of types ...
+node.exe : Failed to 
+compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (Fai  
+  led to compile.:String   
+ ) [], RemoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+
+./lib/billing/stripe.ts:8:3
+Type error: Type 
+'"2024-12-18.acacia"' is 
+not assignable to type 
+'"2026-03-25.dahlia"'.
+
+[0m [90m  6 |[39m
+ [90m  7 |[39m 
+[36mexport[39m 
+[36mconst[39m stripe 
+[33m=[39m [36mnew[39m 
+[33mStripe[39m(process[33
+m.[39menv[33m.[39m[33mS
+TRIPE_SECRET_KEY[39m[33m,
+[39m {
+[31m[1m>[22m[39m[90m  
+8 |[39m   
+apiVersion[33m:[39m [32m
+'2024-12-18.acacia'[39m[3
+3m,[39m
+ [90m    |[39m   
+[31m[1m^[22m[39m
+ [90m  9 |[39m 
+})[33m;[39m
+ [90m 10 |[39m[0m
+Next.js build worker 
+exited with code: 1 and 
+signal: null

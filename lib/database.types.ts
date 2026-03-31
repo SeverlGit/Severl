@@ -3,12 +3,17 @@
  * Use these instead of `as any` for typed Supabase responses.
  */
 
+export type PlanTier = 'essential' | 'pro' | 'elite' | 'agency';
+
 export type OrgRow = {
   id: string;
   name: string;
   vertical: 'smm_freelance' | 'smm_agency';
   owner_id: string;
   timezone: string;
+  plan_tier: PlanTier;
+  stripe_customer_id: string | null;
+  subscription_status: string;
   created_at: string;
   updated_at: string;
 };

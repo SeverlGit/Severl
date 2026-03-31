@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { usePlan } from "@/lib/billing/plan-context";
+import Link from "next/link";
 
 type Props = {
   orgId: string;
@@ -47,6 +49,8 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
   const [contractRenewal, setContractRenewal] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const { planTier, limits, clientsUsed, atClientLimit } = usePlan();
 
   const platformsField = verticalConfig.crm.intakeFields.find(
     (f) => f.key === "platforms"
@@ -126,12 +130,34 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
         <DialogHeader>
           <DialogTitle>Add {verticalConfig.crm.clientLabel}</DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new{" "}
-            {verticalConfig.crm.clientLabel.toLowerCase()}.
+            {atClientLimit
+              ? `You've reached your plan's limit of ${limits.clients} clients.`
+              : `Fill in the details below to add a new ${verticalConfig.crm.clientLabel.toLowerCase()}.`}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4 px-6 py-4">
+        {atClientLimit ? (
+          <div className="flex flex-col items-center justify-center p-8 gap-4 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-rose-dim text-brand-rose-deep">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-txt-primary">Client Limit Reached</h3>
+              <p className="mt-1 text-[13px] text-txt-muted max-w-[280px]">
+                Your {planTier} plan allows up to {limits.clients} clients. Upgrade your plan to continue growing your roster.
+              </p>
+            </div>
+            <Link
+              href="/billing"
+              className="mt-2 rounded bg-brand-rose px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-rose/90"
+              onClick={() => setOpen(false)}
+            >
+              View Plans
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-4 px-6 py-4">
           <div className="col-span-2">
             <label className={labelClass}>Brand name *</label>
             <Input
@@ -245,6 +271,8 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
             {isPending ? "···" : `Add ${verticalConfig.crm.clientLabel.toLowerCase()}`}
           </button>
         </DialogFooter>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );

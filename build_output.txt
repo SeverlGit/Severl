@@ -1,0 +1,55 @@
+﻿
+> severl-smm-os@1.0.0 build
+> next build
+
+   Γû▓ Next.js 15.5.14
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ┬╖ clientTraceMetadata
+
+   Creating an optimized production build ...
+node.exe : Failed to 
+compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (Fai  
+  led to compile.:String   
+ ) [], RemoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+
+./node_modules\next\dist\co
+mpiled\server-only\index.js
+'server-only' cannot be 
+imported from a Client 
+Component module. It 
+should only be used from a 
+Server Component.
+
+Import trace for requested 
+module:
+  ./node_modules\next\dist\
+compiled\server-only\index.
+js
+  ./node_modules\@clerk\nex
+tjs\dist\esm\app-router\ser
+ver\auth.js
+  ./node_modules\@clerk\nex
+tjs\dist\esm\server\index.j
+s
+  ./lib\supabase\server.ts
+  ./lib\auth\tier-limits.ts
+  ./lib\billing\plan-contex
+t.tsx
+
+
+> Build failed because of 
+webpack errors

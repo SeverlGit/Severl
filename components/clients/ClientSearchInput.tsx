@@ -28,11 +28,11 @@ export function ClientSearchInput({ search, filter, placeholder }: Props) {
 
   return (
     <div className="relative">
-      <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[rgba(255,255,255,0.25)]" />
+      <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-txt-muted" />
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="h-8 w-56 pl-8 font-sans text-[13px] placeholder:text-gray-400"
+        className="h-8 w-56 pl-8 font-sans text-[13px] placeholder:text-txt-muted"
         placeholder={placeholder}
       />
       {value && (

@@ -9,6 +9,14 @@ create extension if not exists "pgcrypto";
 -- ENUM TYPES
 -- ============================
 
+-- Plan Tier for an organization
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'plan_tier') then
+    create type plan_tier as enum ('essential', 'pro', 'elite', 'agency');
+  end if;
+end$$;
+
 -- Vertical for an organization
 do $$
 begin
@@ -101,13 +109,16 @@ end$$;
 -- ============================
 
 create table if not exists orgs (
-  id            uuid primary key default gen_random_uuid(),
-  name          text not null,
-  vertical      vertical_type not null,
-  owner_id      text not null,
-  timezone      text not null default 'America/New_York',
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
+  id                  uuid primary key default gen_random_uuid(),
+  name                text not null,
+  vertical            vertical_type not null,
+  owner_id            text not null,
+  timezone            text not null default 'America/New_York',
+  plan_tier           plan_tier not null default 'essential',
+  stripe_customer_id  text,
+  subscription_status text not null default 'active',
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
 );
 
 create index if not exists idx_orgs_owner_id
@@ -298,4 +309,47 @@ create index if not exists idx_events_org_client_id
 -- 2. Retainer invoice generation:
 --    - Auto-generated invoices should pull `clients.retainer_amount` into `invoices.total`
 --      and corresponding `invoice_line_items` rather than duplicating configuration elsewhere.
+
+-- ============================
+-- STORAGE RLS POLICIES (OPTIONAL)
+-- ============================
+-- Ensure your Supabase instance has a Storage bucket named 'org-files'.
+-- This policy enforces the tier bytes limit before a new object is inserted.
+-- We cast size to bigint for comparison. Limits:
+--   essential = 524288000 (500MB)
+--   pro       = 10737418240 (10GB)
+--   elite     = 107374182400 (100GB)
+--   agency    = 536870912000 (500GB)
+-- Assuming the folder structure is `[org_id]/...` so (bucket_id = 'org-files' and (storage.foldername(name))[1] = org_id::text)
+
+-- Example Storage policy statement (Run in SQL Editor if needed):
+/*
+CREATE POLICY "Enforce Storage Tier Limits"
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'org-files' AND
+  (
+    -- 1. Allowed file size checks
+    (metadata->>'size')::bigint +
+    COALESCE((
+      SELECT sum((metadata->>'size')::bigint)
+      FROM storage.objects
+      WHERE bucket_id = 'org-files'
+      AND (storage.foldername(name))[1] = (storage.foldername(storage.objects.name))[1]
+    ), 0) <= (
+      SELECT CASE
+               WHEN orgs.plan_tier = 'essential' THEN 524288000
+               WHEN orgs.plan_tier = 'pro' THEN 10737418240
+               WHEN orgs.plan_tier = 'elite' THEN 107374182400
+               WHEN orgs.plan_tier = 'agency' THEN 536870912000
+               ELSE 524288000
+             END
+      FROM orgs
+      WHERE orgs.id::text = (storage.foldername(name))[1]
+    )
+  )
+);
+*/
 

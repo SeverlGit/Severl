@@ -46,8 +46,10 @@ import {
 } from "@/components/ui/select";
 import { ClientAvatar } from "@/components/shared/ClientAvatar";
 import type { TeamMemberRow } from "@/lib/database.types";
-import { Pencil, UserPlus } from "lucide-react";
+import { usePlan } from "@/lib/billing/plan-context";
+import { Pencil, UserPlus, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const ROLE_OPTIONS = [
   { value: "account_manager", label: "Account manager" },
@@ -102,6 +104,9 @@ export function TeamManagementDialog({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  
+  const { planTier } = usePlan();
+  const isAgency = planTier === 'agency';
 
   useEffect(() => {
     if (teamMembersProp !== undefined) {
@@ -282,18 +287,30 @@ export function TeamManagementDialog({
             <h3 className="text-[10px] uppercase tracking-wider font-medium text-txt-muted">
               Members
             </h3>
-            <Button
-              variant="terminal"
-              size="sm"
-              onClick={() => {
-                setShowAddForm(true);
-                cancelEdit();
-              }}
-              disabled={showAddForm}
-            >
-              <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-              Add member
-            </Button>
+            <div className="relative group">
+              <Button
+                variant="terminal"
+                size="sm"
+                onClick={() => {
+                  if (isAgency) {
+                    setShowAddForm(true);
+                    cancelEdit();
+                  }
+                }}
+                disabled={showAddForm || !isAgency}
+              >
+                {!isAgency ? <Lock className="mr-1.5 h-3 w-3" /> : <UserPlus className="mr-1.5 h-3.5 w-3.5" />}
+                Add member
+              </Button>
+              {!isAgency && (
+                <div className="absolute top-full right-0 mt-1 hidden group-hover:block z-10 w-48 rounded bg-panel border border-border p-2 text-xs shadow-md">
+                  <span className="text-txt-secondary block mb-1">Team management requires the Agency plan.</span>
+                  <Link href="/billing" className="text-brand-rose-deep hover:text-brand-rose font-medium inline-block" onClick={() => setOpen(false)}>
+                    Upgrade plan &rarr;
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
           {showAddForm && (
