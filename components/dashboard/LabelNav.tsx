@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+import { UserNav } from "@/components/dashboard/UserNav";
 import type { OrgRecord } from "@/lib/auth";
 import { useVerticalConfig } from "@/lib/vertical-config";
 import { usePlan } from "@/lib/billing/plan-context";
@@ -139,13 +139,7 @@ export default function LabelNav({ org, orgId }: Props) {
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox: "h-7 w-7",
-                    },
-                  }}
-                />
+                <UserNav />
               </div>
             </TooltipTrigger>
             <TooltipContent side="right">Account</TooltipContent>

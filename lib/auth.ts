@@ -41,5 +41,8 @@ export const getCurrentOrg = cache(async (): Promise<OrgRecord> => {
     redirect('/onboarding');
   }
 
-  return data as OrgRecord;
+  return {
+    ...data,
+    plan_tier: data.plan_tier || 'essential'
+  } as OrgRecord;
 });
