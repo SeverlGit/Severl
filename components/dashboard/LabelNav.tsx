@@ -66,13 +66,12 @@ export default function LabelNav({ org, orgId }: Props) {
               <p className="text-[11px] text-txt-muted">{vertical.name}</p>
             </TooltipContent>
           </Tooltip>
-          
-          <div className={`rounded px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider ${
-            planTier === 'essential' ? 'bg-surface-hover text-txt-muted' :
-            planTier === 'pro'       ? 'bg-brand-rose-dim text-brand-rose-deep' :
-            planTier === 'elite'     ? 'bg-brand-plum-dim text-brand-plum-deep' :
-                                       'bg-brand-plum text-white'
-          }`}>
+
+          <div className={`rounded mr-1.5 ml-1.5 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider ${planTier === 'essential' ? 'bg-surface-hover text-txt-muted' :
+            planTier === 'pro' ? 'bg-brand-rose-dim text-brand-rose-deep' :
+              planTier === 'elite' ? 'bg-brand-plum-dim text-brand-plum-deep' :
+                'bg-brand-plum text-white'
+            }`}>
             {planTier}
           </div>
         </div>
@@ -91,11 +90,10 @@ export default function LabelNav({ org, orgId }: Props) {
                   <TooltipTrigger asChild>
                     <Link
                       href={item.href}
-                      className={`relative flex h-9 w-full items-center justify-center transition-colors duration-150 ease-out ${
-                        isActive
-                          ? "bg-[rgba(221,180,188,0.10)] text-[#DDB4BC]"
-                          : "text-white/30 hover:text-white/60"
-                      }`}
+                      className={`relative flex h-9 w-full items-center justify-center transition-colors duration-150 ease-out ${isActive
+                        ? "bg-[rgba(221,180,188,0.10)] text-[#DDB4BC]"
+                        : "text-white/30 hover:text-white/60"
+                        }`}
                       aria-label={label}
                     >
                       {isActive && (

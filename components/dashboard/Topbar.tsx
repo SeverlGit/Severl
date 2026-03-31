@@ -68,12 +68,6 @@ export default function Topbar() {
           <span className="relative inline-flex h-[5px] w-[5px] rounded-full bg-success" />
         </span>
       </div>
-      <Link
-        href="/clients"
-        className="text-[11px] font-medium px-3 py-1 rounded-sm border border-brand-rose/25 bg-brand-rose-dim text-brand-rose-deep transition-colors hover:bg-brand-rose/10"
-      >
-        + Add client
-      </Link>
     </div>
   );
 }
