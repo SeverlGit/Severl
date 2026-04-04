@@ -6,9 +6,9 @@ import { getSupabaseAdminClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 
 const PRICE_ID_MAP: Record<string, string | undefined> = {
-  pro: process.env.STRIPE_PRICE_PRO,
-  elite: process.env.STRIPE_PRICE_ELITE,
-  agency: process.env.STRIPE_PRICE_AGENCY_BASE,
+  pro: process.env.STRIPE_PRICE_PRO ?? process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
+  elite: process.env.STRIPE_PRICE_ELITE ?? process.env.NEXT_PUBLIC_STRIPE_PRICE_ELITE,
+  agency: process.env.STRIPE_PRICE_AGENCY_BASE ?? process.env.NEXT_PUBLIC_STRIPE_PRICE_AGENCY_BASE,
 };
 
 async function getOrigin() {
