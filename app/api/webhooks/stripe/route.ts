@@ -132,6 +132,17 @@ export async function POST(req: NextRequest) {
         revalidateTag(`dashboard-${org.id}`);
         break;
       }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
+
+        await supabase
+          .from('orgs')
+          .update({ subscription_status: 'past_due' })
+          .eq('stripe_customer_id', customerId);
+        break;
+      }
     }
   } catch (error) {
     Sentry.captureException(error);

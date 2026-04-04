@@ -217,15 +217,15 @@ export default function InvoicesClient({
             </TabsList>
           </Tabs>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[rgba(255,255,255,0.25)]" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[rgba(160,152,144,0.75)]" />
             <Input
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               placeholder="Search invoices..."
-              className="h-8 w-56 pl-8 font-sans text-[13px]"
+              className="h-8 w-56 pl-8 font-sans text-[13px] placeholder:text-[rgba(160,152,144,0.75)]"
             />
             {searchValue && (
-              <button type="button" onClick={() => setSearchValue("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-txt-muted transition-colors hover:text-txt-primary" aria-label="Clear search">
+              <button type="button" onClick={() => setSearchValue("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-txt-muted transition-colors hover:text-txt-primary text-[rgba(160,152,144,0.75)]" aria-label="Clear search">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}

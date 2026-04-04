@@ -46,7 +46,7 @@ export default async function ClientsPage({ searchParams }: Props) {
             filter={filter}
             placeholder={`Search by brand, ${vertical.crm.contactLabel.toLowerCase()}, or email`}
           />
-          <div className="flex gap-1 overflow-x-auto text-[14px] uppercase tracking-[0.04em]">
+          <div className="flex gap-1 overflow-x-auto text-[14px] uppercase tracking-[0.04em] text-[rgba(160,152,144,0.75)]">
             {TAG_ORDER.map((tag) => {
               const label =
                 tag === "all"
