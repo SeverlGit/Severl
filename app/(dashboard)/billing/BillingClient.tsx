@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useTransition } from 'react';
+import React, { useEffect } from 'react';
 import { usePlan } from '@/lib/billing/plan-context';
 import { createCheckoutSession, createPortalSession } from '@/lib/billing/actions';
 import { toast } from 'sonner';
@@ -68,7 +68,6 @@ export default function BillingClient({
   checkoutCanceled,
 }: Props) {
   const { planTier } = usePlan();
-  const [isPending, startTransition] = useTransition();
   const [loadingTier, setLoadingTier] = React.useState<string | null>(null);
   const [portalPending, setPortalPending] = React.useState(false);
 
@@ -84,34 +83,26 @@ export default function BillingClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSubscribe = (tier: string) => {
+  const handleSubscribe = async (tier: string) => {
     setLoadingTier(tier);
-    startTransition(async () => {
-      try {
-        const url = await createCheckoutSession({ orgId, tier });
-        window.location.href = url;
-      } catch (err: unknown) {
-        toast.error('Checkout failed', {
-          description: err instanceof Error ? err.message : 'Something went wrong.',
-        });
-        setLoadingTier(null);
-      }
-    });
+    const result = await createCheckoutSession({ orgId, tier });
+    if (result.error) {
+      toast.error('Checkout failed', { description: result.error });
+      setLoadingTier(null);
+      return;
+    }
+    window.location.href = result.data;
   };
 
-  const handlePortal = () => {
+  const handlePortal = async () => {
     setPortalPending(true);
-    startTransition(async () => {
-      try {
-        const url = await createPortalSession({ orgId });
-        window.location.href = url;
-      } catch (err: unknown) {
-        toast.error('Could not open billing portal', {
-          description: err instanceof Error ? err.message : 'Something went wrong.',
-        });
-        setPortalPending(false);
-      }
-    });
+    const result = await createPortalSession({ orgId });
+    if (result.error) {
+      toast.error('Could not open billing portal', { description: result.error });
+      setPortalPending(false);
+      return;
+    }
+    window.location.href = result.data;
   };
 
   return (
@@ -146,7 +137,7 @@ export default function BillingClient({
         {hasBillingPortal && (
           <button
             onClick={handlePortal}
-            disabled={portalPending || isPending}
+            disabled={portalPending || loadingTier !== null}
             className="flex items-center gap-1.5 rounded-md border border-border bg-panel px-3 py-2 text-xs font-medium text-txt-secondary transition-colors hover:bg-surface-hover disabled:opacity-50"
           >
             <CreditCard className="h-3.5 w-3.5" />
@@ -158,7 +149,7 @@ export default function BillingClient({
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {plans.map((plan) => {
           const isCurrent = plan.tier === planTier;
-          const isLoading = loadingTier === plan.tier && isPending;
+          const isLoading = loadingTier === plan.tier && loadingTier !== null;
 
           return (
             <div
@@ -216,7 +207,7 @@ export default function BillingClient({
                         ? 'bg-brand-rose text-white hover:bg-brand-rose-deep'
                         : 'bg-brand-rose/80 text-white hover:bg-brand-rose',
                     )}
-                    disabled={isPending}
+                    disabled={loadingTier !== null}
                     onClick={() => handleSubscribe(plan.tier)}
                   >
                     {isLoading ? 'Redirecting…' : `Upgrade to ${plan.name}`}
