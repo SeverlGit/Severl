@@ -91,7 +91,7 @@ export default function BillingClient({
       setLoadingTier(null);
       return;
     }
-    window.location.href = result.data;
+    window.location.href = result.data!;
   };
 
   const handlePortal = async () => {
@@ -102,7 +102,7 @@ export default function BillingClient({
       setPortalPending(false);
       return;
     }
-    window.location.href = result.data;
+    window.location.href = result.data!;
   };
 
   return (
