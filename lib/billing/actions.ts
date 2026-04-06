@@ -19,13 +19,13 @@ async function getOrigin() {
 async function resolveStripeCustomer(orgId: string): Promise<string> {
   const supabase = getSupabaseAdminClient();
 
-  const { data: org } = await supabase
+  const { data: org, error: orgError } = await supabase
     .from('orgs')
     .select('stripe_customer_id, owner_id')
     .eq('id', orgId)
     .single();
 
-  if (!org) throw new Error('Organization not found');
+  if (orgError || !org) throw new Error(`Organization not found: ${orgError?.message ?? 'no data'} (orgId=${orgId})`);
 
   if (org.stripe_customer_id) return org.stripe_customer_id;
 
