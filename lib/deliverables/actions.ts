@@ -76,14 +76,14 @@ export async function createDeliverable(params: {
   }
 
   const supabase = getSupabaseAdminClient();
-  const monthStart = new Date(params.month.getFullYear(), params.month.getMonth(), 1);
+  const monthStartStr = `${params.month.getFullYear()}-${String(params.month.getMonth() + 1).padStart(2, '0')}-01`;
 
   const { data, error } = await supabase
     .from('deliverables')
     .insert({
       org_id: params.orgId,
       client_id: params.clientId,
-      month: monthStart.toISOString().slice(0, 10),
+      month: monthStartStr,
       type: params.type,
       title: params.title || params.type,
       status: 'not_started',
@@ -215,15 +215,17 @@ export async function updateDeliverableAssignee(params: {
 export async function getMonthCloseOutData(orgId: string, month: Date) {
   await requireOrgAccess(orgId);
   const supabase = getSupabaseAdminClient();
-  const start = new Date(month.getFullYear(), month.getMonth(), 1);
-  const end = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+  const startStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-01`;
+  
+  const endMonth = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+  const endStr = `${endMonth.getFullYear()}-${String(endMonth.getMonth() + 1).padStart(2, '0')}-01`;
 
   const { data, error } = await supabase
     .from('deliverables')
     .select('client_id, status, clients!inner(brand_name, retainer_amount)')
     .eq('org_id', orgId)
-    .gte('month', start.toISOString().slice(0, 10))
-    .lt('month', end.toISOString().slice(0, 10));
+    .gte('month', startStr)
+    .lt('month', endStr);
 
   if (error || !data) return [];
 

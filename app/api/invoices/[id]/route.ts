@@ -19,6 +19,14 @@ function formatMoney(n: number): string {
 function formatDateLong(iso: string | null | undefined): string {
   if (!iso) return '—';
   try {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      const [y, m, d] = iso.split('-');
+      return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
     return new Date(iso).toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'long',

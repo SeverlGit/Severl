@@ -192,8 +192,11 @@ export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, ind
   const title = deliverable.title || typeLabel;
   const editTitle = deliverable.title || typeLabel;
   const dueDateLabel = deliverable.due_date
-    ? new Date(deliverable.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-    : "No due date";
+    ? (() => {
+        const [y, m, d] = (deliverable.due_date as string).split('-');
+        return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      })()
+    : 'No due date';
   const isPastDue = deliverable.due_date && new Date(deliverable.due_date) < new Date() && deliverable.status !== "published";
   const leftBorderClass =
     deliverable.status === "pending_approval"
@@ -209,7 +212,7 @@ export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, ind
       transition={{ duration: 0.25, ease: "easeOut", delay: index * 0.04 }}
       className={`group flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-[14px] text-txt-secondary transition-colors hover:bg-[#F0EBE3] ${leftBorderClass}`}
     >
-      <div className="w-28 text-[12px] font-medium uppercase tracking-[0.05em] text-[rgba(255,255,255,0.35)]">
+      <div className="w-28 text-[12px] font-medium uppercase tracking-[0.05em] text-txt-hint">
         {typeLabel}
       </div>
       <div className="flex-1 text-txt-primary">{title}</div>
@@ -238,7 +241,7 @@ export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, ind
         <button
           type="button"
           onClick={() => setEditOpen(true)}
-          className="text-txt-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-txt-secondary"
+          className="text-txt-muted opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-rose/50 rounded hover:text-txt-secondary"
           aria-label="Edit deliverable"
         >
           <Pencil className="h-3.5 w-3.5" />
@@ -248,7 +251,7 @@ export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, ind
           <button
             type="button"
             disabled={isDeleting}
-            className="text-txt-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-danger disabled:opacity-40"
+            className="text-txt-muted opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-danger/50 rounded hover:text-danger disabled:opacity-40"
             aria-label="Delete deliverable"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -313,7 +316,7 @@ function AssigneePicker({ deliverableId, orgId, currentName, currentId, teamMemb
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="flex items-center gap-1.5 text-[12px] text-[rgba(255,255,255,0.35)] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 text-[12px] text-txt-muted transition-colors hover:text-txt-secondary"
             onClick={(e) => e.stopPropagation()}
           >
             {currentName ? (

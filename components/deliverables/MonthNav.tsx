@@ -30,17 +30,19 @@ export function MonthNav({ currentMonth }: Props) {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="rounded-full border border-border px-2 py-1 text-[12px] text-txt-secondary"
+        className="rounded-full border border-border px-2 py-1 text-[12px] text-txt-secondary transition-colors hover:border-border-strong hover:text-txt-primary"
+        aria-label="Previous month"
       >
         ←
       </button>
-      <span className="font-mono text-sm font-medium text-txt-primary">
+      <span className="font-sans text-sm font-medium text-txt-primary">
         {label}
       </span>
       <button
         type="button"
         onClick={() => navigate(1)}
-        className="rounded-full border border-border px-2 py-1 text-[12px] text-txt-secondary"
+        className="rounded-full border border-border px-2 py-1 text-[12px] text-txt-secondary transition-colors hover:border-border-strong hover:text-txt-primary"
+        aria-label="Next month"
       >
         →
       </button>

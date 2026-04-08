@@ -30,15 +30,35 @@ export async function checkClientLimit(orgId: string): Promise<void> {
   }
 }
 
+export async function checkStorageLimit(orgId: string, bytesToAdd: number): Promise<void> {
+  const supabase = getSupabaseAdminClient();
+  const { data: org } = await supabase.from('orgs').select('plan_tier').eq('id', orgId).single();
+  if (!org) throw new Error('Organization not found');
+
+  const tier = org.plan_tier as PlanTier;
+  const limits = TIER_LIMITS[tier];
+
+  // NOTE: Currently, actual usage calculation is deferred to Supabase Storage RLS.
+  // This function serves as the application-level gate if file uploads are implemented in the API.
+  // For full enforcement, sum sizes of objects in org-files/[orgId] + bytesToAdd and compare.
+
+  if (bytesToAdd > limits.storageBytes) {
+    throw new TierLimitError(
+      `File exceeds storage limit for tier ${tier}`,
+      `Your current plan (${tier}) is limited to ${limits.storageBytes / (1024 ** 3)} GB of storage. Please upgrade to add larger files.`
+    );
+  }
+}
+
 export async function checkDeliverableLimit(orgId: string, month: Date): Promise<void> {
   const supabase = getSupabaseAdminClient();
-  const monthStart = new Date(month.getFullYear(), month.getMonth(), 1).toISOString().slice(0, 10);
+  const monthStartStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-01`;
   
   const [{ data: org }, { count }] = await Promise.all([
     supabase.from('orgs').select('plan_tier').eq('id', orgId).single(),
     supabase.from('deliverables').select('id', { count: 'exact', head: true })
       .eq('org_id', orgId)
-      .eq('month', monthStart)
+      .eq('month', monthStartStr)
       .is('archived_at', null)
   ]);
 

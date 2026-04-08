@@ -36,6 +36,12 @@ export async function createTeamMember(params: {
   await requireOrgAccess(params.orgId);
   const supabase = getSupabaseAdminClient();
 
+  // Tier check: only Agency plan can add team members
+  const { data: org } = await supabase.from('orgs').select('plan_tier').eq('id', params.orgId).single();
+  if (org?.plan_tier !== 'agency') {
+    throw new Error('Team management requires the Agency plan.');
+  }
+
   const { data, error } = await supabase
     .from('team_members')
     .insert({

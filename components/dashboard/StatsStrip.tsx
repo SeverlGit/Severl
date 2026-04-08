@@ -97,7 +97,15 @@ function StatCellDisplay({ stat }: { stat: StatCell }) {
   );
 
   if (stat.href) {
-    return <Link href={stat.href}>{inner}</Link>;
+    return (
+      <Link
+        href={stat.href}
+        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-rose/40 focus-visible:ring-offset-1"
+        aria-label={`${stat.label}: ${displayValue}${stat.delta ? `, ${stat.delta}` : ''}`}
+      >
+        {inner}
+      </Link>
+    );
   }
   return <div>{inner}</div>;
 }

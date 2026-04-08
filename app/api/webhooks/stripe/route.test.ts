@@ -106,4 +106,66 @@ describe('Stripe Webhook', () => {
     expect(mockSupabase.eq).toHaveBeenCalledWith('stripe_customer_id', 'cus_123');
     expect(syncPlanToClerkMetadata).toHaveBeenCalledWith('user_123', 'essential');
   });
+
+  it('handles customer.subscription.updated', async () => {
+    const mockEvent = {
+      type: 'customer.subscription.updated',
+      data: {
+        object: {
+          customer: 'cus_123',
+          status: 'active',
+          items: {
+            data: [{ price: { id: 'price_pro_123' } }],
+          },
+        },
+      },
+    };
+
+    (stripe.webhooks.constructEvent as any).mockReturnValue(mockEvent);
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+      body: 'trigger',
+    });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    expect(mockSupabase.update).toHaveBeenCalledWith({
+      plan_tier: 'pro',
+      subscription_status: 'active',
+    });
+    expect(mockSupabase.eq).toHaveBeenCalledWith('stripe_customer_id', 'cus_123');
+    expect(syncPlanToClerkMetadata).toHaveBeenCalledWith('user_123', 'pro');
+  });
+
+  it('handles invoice.payment_failed', async () => {
+    const mockEvent = {
+      type: 'invoice.payment_failed',
+      data: {
+        object: {
+          customer: 'cus_123',
+        },
+      },
+    };
+
+    (stripe.webhooks.constructEvent as any).mockReturnValue(mockEvent);
+    
+    // We expect the handler to fetch the org data
+    mockSupabase.single.mockResolvedValue({ data: { owner_id: 'user_123', id: 'org_123', plan_tier: 'pro' }, error: null });
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+      body: 'trigger',
+    });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(200);
+    expect(mockSupabase.update).toHaveBeenCalledWith({ subscription_status: 'past_due' });
+    expect(mockSupabase.eq).toHaveBeenCalledWith('stripe_customer_id', 'cus_123');
+    expect(syncPlanToClerkMetadata).toHaveBeenCalledWith('user_123', 'pro');
+  });
 });

@@ -31,7 +31,7 @@ export function RenewalCountdown({ clientId, orgId, contractRenewal }: Props) {
 
   if (days > 30) {
     return (
-      <div className="text-[14px] text-[rgba(255,255,255,0.35)]">
+      <div className="text-[14px] text-txt-muted">
         {days} days until renewal
       </div>
     );
@@ -39,14 +39,14 @@ export function RenewalCountdown({ clientId, orgId, contractRenewal }: Props) {
 
   if (days >= 14) {
     return (
-      <div className="rounded-lg border border-[rgba(250,204,21,0.25)] bg-[rgba(250,204,21,0.06)] px-4 py-3 text-[14px] text-[#facc15]">
+      <div className="rounded-lg border border-warning/20 bg-warning-bg px-4 py-3 text-[14px] text-warning">
         {days} days until renewal — consider reaching out.
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.06)] px-4 py-3 text-[14px] text-[#f87171]">
+    <div className="flex flex-col gap-3 rounded-lg border border-danger/20 bg-danger-bg px-4 py-3 text-[14px] text-danger">
       <div>Renewal in {days} days.</div>
       <Button size="sm" disabled={isPending} onClick={handleMarkRenewed}>
         Mark as renewed

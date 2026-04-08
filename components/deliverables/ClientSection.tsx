@@ -44,6 +44,8 @@ export function ClientSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between text-left"
+        aria-expanded={open}
+        aria-label={`${open ? 'Collapse' : 'Expand'} deliverables for ${brandName}`}
       >
         <div className="flex items-center gap-2">
           {open ? <ChevronDown className="h-3 w-3 text-txt-muted" /> : <ChevronRight className="h-3 w-3 text-txt-muted" />}

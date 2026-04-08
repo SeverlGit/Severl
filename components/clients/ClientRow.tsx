@@ -66,9 +66,13 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
     return "text-txt-muted";
   })();
 
-  const renewalLabel = client.contract_renewal
-    ? new Date(client.contract_renewal).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
-    : "—";
+  const renewalLabel = (() => {
+    if (!client.contract_renewal) return '—';
+    const [y, m, d] = client.contract_renewal.split('-');
+    return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+  })();
 
   return (
     <motion.tr
@@ -88,7 +92,7 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
           <div className="flex flex-col">
             <span className="text-[14px] text-txt-primary">{client.brand_name}</span>
             <span className="text-[12px] text-txt-muted">
-              {client.contact_name} · {client.contact_email}
+              {[client.contact_name, client.contact_email].filter(Boolean).join(' · ')}
             </span>
           </div>
         </div>
@@ -124,12 +128,15 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
       </td>
       <td className={`px-3 py-2.5 font-mono text-[13px] tabular-nums ${renewalColor}`}>{renewalLabel}</td>
       {showAccountManager && (
-        <td className="px-3 py-2.5 text-[13px] text-[rgba(255,255,255,0.35)]">
+        <td className="px-3 py-2.5 text-[13px] text-txt-muted">
           {client.team_members?.name ?? "—"}
         </td>
       )}
       <td className="px-3 py-2.5 text-right text-[13px]">
-        <Link href={`/clients/${client.id}`} className="text-brand-rose transition-colors hover:text-white hover:underline">
+        <Link
+          href={`/clients/${client.id}`}
+          className="rounded px-2 py-1 text-brand-rose transition-colors hover:bg-brand-rose-dim hover:text-brand-rose-deep focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-rose/50"
+        >
           View →
         </Link>
       </td>

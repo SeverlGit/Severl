@@ -72,7 +72,7 @@ export default function BillingClient({
   const [portalPending, setPortalPending] = React.useState(false);
 
   const isPastDue = subscriptionStatus === 'past_due';
-  const hasBillingPortal = !!stripeCustomerId && planTier !== 'essential';
+  const hasBillingPortal = !!stripeCustomerId;
 
   useEffect(() => {
     if (checkoutSuccess) {

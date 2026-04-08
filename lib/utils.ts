@@ -22,6 +22,13 @@ export function renewalUrgency(daysRemaining: number): 'red' | 'amber' | 'green'
 }
 
 export function formatShortDate(dateStr: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, d] = dateStr.split('-');
+    return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+  }
   return new Date(dateStr).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',

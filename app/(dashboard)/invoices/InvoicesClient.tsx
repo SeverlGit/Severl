@@ -261,8 +261,12 @@ export default function InvoicesClient({
               )}
               {optimisticInvoices.map((inv, idx) => {
                 const isOverdue = inv.status === "overdue";
-                const billingLabel = inv.billing_month ? new Date(inv.billing_month).toLocaleDateString(undefined, { month: "long", year: "numeric" }) : "—";
-                const dueLabel = inv.due_date ? new Date(inv.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "—";
+                const billingLabel = inv.billing_month
+                  ? (() => { const [y, m] = inv.billing_month.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); })()
+                  : "—";
+                const dueLabel = inv.due_date
+                  ? (() => { const [y, m, d] = inv.due_date.split('-'); return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); })()
+                  : "—";
                 return (
                   <motion.tr key={inv.id} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25, ease: "easeOut", delay: idx * 0.03 }} className={`border-b border-border-subtle transition-colors hover:bg-surface ${isOverdue ? "border-l-2 border-l-danger" : ""}`}>
                     <td className="px-3 py-3 font-mono text-[12px] tabular-nums text-txt-muted">{inv.invoice_number || "—"}</td>
@@ -296,7 +300,7 @@ export default function InvoicesClient({
                             disabled={isPending}
                             className="disabled:opacity-50"
                           >
-                            {isPending ? "···" : "Send"}
+                            {isPending ? 'Sending…' : 'Mark sent'}
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="text-txt-muted hover:text-danger">Void</Button>
                         </>}
@@ -330,7 +334,7 @@ export default function InvoicesClient({
           </SheetHeader>
           <div className="flex flex-col gap-4 px-5 py-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] font-medium uppercase tracking-[0.06em] text-[rgba(255,255,255,0.35)]">Payment method</label>
+              <label className="text-[12px] font-medium uppercase tracking-[0.06em] text-txt-hint">Payment method</label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger aria-label="Payment method">
                   <SelectValue />
@@ -345,14 +349,14 @@ export default function InvoicesClient({
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-[12px] font-medium uppercase tracking-[0.06em] text-[rgba(255,255,255,0.35)]">Date paid</label>
+              <label className="text-[12px] font-medium uppercase tracking-[0.06em] text-txt-hint">Date paid</label>
               <Input type="date" value={paidDate} onChange={(e) => setPaidDate(e.target.value)} />
             </div>
           </div>
           <SheetFooter>
             <Button variant="ghost" onClick={() => setMarkPaidInvoice(null)}>Cancel</Button>
             <Button disabled={isPending} onClick={handleMarkPaid}>
-              {isPending ? "···" : "Confirm payment"}
+              {isPending ? 'Confirming…' : 'Confirm payment'}
             </Button>
           </SheetFooter>
         </SheetContent>

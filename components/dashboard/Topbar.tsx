@@ -64,7 +64,7 @@ export default function Topbar() {
           {dateStr}
         </span>
         <span className="relative ml-1 flex h-[5px] w-[5px] shrink-0">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-success-bg opacity-75" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
           <span className="relative inline-flex h-[5px] w-[5px] rounded-full bg-success" />
         </span>
       </div>

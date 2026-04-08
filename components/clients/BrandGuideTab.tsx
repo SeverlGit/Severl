@@ -69,7 +69,7 @@ export function BrandGuideTab({ clientId, orgId, vertical, verticalData }: Props
       {vertical.crm.intakeFields.map((field) => {
         const value = localData[field.key];
         const label = (
-          <label className="text-[12px] font-medium uppercase tracking-[0.06em] text-[rgba(255,255,255,0.35)]">
+          <label className="text-[12px] font-medium uppercase tracking-[0.06em] text-txt-hint">
             {field.label}
           </label>
         );
@@ -80,7 +80,7 @@ export function BrandGuideTab({ clientId, orgId, vertical, verticalData }: Props
           return (
             <div key={field.key} className={card}>
               {label}
-              <div className="text-[14px] text-[rgba(255,255,255,0.60)]">
+              <div className="text-[14px] text-txt-muted">
                 {Array.isArray(value) && value.length ? value.join(", ") : "—"}
               </div>
             </div>

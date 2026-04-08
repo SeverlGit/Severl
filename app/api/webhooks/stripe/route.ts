@@ -14,7 +14,9 @@ function getPlanTierFromPriceId(priceId: string): PlanTier {
   if (priceId === process.env.STRIPE_PRICE_PRO) return 'pro';
   if (priceId === process.env.STRIPE_PRICE_ELITE) return 'elite';
   if (priceId === process.env.STRIPE_PRICE_AGENCY_BASE) return 'agency';
-  return 'essential';
+  
+  Sentry.captureMessage(`Unknown Stripe price ID: ${priceId}`, 'error');
+  throw new Error(`Unknown Stripe price ID: ${priceId}`);
 }
 
 export async function POST(req: NextRequest) {
@@ -85,8 +87,17 @@ export async function POST(req: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
         
-        // Get the primary item price (assuming the first item is the base plan)
-        const priceId = subscription.items.data[0]?.price?.id;
+        // Find the item whose price.id matches one of the known base plan IDs
+        const knownBasePrices = new Set([
+          process.env.STRIPE_PRICE_PRO,
+          process.env.STRIPE_PRICE_ELITE,
+          process.env.STRIPE_PRICE_AGENCY_BASE,
+        ].filter(Boolean));
+
+        const basePriceItem = subscription.items.data.find(
+          item => knownBasePrices.has(item.price.id)
+        );
+        const priceId = basePriceItem?.price?.id;
         if (!priceId) break;
 
         const newTier = getPlanTierFromPriceId(priceId);
@@ -103,8 +114,8 @@ export async function POST(req: NextRequest) {
           .single();
 
         if (error) {
-          console.warn('Stripe customer updated but org not found in DB', customerId);
-          break;
+          Sentry.captureException(error);
+          throw error;
         }
 
         await syncPlanToClerkMetadata(org.owner_id, newTier);
@@ -126,7 +137,10 @@ export async function POST(req: NextRequest) {
           .select('id, owner_id')
           .single();
 
-        if (error) break;
+        if (error) {
+          Sentry.captureException(error);
+          throw error;
+        }
 
         await syncPlanToClerkMetadata(org.owner_id, 'essential');
         revalidateTag(`dashboard-${org.id}`);
@@ -137,10 +151,22 @@ export async function POST(req: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
 
-        await supabase
+        const { data: org, error } = await supabase
           .from('orgs')
           .update({ subscription_status: 'past_due' })
-          .eq('stripe_customer_id', customerId);
+          .eq('stripe_customer_id', customerId)
+          .select('id, owner_id, plan_tier')
+          .single();
+
+        if (error || !org) {
+          Sentry.captureException(error || new Error('Org not found for payment_failed'));
+          throw error || new Error('Org not found');
+        }
+
+        // Explicitly sync the current plan_tier (which may now be flagged past_due in our system, 
+        // but Clerk just holds the string tier to gate access/storage)
+        await syncPlanToClerkMetadata(org.owner_id, org.plan_tier);
+        revalidateTag(`dashboard-${org.id}`);
         break;
       }
     }

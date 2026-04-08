@@ -102,7 +102,10 @@ function RevenueBarChart({ data }: { data: MRRTrendPoint[] }) {
       {data.map((d, i) => {
         const pct = (d.mrr / max) * 100;
         const isLast = i === data.length - 1;
-        const month = new Date(d.month).toLocaleDateString(undefined, { month: "short" });
+        const month = (() => {
+          const [y, m] = d.month.split('-');
+          return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString(undefined, { month: "short" });
+        })();
         return (
           <div key={d.month} className="flex flex-1 flex-col items-center gap-1">
             <div className="flex w-full flex-1 items-end">
@@ -310,7 +313,7 @@ function BusinessPulse({
           className="flex h-8 items-center justify-center gap-1.5 rounded-md bg-surface-hover text-[11px] font-medium text-txt-secondary transition-colors hover:bg-border"
         >
           <FileText className="h-3 w-3" />
-          Invoice
+          New Invoice
         </Link>
       </div>
     </div>
@@ -608,28 +611,28 @@ export function DashboardClient({
             {overdue.count > 0 || atRiskCount > 0 || deliverablesBehind > 0 ? (
               <>
                 {overdue.count > 0 && (
-                  <div className="flex items-center gap-2">
+                  <Link href="/invoices?status=overdue" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
                     <span className="text-[12px] text-txt-secondary">
-                      {overdue.count} invoice{overdue.count === 1 ? "" : "s"} overdue
+                      {overdue.count} invoice{overdue.count === 1 ? '' : 's'} overdue
                     </span>
-                  </div>
+                  </Link>
                 )}
                 {atRiskCount > 0 && (
-                  <div className="flex items-center gap-2">
+                  <Link href="/clients?filter=at_risk" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
                     <span className="text-[12px] text-txt-secondary">
                       {atRiskCount} {clientsLabel.toLowerCase()} at risk
                     </span>
-                  </div>
+                  </Link>
                 )}
                 {deliverablesBehind > 0 && (
-                  <div className="flex items-center gap-2">
+                  <Link href="/deliverables" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
                     <span className="text-[12px] text-txt-secondary">
-                      {deliverablesBehind} deliverable{deliverablesBehind === 1 ? "" : "s"} behind
+                      {deliverablesBehind} deliverable{deliverablesBehind === 1 ? '' : 's'} behind
                     </span>
-                  </div>
+                  </Link>
                 )}
               </>
             ) : (

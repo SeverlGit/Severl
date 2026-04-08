@@ -130,7 +130,7 @@ export function NotesTab({ clientId, orgId, notes }: Props) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         {localNotes.length === 0 && (
-          <div className="text-[14px] text-[rgba(255,255,255,0.35)]">
+          <div className="py-6 text-center text-[14px] text-txt-muted">
             No notes yet. Add context about this client.
           </div>
         )}
@@ -142,7 +142,7 @@ export function NotesTab({ clientId, orgId, notes }: Props) {
                   name={note.author_id && user?.id && note.author_id === user.id ? (user.firstName ?? "You") : "Team"}
                   size="sm"
                 />
-                <span className="text-[12px] text-[rgba(255,255,255,0.35)]">
+                <span className="text-[12px] text-txt-hint">
                   {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
                 </span>
               </div>
@@ -213,7 +213,7 @@ export function NotesTab({ clientId, orgId, notes }: Props) {
                   autoFocus
                 />
               ) : (
-                <div className="text-[14px] leading-relaxed text-[rgba(255,255,255,0.60)]">
+                <div className="text-[14px] leading-relaxed text-txt-secondary">
                   {note.body}
                 </div>
               )}
@@ -234,11 +234,11 @@ export function NotesTab({ clientId, orgId, notes }: Props) {
             type="button"
             onClick={handleSave}
             disabled={isPending || !body.trim()}
-            className="text-sm text-brand-rose transition-colors hover:underline disabled:pointer-events-none disabled:opacity-40"
+            className="rounded px-2 py-1 text-sm text-brand-rose transition-colors hover:bg-brand-rose-dim hover:text-brand-rose-deep disabled:pointer-events-none disabled:opacity-40"
           >
-            Save
+            {isPending ? 'Saving…' : 'Save note'}
           </button>
-          <span className="text-[12px] text-[rgba(255,255,255,0.35)]">Cmd+Enter to save</span>
+          <span className="text-[12px] text-txt-hint">Cmd+Enter to save</span>
         </div>
       </div>
     </div>
