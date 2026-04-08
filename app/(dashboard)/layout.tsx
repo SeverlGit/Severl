@@ -5,6 +5,7 @@ import LabelNav from "@/components/dashboard/LabelNav";
 import Topbar from "@/components/dashboard/Topbar";
 import { TopbarTitleProvider } from "@/components/dashboard/TopbarTitleContext";
 import { PlanProvider } from "@/lib/billing/plan-context";
+import { PrefsProvider } from "@/lib/prefs-context";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
 import { NavigationProgress } from "@/components/dashboard/NavigationProgress";
 
@@ -28,18 +29,20 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   return (
     <VerticalConfigProvider verticalSlug={org.vertical}>
       <PlanProvider planTier={org.plan_tier} clientsUsed={clientsUsed}>
-        <TopbarTitleProvider>
-          <Suspense fallback={null}>
-            <NavigationProgress />
-          </Suspense>
-          <div className="flex h-screen overflow-hidden bg-page">
-            <LabelNav org={org} orgId={org.id} />
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <Topbar />
-              <div className="flex-1 overflow-auto">{children}</div>
+        <PrefsProvider>
+          <TopbarTitleProvider>
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
+            <div className="flex h-screen overflow-hidden bg-page">
+              <LabelNav org={org} orgId={org.id} />
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <Topbar />
+                <div className="flex-1 overflow-auto">{children}</div>
+              </div>
             </div>
-          </div>
-        </TopbarTitleProvider>
+          </TopbarTitleProvider>
+        </PrefsProvider>
       </PlanProvider>
     </VerticalConfigProvider>
   );

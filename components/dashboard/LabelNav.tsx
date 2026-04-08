@@ -60,26 +60,29 @@ export default function LabelNav({ org, orgId }: Props) {
     <TooltipProvider delayDuration={200}>
       <aside className="flex h-screen w-[54px] shrink-0 flex-col items-center border-r border-white/5 bg-sidebar">
         {/* Logo mark */}
-        <div className="flex flex-col w-full items-center justify-center pt-3 pb-1 gap-1.5">
+        <div className="flex w-full items-center justify-center pt-3 pb-1">
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-md bg-gradient-to-br from-brand-rose to-brand-plum font-display text-[13px] font-medium text-white shadow-sm">
+              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-md bg-gradient-to-br from-brand-rose to-brand-plum font-display text-[13px] font-medium text-white shadow-sm cursor-default select-none">
                 S
               </span>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              <p className="font-medium">{org.name}</p>
+            <TooltipContent side="right" className="flex flex-col gap-1 p-3">
+              <p className="font-semibold text-[13px] text-txt-primary leading-none">{org.name}</p>
               <p className="text-[11px] text-txt-muted">{vertical.name}</p>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
+                  planTier === 'essential' ? 'bg-surface-hover text-txt-secondary' :
+                  planTier === 'pro'       ? 'bg-brand-rose-dim text-brand-rose-deep' :
+                  planTier === 'elite'     ? 'bg-brand-plum-dim text-brand-plum-deep' :
+                                            'bg-brand-plum text-white'
+                }`}>
+                  {planTier}
+                </span>
+                <span className="text-[10px] text-txt-hint">plan</span>
+              </div>
             </TooltipContent>
           </Tooltip>
-
-          <div className={`rounded mr-1.5 ml-1.5 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider ${planTier === 'essential' ? 'bg-surface-hover text-txt-muted' :
-            planTier === 'pro' ? 'bg-brand-rose-dim text-brand-rose-deep' :
-              planTier === 'elite' ? 'bg-brand-plum-dim text-brand-plum-deep' :
-                'bg-brand-plum text-white'
-            }`}>
-            {planTier}
-          </div>
         </div>
 
         <nav className="flex w-full flex-col items-center gap-1 pt-2">
