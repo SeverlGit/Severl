@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { getCurrentOrg } from "@/lib/auth";
 import { VerticalConfigProvider } from "@/lib/vertical-config";
 import LabelNav from "@/components/dashboard/LabelNav";
@@ -6,6 +6,7 @@ import Topbar from "@/components/dashboard/Topbar";
 import { TopbarTitleProvider } from "@/components/dashboard/TopbarTitleContext";
 import { PlanProvider } from "@/lib/billing/plan-context";
 import { getSupabaseAdminClient } from "@/lib/supabase/server";
+import { NavigationProgress } from "@/components/dashboard/NavigationProgress";
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -28,6 +29,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     <VerticalConfigProvider verticalSlug={org.vertical}>
       <PlanProvider planTier={org.plan_tier} clientsUsed={clientsUsed}>
         <TopbarTitleProvider>
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
           <div className="flex h-screen overflow-hidden bg-page">
             <LabelNav org={org} orgId={org.id} />
             <div className="flex flex-1 flex-col overflow-hidden">
