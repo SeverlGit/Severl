@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { UserProfile, useUser } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { usePlan } from "@/lib/billing/plan-context";
 import { usePrefs } from "@/lib/prefs-context";
 import type { UserPrefs, Density, CurrencyFormat, WeekStart, DueDayPreset } from "@/lib/prefs-context";
@@ -16,12 +16,17 @@ import {
   LayoutGrid,
   CheckCircle2,
   PlayCircle,
-  CreditCard
+  CreditCard,
+  User,
+  Shield,
+  ChevronRight,
+  Mail,
+  Link2,
 } from "lucide-react";
 import Link from "next/link";
 import { useTour } from "@/lib/tour-context";
 
-// ─── Style tokens matching our OS ─────────────────────────────────────────────
+// ─── Primitives ───────────────────────────────────────────────────────────────
 
 const labelClass = "block text-[10px] uppercase tracking-wider font-medium text-txt-muted mb-1.5";
 
@@ -29,19 +34,37 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className={cn(labelClass, "mb-3 mt-1")}>{children}</p>;
 }
 
-function SettingRow({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) {
+function SettingRow({
+  label,
+  description,
+  children,
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-border py-3 last:border-0">
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-medium text-txt-primary">{label}</p>
-        {description && <p className="mt-0.5 text-[11px] leading-relaxed text-txt-muted">{description}</p>}
+        {description && (
+          <p className="mt-0.5 text-[11px] leading-relaxed text-txt-muted">{description}</p>
+        )}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
   );
 }
 
-function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boolean) => void; id?: string }) {
+function Toggle({
+  checked,
+  onChange,
+  id,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  id?: string;
+}) {
   return (
     <button
       id={id}
@@ -52,7 +75,7 @@ function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boo
       className={cn(
         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
         "transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/40",
-        checked ? "bg-success" : "bg-border-strong",
+        checked ? "bg-success" : "bg-border-strong"
       )}
     >
       <span
@@ -65,7 +88,15 @@ function Toggle({ checked, onChange, id }: { checked: boolean; onChange: (v: boo
   );
 }
 
-function SegmentedControl<T extends string | number>({ options, value, onChange }: { options: { label: string; value: T }[]; value: T; onChange: (v: T) => void }) {
+function SegmentedControl<T extends string | number>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { label: string; value: T }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {options.map((opt) => (
@@ -77,7 +108,7 @@ function SegmentedControl<T extends string | number>({ options, value, onChange 
             "rounded border px-2.5 py-1 text-xs font-medium uppercase tracking-wider transition-colors",
             value === opt.value
               ? "border-success bg-success/15 text-success"
-              : "border-border bg-transparent text-txt-muted hover:border-txt-hint",
+              : "border-border bg-transparent text-txt-muted hover:border-txt-hint"
           )}
         >
           {opt.label}
@@ -87,7 +118,175 @@ function SegmentedControl<T extends string | number>({ options, value, onChange 
   );
 }
 
-// ─── Custom Pages ─────────────────────────────────────────────────────────────
+// ─── Clerk management CTA card ─────────────────────────────────────────────────
+
+function ManageCard({
+  title,
+  description,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-left transition-colors hover:bg-surface-hover hover:border-brand-rose/40 group"
+    >
+      <div>
+        <p className="text-[13px] font-medium text-txt-primary">{title}</p>
+        <p className="mt-0.5 text-[12px] text-txt-muted group-hover:text-txt-secondary transition-colors">
+          {description}
+        </p>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-txt-muted group-hover:text-brand-rose transition-colors" />
+    </button>
+  );
+}
+
+// ─── Tab: Profile ─────────────────────────────────────────────────────────────
+
+function ProfileContent() {
+  const { user } = useUser();
+  const { openUserProfile } = useClerk();
+
+  if (!user) return null;
+
+  const openClerk = () => openUserProfile();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-txt-primary mb-1">Profile</h1>
+        <p className="text-[13px] text-txt-muted">
+          Your account identity and connected services.
+        </p>
+      </div>
+
+      <div className="max-w-lg space-y-4">
+        {/* Identity card */}
+        <div>
+          <SectionLabel>Profile details</SectionLabel>
+          <div className="rounded-md border border-border bg-surface divide-y divide-border">
+            {/* Avatar + name */}
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={user.imageUrl}
+                  alt={user.fullName ?? ""}
+                  className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
+                />
+                <div>
+                  <p className="text-[13px] font-medium text-txt-primary">
+                    {user.fullName ?? "—"}
+                  </p>
+                  <p className="text-[11px] text-txt-muted">Display name</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={openClerk}
+                className="text-[12px] font-medium text-brand-rose hover:text-brand-rose-deep transition-colors"
+              >
+                Update profile →
+              </button>
+            </div>
+
+            {/* Email addresses */}
+            <div className="px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider font-medium text-txt-muted mb-2">
+                Email addresses
+              </p>
+              <div className="space-y-1.5">
+                {user.emailAddresses.map((ea) => (
+                  <div key={ea.id} className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-txt-muted shrink-0" />
+                    <span className="text-[13px] text-txt-secondary">{ea.emailAddress}</span>
+                    {ea.id === user.primaryEmailAddressId && (
+                      <span className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium text-txt-muted">
+                        Primary
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Connected accounts */}
+            {user.externalAccounts.length > 0 && (
+              <div className="px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wider font-medium text-txt-muted mb-2">
+                  Connected accounts
+                </p>
+                <div className="space-y-1.5">
+                  {user.externalAccounts.map((acct) => (
+                    <div key={acct.id} className="flex items-center gap-2">
+                      <Link2 className="h-3.5 w-3.5 text-txt-muted shrink-0" />
+                      <span className="text-[13px] text-txt-secondary capitalize">
+                        {acct.provider}
+                      </span>
+                      <span className="text-[12px] text-txt-muted">
+                        {"emailAddress" in acct ? String(acct.emailAddress) : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Manage CTA */}
+        <ManageCard
+          title="Manage full account"
+          description="Update photo, name, emails, and connected accounts"
+          onClick={openClerk}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Tab: Security ────────────────────────────────────────────────────────────
+
+function SecurityContent() {
+  const { openUserProfile } = useClerk();
+  const openClerk = () => openUserProfile();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold text-txt-primary mb-1">Security</h1>
+        <p className="text-[13px] text-txt-muted">
+          Manage your password, two-factor authentication, and active sessions.
+        </p>
+      </div>
+
+      <div className="max-w-lg space-y-3">
+        <div>
+          <SectionLabel>Authentication</SectionLabel>
+          <div className="space-y-2">
+            <ManageCard
+              title="Password & 2FA"
+              description="Change your password or set up two-factor authentication"
+              onClick={openClerk}
+            />
+            <ManageCard
+              title="Active sessions"
+              description="View and revoke access across all your devices"
+              onClick={openClerk}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tab: App Settings ────────────────────────────────────────────────────────
 
 function AppSettingsContent() {
   const { prefs, setPref } = usePrefs();
@@ -95,7 +294,6 @@ function AppSettingsContent() {
   const [draft, setDraft] = useState<UserPrefs>(prefs);
   const [saved, setSaved] = useState(true);
 
-  // When Clerk switches tabs, this component mounts/unmounts, syncing to live prefs.
   useEffect(() => {
     setDraft(prefs);
     setSaved(true);
@@ -120,10 +318,11 @@ function AppSettingsContent() {
 
   return (
     <div className="flex flex-col h-full relative space-y-8 pb-20">
-      
       <div>
         <h1 className="text-xl font-semibold text-txt-primary mb-1">App Settings</h1>
-        <p className="text-[13px] text-txt-muted">Manage your dashboard display, invoicing preferences, and workflows.</p>
+        <p className="text-[13px] text-txt-muted">
+          Manage your dashboard display, invoicing preferences, and workflows.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-8">
@@ -137,16 +336,29 @@ function AppSettingsContent() {
           <div className="rounded-md border border-border bg-surface px-3">
             <SettingRow label="Density" description="Row height and padding across tables.">
               <SegmentedControl<Density>
-                options={[{ label: "Compact", value: "compact" }, { label: "Normal", value: "comfortable" }, { label: "Spacious", value: "spacious" }]}
+                options={[
+                  { label: "Compact", value: "compact" },
+                  { label: "Normal", value: "comfortable" },
+                  { label: "Spacious", value: "spacious" },
+                ]}
                 value={draft.density}
                 onChange={(v) => update("density", v)}
               />
             </SettingRow>
             <SettingRow label="Completion %" description="Progress % on deliverable client headers.">
-              <Toggle checked={draft.showCompletionPercent} onChange={(v) => update("showCompletionPercent", v)} />
+              <Toggle
+                checked={draft.showCompletionPercent}
+                onChange={(v) => update("showCompletionPercent", v)}
+              />
             </SettingRow>
-            <SettingRow label="Retainer in deliverables" description="Show retainer value next to client name.">
-              <Toggle checked={draft.showRetainerInDeliverables} onChange={(v) => update("showRetainerInDeliverables", v)} />
+            <SettingRow
+              label="Retainer in deliverables"
+              description="Show retainer value next to client name."
+            >
+              <Toggle
+                checked={draft.showRetainerInDeliverables}
+                onChange={(v) => update("showRetainerInDeliverables", v)}
+              />
             </SettingRow>
           </div>
         </div>
@@ -161,14 +373,26 @@ function AppSettingsContent() {
           <div className="rounded-md border border-border bg-surface px-3">
             <SettingRow label="Currency" description="Applied to all invoices and revenue figures.">
               <SegmentedControl<CurrencyFormat>
-                options={[{ label: "USD", value: "USD" }, { label: "EUR", value: "EUR" }, { label: "GBP", value: "GBP" }, { label: "CAD", value: "CAD" }]}
+                options={[
+                  { label: "USD", value: "USD" },
+                  { label: "EUR", value: "EUR" },
+                  { label: "GBP", value: "GBP" },
+                  { label: "CAD", value: "CAD" },
+                ]}
                 value={draft.currency}
                 onChange={(v) => update("currency", v)}
               />
             </SettingRow>
-            <SettingRow label="Default due days" description="Pre-filled when creating a new invoice.">
+            <SettingRow
+              label="Default due days"
+              description="Pre-filled when creating a new invoice."
+            >
               <SegmentedControl<DueDayPreset>
-                options={[{ label: "7d", value: 7 }, { label: "14d", value: 14 }, { label: "30d", value: 30 }]}
+                options={[
+                  { label: "7d", value: 7 },
+                  { label: "14d", value: 14 },
+                  { label: "30d", value: 30 },
+                ]}
                 value={draft.defaultDueDays}
                 onChange={(v) => update("defaultDueDays", v)}
               />
@@ -186,21 +410,33 @@ function AppSettingsContent() {
           <div className="rounded-md border border-border bg-surface px-3">
             <SettingRow label="Week starts on" description="Affects calendar and date range views.">
               <SegmentedControl<WeekStart>
-                options={[{ label: "Mon", value: "monday" }, { label: "Sun", value: "sunday" }]}
+                options={[
+                  { label: "Mon", value: "monday" },
+                  { label: "Sun", value: "sunday" },
+                ]}
                 value={draft.weekStart}
                 onChange={(v) => update("weekStart", v)}
               />
             </SettingRow>
-            <SettingRow label="Confirm before delete" description="Show a confirmation dialog before deleting items.">
-              <Toggle checked={draft.confirmBeforeDelete} onChange={(v) => update("confirmBeforeDelete", v)} />
+            <SettingRow
+              label="Confirm before delete"
+              description="Show a confirmation dialog before deleting items."
+            >
+              <Toggle
+                checked={draft.confirmBeforeDelete}
+                onChange={(v) => update("confirmBeforeDelete", v)}
+              />
             </SettingRow>
-            <SettingRow label="Replay welcome tour" description="Watch the onboarding spotlight again.">
+            <SettingRow
+              label="Replay welcome tour"
+              description="Watch the onboarding spotlight again."
+            >
               <button
                 type="button"
                 onClick={() => setTimeout(() => openTour(), 200)}
                 className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-xs font-medium text-txt-primary shadow-sm transition-colors hover:bg-surface-hover hover:text-brand-rose"
               >
-                <PlayCircle className="h-3.5 w-3.5 text-txt-muted group-hover:text-brand-rose" />
+                <PlayCircle className="h-3.5 w-3.5 text-txt-muted" />
                 Replay
               </button>
             </SettingRow>
@@ -224,7 +460,11 @@ function AppSettingsContent() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <button type="button" onClick={handleCancel} className="text-sm text-txt-muted transition-colors hover:text-txt-secondary">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="text-sm text-txt-muted transition-colors hover:text-txt-secondary"
+          >
             Cancel
           </button>
           <button
@@ -241,14 +481,16 @@ function AppSettingsContent() {
   );
 }
 
+// ─── Tab: Plan & Billing ──────────────────────────────────────────────────────
+
 function BillingSettingsContent({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   const { planTier } = usePlan();
-  
+
   const TIER_STYLE: Record<string, { label: string; className: string }> = {
     essential: { label: "Essential", className: "bg-surface-hover text-txt-secondary border-border" },
-    pro:       { label: "Pro",       className: "bg-brand-rose-dim text-brand-rose-deep border-brand-rose/20" },
-    elite:     { label: "Elite",     className: "bg-brand-plum-dim text-brand-plum-deep border-brand-plum/20" },
-    agency:    { label: "Agency",    className: "bg-brand-plum text-white border-transparent" },
+    pro: { label: "Pro", className: "bg-brand-rose-dim text-brand-rose-deep border-brand-rose/20" },
+    elite: { label: "Elite", className: "bg-brand-plum-dim text-brand-plum-deep border-brand-plum/20" },
+    agency: { label: "Agency", className: "bg-brand-plum text-white border-transparent" },
   };
 
   const tier = TIER_STYLE[planTier] ?? TIER_STYLE.essential;
@@ -257,7 +499,9 @@ function BillingSettingsContent({ onOpenChange }: { onOpenChange: (open: boolean
     <div className="flex flex-col h-full space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-txt-primary mb-1">Plan & Billing</h1>
-        <p className="text-[13px] text-txt-muted">View your current subscription limits and manage your billing through Stripe.</p>
+        <p className="text-[13px] text-txt-muted">
+          View your current subscription limits and manage your billing through Stripe.
+        </p>
       </div>
 
       <div className="max-w-md">
@@ -269,10 +513,13 @@ function BillingSettingsContent({ onOpenChange }: { onOpenChange: (open: boolean
         >
           <div>
             <div className="flex items-center gap-3">
-              <p className="text-[14px] font-medium text-txt-primary">
-                Organization Plan
-              </p>
-              <span className={cn("rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider", tier.className)}>
+              <p className="text-[14px] font-medium text-txt-primary">Organization Plan</p>
+              <span
+                className={cn(
+                  "rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                  tier.className
+                )}
+              >
                 {tier.label}
               </span>
             </div>
@@ -286,7 +533,18 @@ function BillingSettingsContent({ onOpenChange }: { onOpenChange: (open: boolean
   );
 }
 
-// ─── Main Wrapper Component ───────────────────────────────────────────────────
+// ─── Sidebar nav config ───────────────────────────────────────────────────────
+
+type Tab = "profile" | "security" | "app" | "billing";
+
+const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType }[] = [
+  { id: "profile",  label: "Profile",       icon: User       },
+  { id: "security", label: "Security",      icon: Shield     },
+  { id: "app",      label: "App Settings",  icon: Sliders    },
+  { id: "billing",  label: "Plan & Billing", icon: CreditCard },
+];
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 type Props = {
   open: boolean;
@@ -294,83 +552,71 @@ type Props = {
 };
 
 export function SettingsPanel({ open, onOpenChange }: Props) {
-  // Wait until mounted to prevent hydration mismatches with Clerk
+  const [tab, setTab] = useState<Tab>("profile");
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => setMounted(true), []);
+
+  // Reset to profile tab when reopened
+  useEffect(() => {
+    if (open) setTab("profile");
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="max-w-5xl w-full h-[85vh] p-0 border-border bg-panel shadow-2xl overflow-hidden" 
+      <DialogContent
+        className="max-w-5xl w-full h-[85vh] p-0 border-border bg-panel shadow-2xl overflow-hidden"
         size="xl"
       >
-        {/* Render UserProfile embedded inside Radix Dialog context seamlessly */}
         {mounted && (
-          <UserProfile 
-            routing="virtual"
-            appearance={{
-              elements: {
-                rootBox: "w-full h-full",
-                card: "w-full h-full shadow-none bg-panel rounded-none",
-                navbar: "border-r border-border bg-panel pt-4",
-                navbarMobileMenuRow: "bg-surface border-border",
-                navbarMobileMenuButton: "text-txt-primary",
-                
-                // Sidebar items
-                navbarButton: "text-txt-muted hover:text-txt-primary hover:bg-surface transition-colors",
-                navbarButton__active: "text-brand-rose bg-brand-rose/10",
-                
-                // Content area
-                scrollBox: "bg-panel",
-                pageScrollBox: "px-8 py-6", // Native padding for custom pages
-                
-                // Native headers
-                headerTitle: "text-xl font-semibold text-txt-primary",
-                headerSubtitle: "text-[13px] text-txt-muted",
-                
-                // Form elements
-                profileSectionTitle: "text-sm font-medium text-txt-primary border-b border-border pb-2",
-                profileSectionTitleText: "text-txt-primary",
-                profileSectionContent: "text-txt-secondary",
-                
-                // Buttons & Inputs inside Clerk
-                formButtonPrimary: "bg-brand-rose hover:bg-brand-rose/90 text-white",
-                formButtonReset: "text-txt-muted hover:bg-surface",
-                formFieldInput: "bg-surface border-border text-txt-primary focus:border-brand-rose",
-                formFieldLabel: "text-txt-muted text-xs uppercase tracking-wider font-medium",
-                
-                // Footer
-                footer: "hidden", // Hide Clerk watermark
-              },
-              variables: {
-                colorPrimary: "#e11d48", // brand-rose
-                colorBackground: "#09090b", // zinc-950
-                colorText: "#e4e4e7", // zinc-200
-                colorTextSecondary: "#a1a1aa", // zinc-400
-                colorDanger: "#ef4444", // red-500
-                colorInputBackground: "#18181b", // zinc-900 (surface)
-              }
-            }}
-          >
-            {/* Custom: App Settings */}
-            <UserProfile.Page 
-              label="App Settings" 
-              labelIcon={<Sliders className="h-4 w-4" />} 
-              url="app"
-            >
-              <AppSettingsContent />
-            </UserProfile.Page>
+          <div className="flex h-full">
+            {/* ── Sidebar ── */}
+            <aside className="w-52 shrink-0 flex flex-col border-r border-white/5 bg-sidebar">
+              {/* Header */}
+              <div className="px-4 pt-5 pb-4 border-b border-white/5">
+                <p className="text-[13px] font-semibold text-white/80">Account</p>
+                <p className="text-[11px] text-white/35 mt-0.5">Manage your account</p>
+              </div>
 
-            {/* Custom: Plan & Billing */}
-            <UserProfile.Page 
-              label="Plan & Billing" 
-              labelIcon={<CreditCard className="h-4 w-4" />} 
-              url="billing"
-            >
-              <BillingSettingsContent onOpenChange={onOpenChange} />
-            </UserProfile.Page>
+              {/* Nav */}
+              <nav className="flex-1 px-2 py-2 space-y-0.5">
+                {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setTab(id)}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
+                      tab === id
+                        ? "bg-brand-rose/15 text-brand-rose-mid"
+                        : "text-white/40 hover:text-white/70 hover:bg-white/5"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-colors",
+                        tab === id ? "text-brand-rose" : "text-white/30"
+                      )}
+                    />
+                    {label}
+                  </button>
+                ))}
+              </nav>
 
-          </UserProfile>
+              {/* Footer */}
+              <div className="px-4 py-4 border-t border-white/5">
+                <p className="text-[10px] text-white/20 tracking-wide">Secured by Clerk</p>
+              </div>
+            </aside>
+
+            {/* ── Content ── */}
+            <main className="relative flex-1 overflow-y-auto px-8 py-6 bg-panel">
+              {tab === "profile"  && <ProfileContent />}
+              {tab === "security" && <SecurityContent />}
+              {tab === "app"      && <AppSettingsContent />}
+              {tab === "billing"  && <BillingSettingsContent onOpenChange={onOpenChange} />}
+            </main>
+          </div>
         )}
       </DialogContent>
     </Dialog>

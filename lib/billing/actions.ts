@@ -5,6 +5,9 @@ import { stripe } from '@/lib/billing/stripe';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import * as Sentry from '@sentry/nextjs';
+import { syncPlanToClerkMetadata } from '@/lib/billing/sync-clerk-metadata';
+import type { PlanTier } from '@/lib/database.types';
+import { revalidateTag } from 'next/cache';
 
 const PRICE_ID_MAP: Record<string, string | undefined> = {
   pro: process.env.STRIPE_PRICE_PRO ?? process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
@@ -107,5 +110,92 @@ export async function createPortalSession(params: { orgId: string }): Promise<Ac
     console.error('[createPortalSession]', err);
     Sentry.captureException(err);
     return { error: err instanceof Error ? err.message : 'Unexpected error opening billing portal' };
+  }
+}
+
+export async function restorePurchases(orgId: string): Promise<ActionResult<{ tier: string }>> {
+  try {
+    await requireOrgAccess(orgId);
+
+    const supabase = getSupabaseAdminClient();
+    const { data: org, error: orgError } = await supabase
+      .from('orgs')
+      .select('stripe_customer_id, owner_id')
+      .eq('id', orgId)
+      .single();
+
+    if (orgError || !org) {
+      return { error: 'Organization not found' };
+    }
+
+    let customerId = org.stripe_customer_id;
+
+    // Fast-path recovery if customer was checked out but not linked properly
+    if (!customerId) {
+      const searchRes = await stripe.customers.search({
+        query: `metadata['orgId']:'${orgId}'`,
+      });
+      if (searchRes.data.length > 0) {
+        customerId = searchRes.data[0].id;
+        await supabase.from('orgs').update({ stripe_customer_id: customerId }).eq('id', orgId);
+      } else {
+        return { error: 'No Stripe customer found for this organization. You may not have an active subscription.' };
+      }
+    }
+
+    // Find the current active subscription on Stripe
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'active',
+      expand: ['data.items.data.price'],
+    });
+
+    if (subscriptions.data.length === 0) {
+      return { error: 'No active subscriptions found in Stripe.' };
+    }
+
+    // If they have multiple for some reason, use the newest
+    const activeSubs = subscriptions.data.sort((a, b) => b.created - a.created);
+    const primarySub = activeSubs[0];
+
+    const knownBasePrices = new Set([
+      PRICE_ID_MAP.pro,
+      PRICE_ID_MAP.elite,
+      PRICE_ID_MAP.agency,
+    ].filter(Boolean));
+
+    const basePriceItem = primarySub.items.data.find(item => knownBasePrices.has(item.price.id));
+    const priceId = basePriceItem?.price?.id;
+
+    if (!priceId) {
+      return { error: 'Found an active Stripe subscription, but it does not match standard platform tiers.' };
+    }
+
+    // Map the resolved priceId to the internal PlanTier
+    let newTier: PlanTier = 'essential';
+    for (const [key, val] of Object.entries(PRICE_ID_MAP)) {
+      if (val === priceId) {
+        newTier = key as PlanTier;
+        break;
+      }
+    }
+
+    // Force sync the recovered tier back down to OS and Clerk
+    await supabase
+      .from('orgs')
+      .update({
+        plan_tier: newTier,
+        subscription_status: 'active',
+      })
+      .eq('id', orgId);
+
+    await syncPlanToClerkMetadata(org.owner_id, newTier);
+    revalidateTag(`dashboard-${orgId}`);
+
+    return { data: { tier: newTier } };
+  } catch (err) {
+    console.error('[restorePurchases]', err);
+    Sentry.captureException(err);
+    return { error: err instanceof Error ? err.message : 'Unexpected error during purchase restoration.' };
   }
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { usePlan } from '@/lib/billing/plan-context';
-import { createCheckoutSession, createPortalSession } from '@/lib/billing/actions';
+import { createCheckoutSession, createPortalSession, restorePurchases } from '@/lib/billing/actions';
 import { toast } from 'sonner';
 import { Check, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -105,6 +105,18 @@ export default function BillingClient({
     window.location.href = result.data!;
   };
 
+  const [restoring, setRestoring] = React.useState(false);
+  const handleRestore = async () => {
+    setRestoring(true);
+    const result = await restorePurchases(orgId);
+    setRestoring(false);
+    if (result.error) {
+      toast.error('Could not restore purchases', { description: result.error });
+      return;
+    }
+    toast.success('Purchases restored', { description: `Account synced successfully!` });
+  };
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       {isPastDue && (
@@ -134,16 +146,26 @@ export default function BillingClient({
           </p>
         </div>
 
-        {hasBillingPortal && (
+        <div className="flex items-center gap-4">
           <button
-            onClick={handlePortal}
-            disabled={portalPending || loadingTier !== null}
-            className="flex items-center gap-1.5 rounded-md border border-border bg-panel px-3 py-2 text-xs font-medium text-txt-secondary transition-colors hover:bg-surface-hover disabled:opacity-50"
+            onClick={handleRestore}
+            disabled={restoring || portalPending || loadingTier !== null}
+            className="text-xs font-medium text-brand-rose transition-colors hover:underline disabled:opacity-50"
           >
-            <CreditCard className="h-3.5 w-3.5" />
-            {portalPending ? 'Opening…' : 'Manage billing'}
+            {restoring ? 'Restoring…' : 'Restore purchases'}
           </button>
-        )}
+
+          {hasBillingPortal && (
+            <button
+              onClick={handlePortal}
+              disabled={portalPending || loadingTier !== null}
+              className="flex items-center gap-1.5 rounded-md border border-border bg-panel px-3 py-2 text-xs font-medium text-txt-secondary transition-colors hover:bg-surface-hover disabled:opacity-50"
+            >
+              <CreditCard className="h-3.5 w-3.5" />
+              {portalPending ? 'Opening…' : 'Manage billing'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
