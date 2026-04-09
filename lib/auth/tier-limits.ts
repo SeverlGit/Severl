@@ -7,15 +7,21 @@ export * from '@/lib/billing/tier-definitions';
 export async function checkClientLimit(orgId: string): Promise<void> {
   const supabase = getSupabaseAdminClient();
   
-  const [{ data: org }, { count }] = await Promise.all([
+  const [{ data: org, error: orgError }, { count, error: countError }] = await Promise.all([
     supabase.from('orgs').select('plan_tier').eq('id', orgId).single(),
     supabase.from('clients').select('id', { count: 'exact', head: true })
       .eq('org_id', orgId)
       .is('archived_at', null)
   ]);
 
+  if (orgError) {
+    throw new Error(`Database error fetching org limits: ${orgError.message}`);
+  }
   if (!org) {
     throw new Error('Organization not found');
+  }
+  if (countError) {
+    throw new Error(`Database error counting clients: ${countError.message}`);
   }
 
   const currentCount = count || 0;
@@ -32,7 +38,9 @@ export async function checkClientLimit(orgId: string): Promise<void> {
 
 export async function checkStorageLimit(orgId: string, bytesToAdd: number): Promise<void> {
   const supabase = getSupabaseAdminClient();
-  const { data: org } = await supabase.from('orgs').select('plan_tier').eq('id', orgId).single();
+  const { data: org, error: orgError } = await supabase.from('orgs').select('plan_tier').eq('id', orgId).single();
+  
+  if (orgError) throw new Error(`Database error fetching org limits: ${orgError.message}`);
   if (!org) throw new Error('Organization not found');
 
   const tier = org.plan_tier as PlanTier;
@@ -54,7 +62,7 @@ export async function checkDeliverableLimit(orgId: string, month: Date): Promise
   const supabase = getSupabaseAdminClient();
   const monthStartStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}-01`;
   
-  const [{ data: org }, { count }] = await Promise.all([
+  const [{ data: org, error: orgError }, { count, error: countError }] = await Promise.all([
     supabase.from('orgs').select('plan_tier').eq('id', orgId).single(),
     supabase.from('deliverables').select('id', { count: 'exact', head: true })
       .eq('org_id', orgId)
@@ -62,8 +70,14 @@ export async function checkDeliverableLimit(orgId: string, month: Date): Promise
       .is('archived_at', null)
   ]);
 
+  if (orgError) {
+    throw new Error(`Database error fetching org limits: ${orgError.message}`);
+  }
   if (!org) {
     throw new Error('Organization not found');
+  }
+  if (countError) {
+    throw new Error(`Database error counting deliverables: ${countError.message}`);
   }
 
   const currentCount = count || 0;

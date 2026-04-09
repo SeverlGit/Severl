@@ -79,7 +79,6 @@ export default function LabelNav({ org, orgId }: Props) {
                 }`}>
                   {planTier}
                 </span>
-                <span className="text-[10px] text-txt-hint">plan</span>
               </div>
             </TooltipContent>
           </Tooltip>
