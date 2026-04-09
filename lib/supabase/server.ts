@@ -4,11 +4,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 function getEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !publishableKey) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
   }
-  return { url, anonKey };
+  return { url, publishableKey };
 }
 
 /**
@@ -17,9 +17,9 @@ function getEnv() {
  * Supabase verifies the Clerk session token directly — no JWT template needed.
  */
 export function getSupabaseServerClient(): SupabaseClient {
-  const { url, anonKey } = getEnv();
+  const { url, publishableKey } = getEnv();
 
-  return createClient(url, anonKey, {
+  return createClient(url, publishableKey, {
     async accessToken() {
       return (await auth()).getToken();
     },
@@ -27,18 +27,18 @@ export function getSupabaseServerClient(): SupabaseClient {
 }
 
 /**
- * Service-role admin client — bypasses RLS entirely.
+ * Secret-key admin client — bypasses RLS entirely.
  * Only use in trusted server actions where the caller has already
  * verified the user's identity via Clerk (e.g. createOrg, getCurrentOrg).
  * Never expose this client to the browser.
  */
 export function getSupabaseAdminClient(): SupabaseClient {
   const { url } = getEnv();
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('Missing SUPABASE_SECRET_KEY');
   }
-  return createClient(url, serviceKey, {
+  return createClient(url, secretKey, {
     auth: { persistSession: false },
   });
 }
