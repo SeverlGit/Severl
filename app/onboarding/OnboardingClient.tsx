@@ -5,19 +5,22 @@ import { motion } from "framer-motion";
 import { useFormState, useFormStatus } from "react-dom";
 import { createOrg } from "./actions";
 import AuthShell from "@/components/brand/AuthShell";
+import { cn } from "@/lib/utils";
 
 type Step = 1 | 2;
 
 const initialState = { error: undefined as string | undefined };
 const ease = [0.16, 1, 0.3, 1] as const;
 
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
 function SoloIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="5" r="3" stroke="#C4909A" strokeWidth="1.5" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="6.5" r="3.5" stroke="#8C5562" strokeWidth="1.5" />
       <path
-        d="M2.5 14.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"
-        stroke="#C4909A"
+        d="M3 18c0-3.5 3-6 7-6s7 2.5 7 6"
+        stroke="#8C5562"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
@@ -27,24 +30,49 @@ function SoloIcon() {
 
 function TeamIcon() {
   return (
-    <svg width="18" height="16" viewBox="0 0 18 16" fill="none">
-      <circle cx="7" cy="4.5" r="2.5" stroke="#C4909A" strokeWidth="1.5" />
+    <svg width="22" height="20" viewBox="0 0 22 20" fill="none">
+      <circle cx="8.5" cy="6" r="3" stroke="#8C5562" strokeWidth="1.5" />
       <path
-        d="M2 14c0-2.5 2-4.5 5-4.5s5 2 5 4.5"
-        stroke="#C4909A"
+        d="M2 18c0-3 2.5-5 6.5-5s6.5 2 6.5 5"
+        stroke="#8C5562"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
-      <circle cx="13" cy="5.5" r="2" stroke="#C4909A" strokeWidth="1.2" />
+      <circle cx="16" cy="7" r="2.5" stroke="#6B6178" strokeWidth="1.25" />
       <path
-        d="M13.5 9.5c1.8.3 3.5 1.5 3.5 3.5"
-        stroke="#C4909A"
-        strokeWidth="1.2"
+        d="M16.5 12c2.5.4 4.5 2 4.5 4.5"
+        stroke="#6B6178"
+        strokeWidth="1.25"
         strokeLinecap="round"
       />
     </svg>
   );
 }
+
+// ─── Step indicator ───────────────────────────────────────────────────────────
+
+function StepIndicator({ step }: { step: Step }) {
+  return (
+    <div className="mb-6 flex items-center gap-2">
+      {([1, 2] as const).map((n) => (
+        <div
+          key={n}
+          className={cn(
+            "h-1.5 rounded-full transition-all duration-300",
+            n === step
+              ? "w-6 bg-brand-rose"
+              : n < step
+              ? "w-3 bg-brand-rose/40"
+              : "w-3 bg-border-strong"
+          )}
+        />
+      ))}
+      <span className="ml-1 text-[11px] text-txt-muted">Step {step} of 2</span>
+    </div>
+  );
+}
+
+// ─── Vertical option cards ────────────────────────────────────────────────────
 
 function VerticalOptions() {
   const { pending } = useFormStatus();
@@ -53,22 +81,22 @@ function VerticalOptions() {
     {
       key: "smm_freelance" as const,
       icon: <SoloIcon />,
-      iconBg: "rgba(110,231,183,0.12)",
       title: "I work solo",
       subtitle: "Freelance · up to 10 clients",
+      tag: "Freelancer",
     },
     {
       key: "smm_agency" as const,
       icon: <TeamIcon />,
-      iconBg: "rgba(110,231,183,0.12)",
       title: "I run a team",
       subtitle: "Agency · team management",
+      tag: "Agency",
     },
   ];
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-[10px]">
+      <div className="grid grid-cols-2 gap-3">
         {options.map((option, index) => (
           <motion.button
             key={option.key}
@@ -76,21 +104,30 @@ function VerticalOptions() {
             name="vertical"
             value={option.key}
             disabled={pending}
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease, delay: index * 0.06 }}
-            className="flex flex-col rounded-[10px] border border-white/[0.08] bg-white/[0.04] p-5 text-left transition-colors hover:border-[rgba(110,231,183,0.20)] hover:bg-[rgba(110,231,183,0.05)] disabled:cursor-wait disabled:opacity-60"
+            transition={{ duration: 0.4, ease, delay: index * 0.07 }}
+            className={cn(
+              "group flex flex-col rounded-xl border bg-surface p-4 text-left",
+              "transition-all duration-150",
+              "hover:border-brand-rose/40 hover:bg-brand-rose-dim hover:shadow-sm",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-rose/40",
+              "disabled:cursor-wait disabled:opacity-50",
+              "border-border"
+            )}
           >
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-[7px]"
-              style={{ background: option.iconBg }}
-            >
-              {option.icon}
+            <div className="flex items-center justify-between">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-rose-dim border border-brand-rose/20 transition-colors group-hover:bg-white">
+                {option.icon}
+              </div>
+              <span className="rounded border border-brand-plum/20 bg-brand-plum-dim px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-plum-deep">
+                {option.tag}
+              </span>
             </div>
-            <span className="mt-3 text-[14px] font-medium text-white">
+            <span className="mt-3 text-[14px] font-semibold text-txt-primary">
               {option.title}
             </span>
-            <span className="mt-1 text-[12px] text-white/40">
+            <span className="mt-0.5 text-[12px] text-txt-muted">
               {option.subtitle}
             </span>
           </motion.button>
@@ -98,13 +135,16 @@ function VerticalOptions() {
       </div>
 
       {pending && (
-        <p className="mt-3 text-center text-[12px] text-white/40">
+        <p className="mt-4 flex items-center justify-center gap-2 text-[12px] text-txt-muted">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-rose animate-pulse inline-block" />
           Creating your workspace…
         </p>
       )}
     </>
   );
 }
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function OnboardingClient() {
   const [step, setStep] = useState<Step>(1);
@@ -115,7 +155,7 @@ export default function OnboardingClient() {
   const [timezone] = useState(() =>
     typeof window !== "undefined"
       ? Intl.DateTimeFormat().resolvedOptions().timeZone
-      : "UTC",
+      : "UTC"
   );
 
   const isNameValid = businessName.trim().length > 0;
@@ -135,19 +175,23 @@ export default function OnboardingClient() {
     <AuthShell>
       <motion.div
         key={step}
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease, delay: 0.1 }}
-        className="w-full max-w-[420px] rounded-[14px] border border-white/[0.08] bg-[rgba(8,8,8,0.85)] p-7 backdrop-blur-[20px] backdrop-saturate-[180%]"
+        transition={{ duration: 0.45, ease, delay: 0.08 }}
+        className="w-full max-w-[420px] rounded-xl border border-border bg-panel p-7 shadow-sm"
       >
+        <StepIndicator step={step} />
+
+        {/* ── Step 1: Business name ── */}
         {step === 1 && (
           <div className="flex flex-col">
-            <h2 className="text-[13px] font-medium tracking-[-0.02em] text-white">
+            <h2 className="font-display text-[22px] font-medium leading-snug text-txt-primary">
               What&apos;s your business called?
             </h2>
-            <p className="mb-5 mt-1.5 text-[13px] text-white/40">
+            <p className="mb-5 mt-1.5 text-[13px] text-txt-muted">
               This is how your workspace will be labelled.
             </p>
+
             <input
               autoFocus
               value={businessName}
@@ -157,35 +201,35 @@ export default function OnboardingClient() {
               }}
               onKeyDown={handleKeyDown}
               onBlur={() => setTouched(true)}
-              placeholder="e.g. Severl Social Studio"
+              placeholder="e.g. Jade Social Studio"
               maxLength={80}
               aria-label="Business name"
               aria-describedby={showNameError ? "name-error" : undefined}
-              className={[
-                "h-12 w-full rounded-lg px-4 text-[13px] text-white outline-none",
-                "transition-[border-color,background] duration-150",
-                "placeholder:text-white/25",
+              className={cn(
+                "h-11 w-full rounded-lg border px-4 text-[13px] text-txt-primary bg-surface outline-none",
+                "placeholder:text-txt-hint transition-colors duration-150",
                 showNameError
-                  ? "border border-red-400/40 bg-red-400/[0.06]"
-                  : "border border-white/10 bg-white/[0.06] focus:border-[rgba(110,231,183,0.40)] focus:bg-white/[0.08]",
-              ].join(" ")}
+                  ? "border-danger/50 bg-danger-bg focus:border-danger/60"
+                  : "border-border focus:border-brand-rose/50 focus:ring-1 focus:ring-brand-rose/10"
+              )}
             />
             {showNameError && (
-              <p id="name-error" className="mt-1.5 text-[12px] text-[#f87171]">
+              <p id="name-error" className="mt-1.5 text-[12px] text-danger">
                 Please enter your business name.
               </p>
             )}
+
             <button
               type="button"
               onClick={handleContinue}
-              disabled={touched && !isNameValid}
-              className="mt-3 h-11 w-full rounded-lg bg-brand-rose text-[13px] font-medium text-white transition-colors hover:bg-brand-rose-deep disabled:cursor-default disabled:opacity-40"
+              className="mt-4 h-11 w-full rounded-lg bg-brand-rose text-[13px] font-medium text-white transition-colors hover:bg-brand-rose-deep disabled:cursor-default disabled:opacity-40"
             >
-              Continue
+              Continue →
             </button>
           </div>
         )}
 
+        {/* ── Step 2: Vertical ── */}
         {step === 2 && (
           <form action={formAction} className="flex flex-col">
             <input type="hidden" name="business_name" value={businessName} />
@@ -195,26 +239,27 @@ export default function OnboardingClient() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="text-[12px] text-white/[0.35] transition-colors hover:text-white"
+                className="text-[12px] text-txt-muted transition-colors hover:text-txt-primary"
                 aria-label="Go back"
               >
                 ← Back
               </button>
+              <span className="text-[12px] text-txt-hint">
+                &middot; {businessName}
+              </span>
             </div>
 
-            <h2 className="text-[13px] font-medium tracking-[-0.02em] text-white">
+            <h2 className="font-display text-[22px] font-medium leading-snug text-txt-primary">
               How do you work?
             </h2>
-            <p className="mb-5 mt-1.5 text-[13px] text-white/40">
-              This personalises your workspace.
+            <p className="mb-5 mt-1.5 text-[13px] text-txt-muted">
+              This personalises your workspace and feature set.
             </p>
 
             <VerticalOptions />
 
             {state?.error && (
-              <p className="mt-3 text-[13px] text-[#f87171]">
-                {state.error}
-              </p>
+              <p className="mt-3 text-[13px] text-danger">{state.error}</p>
             )}
           </form>
         )}

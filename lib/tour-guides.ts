@@ -5,16 +5,16 @@ import "driver.js/dist/driver.css";
 import { markUIMetaSeen } from "@/lib/onboarding-actions";
 
 export const brandTheme = {
-  className: "driver-modern-theme",
   animate: true,
-  opacity: 0.7,
-  padding: 8,
+  smoothScroll: true,
+  overlayOpacity: 0.55,
+  stagePadding: 6,
+  stageRadius: 6,
   allowClose: false,
-  overlayColor: "#09090b", // zinc-950 mapping roughly
-  stageRadius: 4,
-  nextBtnText: "Next &rarr;",
-  prevBtnText: "&larr; Prev",
+  nextBtnText: "Next →",
+  prevBtnText: "← Prev",
   doneBtnText: "Got it",
+  showProgress: true,
 };
 
 /**

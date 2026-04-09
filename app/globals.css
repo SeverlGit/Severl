@@ -90,3 +90,125 @@ a { text-decoration: none; }
 @keyframes drawLine {
   to { stroke-dashoffset: 0; }
 }
+
+/* ── Driver.js — Editorial Command theme override ─────────────────────────── */
+
+/* Overlay */
+#driver-page-overlay {
+  background: rgba(26, 23, 20, 0.55) !important; /* warm dark, not zinc-950 */
+}
+
+/* Popover card */
+.driver-popover {
+  background:    #FAF7F4 !important;  /* panel */
+  border:        1px solid #DDD7CE !important; /* border */
+  border-radius: 10px !important;
+  box-shadow:    0 8px 32px rgba(26, 23, 20, 0.12), 0 1px 4px rgba(26, 23, 20, 0.06) !important;
+  padding:       20px 22px 16px !important;
+  max-width:     280px !important;
+  font-family:   var(--font-dm-sans), sans-serif !important;
+}
+
+/* Arrow */
+.driver-popover-arrow-side-left   .driver-popover-arrow { border-right-color:  #DDD7CE !important; }
+.driver-popover-arrow-side-right  .driver-popover-arrow { border-left-color:   #DDD7CE !important; }
+.driver-popover-arrow-side-top    .driver-popover-arrow { border-bottom-color: #DDD7CE !important; }
+.driver-popover-arrow-side-bottom .driver-popover-arrow { border-top-color:    #DDD7CE !important; }
+
+/* Progress pips */
+.driver-popover-progress-tab {
+  background: #DDD7CE !important;
+  width:      6px !important;
+  height:     6px !important;
+  border-radius: 9999px !important;
+}
+.driver-popover-progress-tab.driver-popover-progress-tab-active {
+  background: #C4909A !important; /* brand-rose */
+  width:      14px !important;
+}
+
+/* Title */
+.driver-popover-title {
+  font-family: var(--font-fraunces), serif !important;
+  font-size:   15px !important;
+  font-weight: 600 !important;
+  color:       #1A1714 !important; /* txt-primary */
+  margin-bottom: 5px !important;
+  line-height: 1.3 !important;
+}
+
+/* Description */
+.driver-popover-description {
+  font-size:   13px !important;
+  color:       #6B6560 !important; /* txt-secondary */
+  line-height: 1.6 !important;
+}
+
+/* Footer row */
+.driver-popover-footer {
+  margin-top:     14px !important;
+  padding-top:    12px !important;
+  border-top:     1px solid #E8E2D9 !important; /* border-subtle */
+  display:        flex !important;
+  align-items:    center !important;
+  gap:            8px !important;
+}
+
+/* Shared button base */
+.driver-popover-footer button {
+  font-family:   var(--font-dm-sans), sans-serif !important;
+  font-size:     12px !important;
+  font-weight:   500 !important;
+  border-radius: 6px !important;
+  padding:       5px 12px !important;
+  cursor:        pointer !important;
+  transition:    background 0.15s, color 0.15s, border-color 0.15s !important;
+  border:        1px solid transparent !important;
+  line-height:   1.4 !important;
+}
+
+/* Prev button */
+.driver-popover-prev-btn {
+  background:   transparent !important;
+  color:        #A09890 !important; /* txt-muted */
+  border-color: #DDD7CE !important;
+  margin-right: auto !important;
+}
+.driver-popover-prev-btn:hover {
+  background:   #E8E2D9 !important;
+  color:        #6B6560 !important;
+}
+
+/* Next / Done button */
+.driver-popover-next-btn {
+  background:   #C4909A !important; /* brand-rose */
+  color:        #ffffff !important;
+  border-color: #C4909A !important;
+  margin-left:  auto !important;
+}
+.driver-popover-next-btn:hover {
+  background:   #8C5562 !important; /* brand-rose-deep */
+  border-color: #8C5562 !important;
+}
+
+/* Close (×) button */
+.driver-popover-close-btn {
+  color:     #A09890 !important;
+  font-size: 16px !important;
+  top:       12px !important;
+  right:     14px !important;
+  opacity:   1 !important;
+  transition: color 0.15s !important;
+}
+.driver-popover-close-btn:hover {
+  color: #1A1714 !important;
+}
+
+/* Stage highlight ring */
+.driver-active-element,
+.driver-highlighted-element {
+  outline:        2px solid #C4909A !important; /* brand-rose */
+  outline-offset: 3px !important;
+  border-radius:  6px !important;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
