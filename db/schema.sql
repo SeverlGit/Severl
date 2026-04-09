@@ -117,6 +117,7 @@ create table if not exists orgs (
   plan_tier           plan_tier not null default 'essential',
   stripe_customer_id  text,
   subscription_status text not null default 'active',
+  ui_meta             jsonb not null default '{}'::jsonb,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );

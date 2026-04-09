@@ -5,6 +5,13 @@
 
 export type PlanTier = 'essential' | 'pro' | 'elite' | 'agency';
 
+export type OrgUIMeta = {
+  has_seen_tour?: boolean;
+  has_seen_first_client?: boolean;
+  has_seen_first_invoice?: boolean;
+  has_seen_first_deliverable?: boolean;
+};
+
 export type OrgRow = {
   id: string;
   name: string;
@@ -14,6 +21,7 @@ export type OrgRow = {
   plan_tier: PlanTier;
   stripe_customer_id: string | null;
   subscription_status: string;
+  ui_meta: OrgUIMeta;
   created_at: string;
   updated_at: string;
 };

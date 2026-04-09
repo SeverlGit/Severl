@@ -22,8 +22,10 @@ import {
   LayoutGrid,
   AlertTriangle,
   CheckCircle2,
+  PlayCircle
 } from "lucide-react";
 import Link from "next/link";
+import { useTour } from "@/lib/tour-context";
 
 // ─── Style tokens matching AddClientDialog ────────────────────────────────────
 
@@ -149,6 +151,7 @@ export function SettingsPanel({ open, onOpenChange }: Props) {
   const { openUserProfile } = useClerk();
   const { planTier } = usePlan();
   const { prefs, setPref } = usePrefs();
+  const { openTour } = useTour();
 
   const tier = TIER_STYLE[planTier] ?? TIER_STYLE.essential;
 
@@ -336,6 +339,22 @@ export function SettingsPanel({ open, onOpenChange }: Props) {
                   checked={draft.confirmBeforeDelete}
                   onChange={(v) => update("confirmBeforeDelete", v)}
                 />
+              </SettingRow>
+              <SettingRow
+                label="Replay welcome tour"
+                description="Watch the onboarding walkthrough again."
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenChange(false);
+                    setTimeout(() => openTour(), 200);
+                  }}
+                  className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-xs font-medium text-txt-primary shadow-sm transition-colors hover:bg-surface-hover hover:text-brand-rose"
+                >
+                  <PlayCircle className="h-3.5 w-3.5 text-txt-muted group-hover:text-brand-rose" />
+                  Replay
+                </button>
               </SettingRow>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { auth } from '@clerk/nextjs/server';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
+import type { OrgUIMeta } from '@/lib/database.types';
 
 export type OrgRecord = {
   id: string;
@@ -12,6 +13,7 @@ export type OrgRecord = {
   plan_tier: 'essential' | 'pro' | 'elite' | 'agency';
   stripe_customer_id: string | null;
   subscription_status: string;
+  ui_meta: OrgUIMeta;
   created_at: string;
   updated_at: string;
 };
