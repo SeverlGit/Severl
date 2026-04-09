@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createInvoice } from "@/lib/invoicing/actions";
 import type { InvoiceClientOption } from "@/lib/invoicing/getInvoicesData";
 import { toast } from "sonner";
+import { useTour } from "@/lib/tour-context";
+import { startCreateInvoiceTour } from "@/lib/tour-guides";
 import {
   Dialog,
   DialogContent,
@@ -68,6 +70,17 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
   const [billingMonth, setBillingMonth] = useState(defaultBillingMonth);
   const [description, setDescription] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const { uiMeta, markLocalSeen } = useTour();
+
+  React.useEffect(() => {
+    if (open && !uiMeta.has_seen_first_invoice && clients.length > 0) {
+      const t = setTimeout(() => {
+        startCreateInvoiceTour(() => markLocalSeen("has_seen_first_invoice"));
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [open, uiMeta.has_seen_first_invoice, clients.length, markLocalSeen]);
 
   const amountPreview = useMemo(() => {
     const n = parseFloat(amountStr.replace(/,/g, ""));
@@ -150,7 +163,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
                 Client
               </label>
               <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger id="create-inv-client" aria-label="Client">
+                <SelectTrigger id="form-invoice-client" aria-label="Client">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
                 <SelectContent>
@@ -210,7 +223,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
                   Due date
                 </label>
                 <Input
-                  id="create-inv-due"
+                  id="form-invoice-due"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
@@ -255,6 +268,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
                 </button>
               </DialogClose>
               <button
+                id="form-invoice-submit"
                 type="submit"
                 disabled={isPending || !clientId}
                 className="rounded bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"

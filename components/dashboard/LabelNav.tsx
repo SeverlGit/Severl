@@ -99,6 +99,7 @@ export default function LabelNav({ org, orgId }: Props) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
+                      id={`tour-nav-${item.key}`}
                       href={item.href}
                       onClick={() => setPendingHref(item.href)}
                       className={`relative flex h-9 w-full items-center justify-center transition-colors duration-150 ease-out ${
@@ -151,7 +152,7 @@ export default function LabelNav({ org, orgId }: Props) {
           />
         )}
 
-        <div className="mt-auto pb-3">
+        <div id="tour-nav-settings" className="mt-auto pb-3">
           <Tooltip>
             <TooltipTrigger asChild>
               <div>

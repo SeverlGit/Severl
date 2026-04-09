@@ -11,6 +11,8 @@ import React, { useState, useTransition } from "react";
 import type { AnyVerticalConfig } from "@/lib/vertical-config";
 import { createClient } from "@/lib/clients/actions";
 import { toast } from "sonner";
+import { useTour } from "@/lib/tour-context";
+import { startAddClientTour } from "@/lib/tour-guides";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +53,16 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
   const [isPending, startTransition] = useTransition();
 
   const { planTier, limits, clientsUsed, atClientLimit } = usePlan();
+  const { uiMeta, markLocalSeen } = useTour();
+
+  React.useEffect(() => {
+    if (open && !uiMeta.has_seen_first_client) {
+      const t = setTimeout(() => {
+        startAddClientTour(() => markLocalSeen("has_seen_first_client"));
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [open, uiMeta.has_seen_first_client, markLocalSeen]);
 
   const platformsField = verticalConfig.crm.intakeFields.find(
     (f) => f.key === "platforms"
@@ -161,6 +173,7 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
               <div className="col-span-2">
                 <label className={labelClass}>Brand name *</label>
                 <Input
+                  id="form-client-brand"
                   autoFocus
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
@@ -215,7 +228,7 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
                 </div>
               </div>
 
-              <div className="col-span-2">
+              <div className="col-span-2" id="form-client-retainer">
                 <label className={labelClass}>Retainer amount</label>
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm text-txt-muted">$</span>
@@ -261,6 +274,7 @@ export function AddClientDialog({ orgId, verticalSlug, verticalConfig, trigger }
             </button>
           </DialogClose>
           <button
+            id="form-client-submit"
             type="button"
             onClick={handleSubmit}
             disabled={

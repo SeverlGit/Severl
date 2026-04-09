@@ -17,30 +17,21 @@ type DashboardLayoutProps = {
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
   const org = await getCurrentOrg();
   
-  // Fetch counts in parallel for limits and contextual milestones
+  // Count active clients to hydrate plan context limits
   const supabase = getSupabaseAdminClient();
-  const [
-    { count: clientCountRes },
-    { count: deliverableCountRes },
-    { count: invoiceCountRes }
-  ] = await Promise.all([
-    supabase.from("clients").select("id", { count: "exact", head: true }).eq("org_id", org.id).is("archived_at", null),
-    supabase.from("deliverables").select("id", { count: "exact", head: true }).eq("org_id", org.id),
-    supabase.from("invoices").select("id", { count: "exact", head: true }).eq("org_id", org.id)
-  ]);
+  const { count } = await supabase
+    .from("clients")
+    .select("id", { count: "exact", head: true })
+    .eq("org_id", org.id)
+    .is("archived_at", null);
 
-  const clientsUsed = clientCountRes || 0;
-  const metrics = {
-    clients: clientsUsed,
-    deliverables: deliverableCountRes || 0,
-    invoices: invoiceCountRes || 0,
-  };
+  const clientsUsed = count || 0;
 
   return (
     <VerticalConfigProvider verticalSlug={org.vertical}>
       <PlanProvider planTier={org.plan_tier} clientsUsed={clientsUsed}>
         <PrefsProvider>
-          <TourProvider uiMeta={org.ui_meta || {}} metrics={metrics}>
+          <TourProvider uiMeta={org.ui_meta || {}}>
             <TopbarTitleProvider>
               <Suspense fallback={null}>
                 <NavigationProgress />
