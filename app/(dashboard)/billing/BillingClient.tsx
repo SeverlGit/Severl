@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { usePlan } from '@/lib/billing/plan-context';
 import { createCheckoutSession, createPortalSession, restorePurchases } from '@/lib/billing/actions';
 import { toast } from 'sonner';
@@ -260,9 +261,16 @@ export default function BillingClient({
         })}
       </div>
 
-      <p className="mt-8 text-center text-xs text-txt-hint">
-        Payments processed securely by Stripe. Cancel anytime from your billing portal.
-      </p>
+      <div className="mt-8 flex flex-col items-center gap-2">
+        <p className="text-center text-xs text-txt-hint">
+          Payments processed securely by Stripe. Cancel anytime from your billing portal.
+        </p>
+        <div className="flex items-center gap-3 text-[11px] text-txt-hint">
+          <Link href="/terms" className="hover:text-txt-muted transition-colors">Terms of Service</Link>
+          <span>·</span>
+          <Link href="/privacy" className="hover:text-txt-muted transition-colors">Privacy Policy</Link>
+        </div>
+      </div>
     </div>
   );
 }

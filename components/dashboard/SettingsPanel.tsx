@@ -29,6 +29,7 @@ import { createPortalSession } from "@/lib/billing/actions";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useTour } from "@/lib/tour-context";
+import { FileText, ShieldCheck } from "lucide-react";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
@@ -636,6 +637,28 @@ function BillingSettingsContent({
             </Link>
           </div>
         )}
+
+        {/* Legal links */}
+        <div className="flex items-center gap-4 pt-2">
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-[11px] text-txt-hint hover:text-txt-secondary transition-colors"
+          >
+            <FileText className="h-3 w-3" />
+            Terms of Service
+          </Link>
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-[11px] text-txt-hint hover:text-txt-secondary transition-colors"
+          >
+            <ShieldCheck className="h-3 w-3" />
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -713,8 +736,26 @@ export function SettingsPanel({ open, onOpenChange, orgId }: Props) {
               </nav>
 
               {/* Footer */}
-              <div className="px-4 py-4 border-t border-white/5">
+              <div className="px-4 py-4 border-t border-white/5 space-y-2">
                 <p className="text-[10px] text-white/20 tracking-wide">Secured by Clerk</p>
+                <div className="flex flex-col gap-1">
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-white/25 hover:text-white/50 transition-colors"
+                  >
+                    Terms of Service
+                  </Link>
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-white/25 hover:text-white/50 transition-colors"
+                  >
+                    Privacy Policy
+                  </Link>
+                </div>
               </div>
             </aside>
 
