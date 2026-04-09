@@ -262,7 +262,7 @@ export function CreateInvoiceDialog({ orgId, verticalSlug, clients }: Props) {
               <DialogClose asChild>
                 <button
                   type="button"
-                  className="text-sm text-txt-muted transition-colors hover:text-txt-secondary"
+                  className="text-sm text-txt-muted transition-colors hover:text-txt-secondary mr-auto"
                 >
                   Cancel
                 </button>

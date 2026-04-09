@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { usePlan } from '@/lib/billing/plan-context';
 import { createCheckoutSession, createPortalSession, restorePurchases } from '@/lib/billing/actions';
 import { toast } from 'sonner';
@@ -68,15 +69,27 @@ export default function BillingClient({
   checkoutCanceled,
 }: Props) {
   const { planTier } = usePlan();
+  const router = useRouter();
   const [loadingTier, setLoadingTier] = React.useState<string | null>(null);
   const [portalPending, setPortalPending] = React.useState(false);
+  const [syncing, setSyncing] = React.useState(checkoutSuccess);
 
   const isPastDue = subscriptionStatus === 'past_due';
   const hasBillingPortal = !!stripeCustomerId;
 
   useEffect(() => {
     if (checkoutSuccess) {
-      toast.success("You're all set!", { description: 'Your plan has been upgraded successfully.' });
+      // Stripe redirects before the webhook fires, so plan_tier in DB is still stale.
+      // Pull the active subscription directly from Stripe and sync it, then re-render.
+      restorePurchases(orgId).then((result) => {
+        setSyncing(false);
+        if (result.error) {
+          toast.error('Plan upgrade detected but sync failed', { description: result.error });
+        } else {
+          toast.success("You're all set!", { description: 'Your plan has been upgraded successfully.' });
+          router.refresh();
+        }
+      });
     } else if (checkoutCanceled) {
       toast.info('Checkout canceled', { description: 'No changes were made to your plan.' });
     }
@@ -119,6 +132,12 @@ export default function BillingClient({
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
+      {syncing && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-brand-rose/30 bg-brand-rose-dim px-4 py-3 text-sm">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-rose animate-pulse inline-block" />
+          <span className="text-brand-rose-deep font-medium">Confirming your upgrade with Stripe…</span>
+        </div>
+      )}
       {isPastDue && (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm">
           <span className="font-medium text-danger">Payment past due.</span>
