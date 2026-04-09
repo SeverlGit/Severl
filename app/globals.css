@@ -83,8 +83,8 @@ a { text-decoration: none; }
   .tag-plum  { @apply bg-brand-plum-dim text-brand-plum-deep border border-brand-plum/20 text-xs font-medium rounded px-2 py-0.5; }
   .tag-green { @apply bg-success-bg text-success border border-success/20 text-xs font-medium rounded px-2 py-0.5; }
   .tag-red   { @apply bg-danger-bg text-danger border border-danger/20 text-xs font-medium rounded px-2 py-0.5; }
-  .tag-amber { @apply bg-warning-bg text-warning border border-warning/20 text-xs font-medium rounded px-2 py-0.5; }
-  .tag-muted { @apply bg-surface-hover text-txt-muted text-xs font-medium rounded px-2 py-0.5; }
+  .tag-amber { @apply bg-warning-bg text-[#8B5F1E] border border-warning/20 text-xs font-medium rounded px-2 py-0.5; }
+  .tag-muted { @apply bg-surface-hover text-txt-secondary text-xs font-medium rounded px-2 py-0.5; }
 }
 
 @keyframes drawLine {

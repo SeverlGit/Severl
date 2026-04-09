@@ -106,7 +106,7 @@ export default function LabelNav({ org, orgId }: Props) {
                           ? "bg-[rgba(221,180,188,0.07)] text-[#DDB4BC]/70"
                           : isActive
                           ? "bg-[rgba(221,180,188,0.10)] text-[#DDB4BC]"
-                          : "text-white/30 hover:text-white/60"
+                          : "text-white/50 hover:text-white/75"
                       }`}
                       aria-label={label}
                       aria-current={isActive ? "page" : undefined}
@@ -129,7 +129,7 @@ export default function LabelNav({ org, orgId }: Props) {
                       <button
                         type="button"
                         onClick={() => setTeamDialogOpen(true)}
-                        className="relative flex h-9 w-full items-center justify-center text-white/30 transition-colors duration-150 ease-out hover:text-white/60"
+                        className="relative flex h-9 w-full items-center justify-center text-white/50 transition-colors duration-150 ease-out hover:text-white/75"
                         aria-label="Team"
                       >
                         <Users className="h-[18px] w-[18px]" strokeWidth={1.5} />

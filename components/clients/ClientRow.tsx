@@ -91,7 +91,7 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
           <ClientAvatar name={client.brand_name} tag={client.tag} />
           <div className="flex flex-col">
             <span className="text-[14px] text-txt-primary">{client.brand_name}</span>
-            <span className="text-[12px] text-txt-muted">
+            <span className="text-[12px] text-txt-secondary">
               {[client.contact_name, client.contact_email].filter(Boolean).join(' · ')}
             </span>
           </div>
@@ -117,7 +117,7 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
             <PlatformChip key={p} label={p} className="bg-surface text-txt-secondary px-2 py-0.5 text-[10px] rounded" />
           ))}
           {platforms.length > 3 && (
-            <span className="text-[12px] text-txt-muted">+{platforms.length - 3}</span>
+            <span className="text-[12px] text-txt-secondary">+{platforms.length - 3}</span>
           )}
         </div>
       </td>
@@ -128,7 +128,7 @@ export function ClientRow({ client, index, orgId, verticalSlug, showAccountManag
       </td>
       <td className={`px-3 py-2.5 font-mono text-[13px] tabular-nums ${renewalColor}`}>{renewalLabel}</td>
       {showAccountManager && (
-        <td className="px-3 py-2.5 text-[13px] text-txt-muted">
+        <td className="px-3 py-2.5 text-[13px] text-txt-secondary">
           {client.team_members?.name ?? "—"}
         </td>
       )}

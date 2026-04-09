@@ -16,7 +16,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-9 w-full items-center justify-between rounded-md border border-border bg-[#F0EBE3] px-3 py-1 text-[16px] text-white shadow-none transition-colors placeholder:text-[rgba(255,255,255,0.25)] focus:outline-none focus:border-[rgba(90,138,106,0.40)] focus:ring-1 focus:ring-[rgba(90,138,106,0.10)] disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      "flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface px-3 py-1 text-[13px] text-txt-primary shadow-none transition-colors focus:outline-none focus:border-brand-rose/40 focus:ring-1 focus:ring-brand-rose/10 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className
     )}
     {...props}
@@ -66,7 +66,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-[5px] py-1.5 pl-2 pr-8 text-[16px] text-txt-muted outline-none transition-colors hover:bg-[#F0EBE3] hover:text-white focus:bg-[#F0EBE3] focus:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:text-success",
+      "relative flex w-full cursor-pointer select-none items-center rounded-[5px] py-1.5 pl-2 pr-8 text-[13px] text-txt-secondary outline-none transition-colors hover:bg-surface-hover hover:text-txt-primary focus:bg-surface-hover focus:text-txt-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:text-success",
       className
     )}
     {...props}
@@ -87,7 +87,7 @@ const SelectSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Separator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-[#1e1e1e]", className)}
+    className={cn("-mx-1 my-1 h-px bg-border", className)}
     {...props}
   />
 ));

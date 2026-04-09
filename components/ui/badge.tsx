@@ -11,8 +11,8 @@ const badgeVariants = cva(
         red:     "bg-danger-bg text-danger",
         amber:   "bg-warning-bg text-warning",
         blue:    "bg-brand-plum-dim text-brand-plum-deep",
-        muted:   "bg-surface-hover text-txt-muted",
-        default: "bg-surface-hover text-txt-muted",
+        muted:   "bg-surface-hover text-txt-secondary",
+        default: "bg-surface-hover text-txt-secondary",
       },
     },
     defaultVariants: {

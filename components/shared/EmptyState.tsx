@@ -43,7 +43,7 @@ export function EmptyState({
         className
       )}
     >
-      <div className="mb-3 flex h-10 w-10 items-center justify-center text-txt-hint [&>svg]:h-10 [&>svg]:w-10">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center text-txt-muted [&>svg]:h-10 [&>svg]:w-10">
         {icon}
       </div>
       <h3 className="text-base font-medium text-txt-secondary">{title}</h3>

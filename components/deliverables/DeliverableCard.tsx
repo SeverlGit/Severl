@@ -76,7 +76,7 @@ export function DeliverableCard({
       </button>
       <div {...listeners} className="cursor-grab px-3 py-2 active:cursor-grabbing">
         <div className="mb-1 flex items-center justify-between">
-          <span className="max-w-[130px] truncate text-[14px] text-txt-muted">
+          <span className="max-w-[130px] truncate text-[14px] text-txt-secondary">
             {brandName}
           </span>
         </div>
@@ -101,7 +101,7 @@ export function DeliverableCard({
               : "No due date"}
           </span>
           {vertical.deliverables.showAssignee && assigneeName && (
-            <span className="text-[14px] text-txt-muted">{assigneeName}</span>
+            <span className="text-[14px] text-txt-secondary">{assigneeName}</span>
           )}
         </div>
       </div>

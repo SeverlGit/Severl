@@ -40,15 +40,15 @@ export function ClientTable({ clients, filter, orgId, verticalSlug, showAccountM
       <table className="min-w-full border-collapse text-[14px]">
         <thead className="border-b border-border bg-surface text-left">
           <tr>
-            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">Brand</th>
-            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">Tag</th>
-            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">Platforms</th>
-            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">Retainer</th>
-            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">Renewal</th>
+            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-muted">Brand</th>
+            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-muted">Tag</th>
+            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-muted">Platforms</th>
+            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-muted">Retainer</th>
+            <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-muted">Renewal</th>
             {showAccountManager && (
-              <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-hint">AM</th>
+              <th className="px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-txt-muted">AM</th>
             )}
-            <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-wider text-txt-hint">Actions</th>
+            <th className="px-3 py-2.5 text-right text-[10px] font-medium uppercase tracking-wider text-txt-muted">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
