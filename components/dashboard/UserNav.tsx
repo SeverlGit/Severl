@@ -17,7 +17,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SettingsPanel } from "@/components/dashboard/SettingsPanel";
 
-export function UserNav() {
+type Props = { orgId: string };
+
+export function UserNav({ orgId }: Props) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -101,7 +103,7 @@ export function UserNav() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} orgId={orgId} />
     </>
   );
 }

@@ -22,7 +22,11 @@ import {
   ChevronRight,
   Mail,
   Link2,
+  ExternalLink,
+  XCircle,
 } from "lucide-react";
+import { createPortalSession } from "@/lib/billing/actions";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useTour } from "@/lib/tour-context";
 
@@ -483,51 +487,155 @@ function AppSettingsContent() {
 
 // ─── Tab: Plan & Billing ──────────────────────────────────────────────────────
 
-function BillingSettingsContent({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
+function BillingSettingsContent({
+  onOpenChange,
+  orgId,
+}: {
+  onOpenChange: (open: boolean) => void;
+  orgId: string;
+}) {
   const { planTier } = usePlan();
+  const [portalPending, setPortalPending] = useState(false);
 
   const TIER_STYLE: Record<string, { label: string; className: string }> = {
     essential: { label: "Essential", className: "bg-surface-hover text-txt-secondary border-border" },
-    pro: { label: "Pro", className: "bg-brand-rose-dim text-brand-rose-deep border-brand-rose/20" },
-    elite: { label: "Elite", className: "bg-brand-plum-dim text-brand-plum-deep border-brand-plum/20" },
-    agency: { label: "Agency", className: "bg-brand-plum text-white border-transparent" },
+    pro:       { label: "Pro",       className: "bg-brand-rose-dim text-brand-rose-deep border-brand-rose/20" },
+    elite:     { label: "Elite",     className: "bg-brand-plum-dim text-brand-plum-deep border-brand-plum/20" },
+    agency:    { label: "Agency",    className: "bg-brand-plum text-white border-transparent" },
   };
 
   const tier = TIER_STYLE[planTier] ?? TIER_STYLE.essential;
+  const isPaid = planTier !== "essential";
+
+  const openPortal = async () => {
+    setPortalPending(true);
+    const result = await createPortalSession({ orgId });
+    setPortalPending(false);
+    if (result.error) {
+      toast.error("Could not open billing portal", { description: result.error });
+      return;
+    }
+    window.location.href = result.data!;
+  };
 
   return (
     <div className="flex flex-col h-full space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-txt-primary mb-1">Plan & Billing</h1>
         <p className="text-[13px] text-txt-muted">
-          View your current subscription limits and manage your billing through Stripe.
+          Manage your subscription, payment method, and billing history.
         </p>
       </div>
 
-      <div className="max-w-md">
-        <SectionLabel>Current Plan</SectionLabel>
-        <Link
-          href="/billing"
-          onClick={() => onOpenChange(false)}
-          className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 transition-colors hover:bg-surface-hover hover:border-brand-rose/40 group"
-        >
-          <div>
-            <div className="flex items-center gap-3">
-              <p className="text-[14px] font-medium text-txt-primary">Organization Plan</p>
-              <span
-                className={cn(
-                  "rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                  tier.className
-                )}
+      <div className="max-w-md space-y-4">
+        {/* Current plan */}
+        <div>
+          <SectionLabel>Current Plan</SectionLabel>
+          <div className="rounded-md border border-border bg-surface divide-y divide-border">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <p className="text-[14px] font-medium text-txt-primary">Organization Plan</p>
+                <span
+                  className={cn(
+                    "rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                    tier.className
+                  )}
+                >
+                  {tier.label}
+                </span>
+              </div>
+              <Link
+                href="/billing"
+                onClick={() => onOpenChange(false)}
+                className="text-[12px] font-medium text-brand-rose hover:text-brand-rose-deep transition-colors"
               >
-                {tier.label}
-              </span>
+                View plans →
+              </Link>
             </div>
-            <p className="mt-1 text-[12px] text-txt-muted group-hover:text-txt-secondary transition-colors">
-              Manage subscription, limits & upgrade options →
-            </p>
           </div>
-        </Link>
+        </div>
+
+        {/* Subscription management — only shown when on a paid plan */}
+        {isPaid && (
+          <div>
+            <SectionLabel>Subscription</SectionLabel>
+            <div className="rounded-md border border-border bg-surface divide-y divide-border">
+              {/* Manage payment method */}
+              <button
+                type="button"
+                onClick={openPortal}
+                disabled={portalPending}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-surface-hover group disabled:opacity-50"
+              >
+                <div>
+                  <p className="text-[13px] font-medium text-txt-primary">Payment method</p>
+                  <p className="text-[11px] text-txt-muted mt-0.5 group-hover:text-txt-secondary transition-colors">
+                    Update your card or billing details
+                  </p>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-txt-muted group-hover:text-brand-rose transition-colors" />
+              </button>
+
+              {/* Billing history */}
+              <button
+                type="button"
+                onClick={openPortal}
+                disabled={portalPending}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-surface-hover group disabled:opacity-50"
+              >
+                <div>
+                  <p className="text-[13px] font-medium text-txt-primary">Billing history</p>
+                  <p className="text-[11px] text-txt-muted mt-0.5 group-hover:text-txt-secondary transition-colors">
+                    View and download past invoices
+                  </p>
+                </div>
+                <ExternalLink className="h-3.5 w-3.5 shrink-0 text-txt-muted group-hover:text-brand-rose transition-colors" />
+              </button>
+
+              {/* Cancel subscription */}
+              <button
+                type="button"
+                onClick={openPortal}
+                disabled={portalPending}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-danger-bg group disabled:opacity-50"
+              >
+                <div>
+                  <p className="text-[13px] font-medium text-danger">Cancel subscription</p>
+                  <p className="text-[11px] text-txt-muted mt-0.5 group-hover:text-danger/70 transition-colors">
+                    You&apos;ll retain access until the end of your billing period
+                  </p>
+                </div>
+                <XCircle className="h-3.5 w-3.5 shrink-0 text-txt-muted group-hover:text-danger transition-colors" />
+              </button>
+            </div>
+
+            {portalPending && (
+              <p className="mt-2 flex items-center gap-1.5 text-[12px] text-txt-muted">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-rose animate-pulse inline-block" />
+                Opening Stripe portal…
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Free tier nudge */}
+        {!isPaid && (
+          <div className="rounded-md border border-brand-rose/20 bg-brand-rose-dim px-4 py-3">
+            <p className="text-[13px] font-medium text-brand-rose-deep">
+              You&apos;re on the free Essential plan
+            </p>
+            <p className="mt-0.5 text-[12px] text-brand-rose-deep/70">
+              Upgrade to unlock more clients, storage, and priority support.
+            </p>
+            <Link
+              href="/billing"
+              onClick={() => onOpenChange(false)}
+              className="mt-2 inline-block text-[12px] font-medium text-brand-rose hover:text-brand-rose-deep transition-colors"
+            >
+              See upgrade options →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -549,9 +657,10 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ElementType }[] = [
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  orgId: string;
 };
 
-export function SettingsPanel({ open, onOpenChange }: Props) {
+export function SettingsPanel({ open, onOpenChange, orgId }: Props) {
   const [tab, setTab] = useState<Tab>("profile");
   const [mounted, setMounted] = useState(false);
 
@@ -614,7 +723,7 @@ export function SettingsPanel({ open, onOpenChange }: Props) {
               {tab === "profile"  && <ProfileContent />}
               {tab === "security" && <SecurityContent />}
               {tab === "app"      && <AppSettingsContent />}
-              {tab === "billing"  && <BillingSettingsContent onOpenChange={onOpenChange} />}
+              {tab === "billing"  && <BillingSettingsContent onOpenChange={onOpenChange} orgId={orgId} />}
             </main>
           </div>
         )}

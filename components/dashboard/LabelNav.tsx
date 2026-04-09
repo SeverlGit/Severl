@@ -155,7 +155,7 @@ export default function LabelNav({ org, orgId }: Props) {
           <Tooltip>
             <TooltipTrigger asChild>
               <div>
-                <UserNav />
+                <UserNav orgId={orgId} />
               </div>
             </TooltipTrigger>
             <TooltipContent side="right">Account</TooltipContent>
