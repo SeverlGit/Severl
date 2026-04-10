@@ -394,4 +394,4 @@ Inline styles: `panel` background (`#FAF7F4`), `txt-primary` text, `border` bord
 
 ---
 
-**Last updated:** 2026-03-26 — full redesign to Editorial Command theme (warm cream + dusty rose + warm plum). Reference mockup: `severl-premium.html`.
+**Last updated:** 2026-04-09 — design system unchanged; reviewed for drift against Tailwind config and globals.css. Reference mockup: `severl-premium.html`.

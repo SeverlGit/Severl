@@ -1,6 +1,6 @@
 # Architecture Overview — Severl (SMM OS)
 
-**Date:** 2026-03-20 · **Last reviewed:** 2026-03-26
+**Date:** 2026-03-20 · **Last reviewed:** 2026-04-09
 **Auditor:** Claude Code (read-only, all source files read)
 **App name:** `severl-smm-os` (`package.json`)
 **Purpose:** Social media manager operating system — retainer, deliverable, and invoice management for SMM freelancers and agencies.
@@ -38,6 +38,8 @@
 | `tailwind-merge` | `^3.5.0` | Tailwind class deduplication |
 | `class-variance-authority` | `^0.7.1` | Variant-based component styling (ui/ primitives) |
 | `tailwindcss-animate` | `^1.0.7` | CSS animation plugin (accordion keyframes) |
+| `stripe` | `^21.0.1` | Stripe Node.js SDK — billing checkout, portal, webhooks |
+| `driver.js` | `^1.4.0` | In-app onboarding tour overlay (dashboard welcome tour) |
 | `next` | `^15.5.14` | Framework |
 | `react-dom` | `^18.3.0` | React DOM + `useFormState`/`useFormStatus` |
 
@@ -102,6 +104,12 @@ Next.js App Router, server-rendered on demand (all routes are `ƒ` dynamic). Sui
 | `NEXT_PUBLIC_SENTRY_DSN` | Public | Sentry DSN (used client + server + edge) |
 | `SENTRY_AUTH_TOKEN` | Server-only | Source map upload to Sentry |
 | `CRON_SECRET` | Server-only | Shared secret for `Authorization: Bearer` on `/api/cron/*` (e.g. Vercel Cron) |
+| `STRIPE_SECRET_KEY` | Server-only | Stripe API key — checkout, portal, webhook verification |
+| `STRIPE_WEBHOOK_SECRET` | Server-only | Stripe webhook signature secret |
+| `STRIPE_PRICE_PRO` | Server-only | Stripe Price ID for Pro plan |
+| `STRIPE_PRICE_ELITE` | Server-only | Stripe Price ID for Elite plan |
+| `STRIPE_PRICE_AGENCY_BASE` | Server-only | Stripe Price ID for Agency plan base seat |
+| `NEXT_PUBLIC_APP_URL` | Public | Canonical app URL — used as Stripe redirect base |
 
 ---
 
@@ -120,23 +128,32 @@ Business Dashboard/
 │   │   ├── invoices/[id]/route.ts   GET — HTML invoice (auth + org check; print/PDF)
 │   │   └── cron/overdue-invoices/   GET — mark overdue (Bearer CRON_SECRET)
 │   ├── (dashboard)/                   Route group — auth-gated dashboard shell
-│   │   ├── layout.tsx                 Dashboard layout — getCurrentOrg(), VerticalConfigProvider, LabelNav, Topbar
+│   │   ├── layout.tsx                 Dashboard layout — getCurrentOrg(), VerticalConfigProvider, PlanProvider, LabelNav, Topbar
+│   │   ├── loading.tsx                Root dashboard loading state
 │   │   ├── DashboardClientLoader.tsx  "use client" — next/dynamic wrapper for DashboardClient (ssr: false)
 │   │   ├── page.tsx                   / — Home dashboard (server page + DashboardClientLoader)
+│   │   ├── billing/
+│   │   │   ├── page.tsx               /billing — server page; reads org plan_tier + stripe_customer_id
+│   │   │   └── BillingClient.tsx      Billing UI — plan cards, upgrade/portal CTAs
 │   │   ├── analytics/
+│   │   │   ├── loading.tsx            Analytics loading skeleton
 │   │   │   ├── page.tsx               /analytics — server page + AnalyticsClientLoader
 │   │   │   ├── AnalyticsClientLoader.tsx  "use client" — dynamic wrapper for AnalyticsClient
 │   │   │   └── AnalyticsClient.tsx    Analytics charts client shell
 │   │   ├── clients/
+│   │   │   ├── loading.tsx            Clients loading skeleton
 │   │   │   ├── page.tsx               /clients — server page, filter/search via searchParams (Promise)
 │   │   │   └── [id]/
+│   │   │       ├── loading.tsx        Client 360 loading skeleton
 │   │   │       ├── page.tsx           /clients/[id] — server page + Client360ClientLoader; params/searchParams Promises
 │   │   │       ├── Client360ClientLoader.tsx  "use client" — dynamic wrapper for Client360Client
 │   │   │       └── Client360Client.tsx Client profile shell (6-tab view)
 │   │   ├── deliverables/
+│   │   │   ├── loading.tsx            Deliverables loading skeleton
 │   │   │   ├── page.tsx               /deliverables — server page, month nav, dual view
 │   │   │   └── DeliverablesDynamic.tsx "use client" — StatusBoardDynamic + CloseOutDialogDynamic (ssr: false)
 │   │   └── invoices/
+│   │       ├── loading.tsx            Invoices loading skeleton
 │   │       ├── page.tsx               /invoices — server page + InvoicesClientLoader
 │   │       ├── InvoicesClientLoader.tsx  "use client" — dynamic wrapper for InvoicesClient
 │   │       └── InvoicesClient.tsx     Invoices list + CreateInvoiceDialog + batch billing
@@ -152,8 +169,12 @@ Business Dashboard/
 │   │   └── SeverlLogo.tsx             Logo component
 │   ├── dashboard/
 │   │   ├── DashboardClient.tsx        Main dashboard — 5-panel layout with framer-motion
-│   │   ├── LabelNav.tsx               Left sidebar nav — uses UserButton from Clerk
+│   │   ├── LabelNav.tsx               Left sidebar nav
+│   │   ├── UserNav.tsx                Avatar dropdown (Settings, Billing, Logout) — replaces raw UserButton
 │   │   ├── Topbar.tsx                 Top bar — page title, date, live indicator
+│   │   ├── TopbarTitleContext.tsx     Context for dynamic topbar title
+│   │   ├── NavigationProgress.tsx     Thin top-of-viewport route transition progress bar
+│   │   ├── SettingsPanel.tsx          In-app settings dialog (density, currency, prefs, Clerk account)
 │   │   ├── AlertStrip.tsx             Inline alert banner (overdue, at-risk, renewals)
 │   │   ├── StatsStrip.tsx             KPI cards strip (MRR, clients, deliverables)
 │   │   ├── TickerBar.tsx              Scrolling metric ticker at bottom of dashboard
@@ -189,6 +210,8 @@ Business Dashboard/
 │   │   ├── AnalyticsSkeleton.tsx      Loading skeleton for analytics page
 │   │   ├── DashboardSkeleton.tsx      Loading skeleton for dashboard page
 │   │   ├── Client360Skeleton.tsx      Loading skeleton for client profile page
+│   │   ├── ClientsSkeleton.tsx        Loading skeleton for clients list page
+│   │   ├── DeliverablesSkeleton.tsx   Loading skeleton for deliverables page
 │   │   ├── InvoicesSkeleton.tsx       Loading skeleton for invoices page
 │   │   ├── ClientAvatar.tsx           Initials avatar with tag-colored ring
 │   │   ├── EmptyState.tsx             Generic empty state component (supports link or ReactNode action)
@@ -208,8 +231,22 @@ Business Dashboard/
 ├── lib/
 │   ├── auth-guard.ts                  requireAuth(), requireOrgAccess()
 │   ├── auth.ts                        getCurrentOrg(), OrgRecord type
+│   ├── auth/
+│   │   ├── tier-limits.ts             checkClientLimit(), checkDeliverableLimit(), checkStorageLimit(); re-exports TIER_LIMITS + TierLimitError
+│   │   └── tier-limits.test.ts        Vitest unit tests for tier limit enforcement
+│   ├── billing/
+│   │   ├── actions.ts                 createCheckoutSession(), createPortalSession(), restorePurchases()
+│   │   ├── plan-context.tsx           PlanProvider + usePlan() — planTier, limits, atClientLimit
+│   │   ├── stripe.ts                  stripe singleton (Stripe v21)
+│   │   ├── sync-clerk-metadata.ts     syncPlanToClerkMetadata() — patches Clerk user publicMetadata
+│   │   ├── sync-stripe-seat.ts        syncStripeTeamSeat() — syncs agency seat quantity
+│   │   └── tier-definitions.ts        TIER_LIMITS record + TierLimitError class
 │   ├── constants.ts                   DELIVERABLE_STATUS_COLORS, DELIVERABLE_STATUS_PCT, INVOICE_STATUS_COLORS
-│   ├── database.types.ts              8 row types + composite types
+│   ├── database.types.ts              Row types + composite types (incl. PlanTier, OrgUIMeta)
+│   ├── onboarding-actions.ts          markUIMetaSeen(key) — writes orgs.ui_meta flags
+│   ├── prefs-context.tsx              UserPrefs type + usePrefs() — localStorage-backed user preferences
+│   ├── tour-context.tsx               Tour state context
+│   ├── tour-guides.ts                 startMainTour() — driver.js welcome tour
 │   ├── types.ts                       VerticalSlug, DeliverableStatus, ClientTag, InvoiceStatus/Type
 │   ├── utils.ts                       cn(), formatCurrency(), daysUntil(), renewalUrgency()
 │   ├── vertical-config.tsx            VerticalConfigProvider, useVerticalConfig() React context
@@ -227,7 +264,8 @@ Business Dashboard/
 │   │   ├── actions.ts                 6 deliverable mutations + getMonthCloseOutData
 │   │   └── getDeliverableData.ts      getMonthlyDeliverables(), computeDeliverableStats()
 │   ├── email/
-│   │   └── welcome.ts                 Resend welcome email template + send function
+│   │   ├── welcome.ts                 Resend welcome email template + send function
+│   │   └── verification.ts            Resend verification email (Clerk custom email provider)
 │   ├── invoicing/
 │   │   ├── actions.ts                 Invoice mutations + createInvoice (draft + line item)
 │   │   ├── batchCreateRetainerInvoices.ts  Batch invoice + line item generation
@@ -242,6 +280,10 @@ Business Dashboard/
 │   ├── actions/client-note.test.ts    2 tests for createClientNote auth pattern
 │   ├── actions/batch-invoices.test.ts Batch retainer invoice tests
 │   └── actions/invoice-actions.test.ts Invoice server action tests
+├── lib/auth/
+│   └── tier-limits.test.ts            Tier limit enforcement unit tests
+├── app/api/webhooks/stripe/
+│   └── route.test.ts                  Stripe webhook handler tests
 ├── public/
 │   ├── SeverlLogo.png                 Logo image
 │   └── bg.mp4                         Auth page background video
@@ -271,10 +313,11 @@ Business Dashboard/
 | `/clients/[id]` | `app/(dashboard)/clients/[id]/page.tsx` | Server + client loader | Client 360 profile — 5–6 tabs (`Client360ClientLoader`) |
 | `/deliverables` | `app/(dashboard)/deliverables/page.tsx` | Server + client loaders | Monthly deliverable board — `DeliverablesDynamic` for kanban + close-out |
 | `/invoices` | `app/(dashboard)/invoices/page.tsx` | Server + client loader | Invoice list, summary strip, create + batch billing (`InvoicesClientLoader`) |
+| `/billing` | `app/(dashboard)/billing/page.tsx` | Server + client | Billing page — plan tier display, Stripe checkout/portal CTAs (`BillingClient`) |
 | `/privacy` | `app/privacy/page.tsx` | Server | Public stub — privacy policy |
 | `/terms` | `app/terms/page.tsx` | Server | Public stub — terms of service |
 
-**API routes (non-mutation):** `GET /api/invoices/[id]` returns a printable HTML invoice (auth required). `GET /api/cron/overdue-invoices` is for scheduled overdue updates (Bearer `CRON_SECRET`). **All writes** use Next.js Server Actions.
+**API routes (non-mutation):** `GET /api/invoices/[id]` returns a printable HTML invoice (auth required). `GET /api/cron/overdue-invoices` is for scheduled overdue updates (Bearer `CRON_SECRET`). `POST /api/webhooks/stripe` handles Stripe events (public — verified via `STRIPE_WEBHOOK_SECRET`). **All writes** use Next.js Server Actions.
 
 ---
 
@@ -285,7 +328,7 @@ Business Dashboard/
 ```ts
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)', '/sign-up(.*)', '/onboarding(.*)', '/privacy(.*)', '/terms(.*)',
-  '/api/cron(.*)',
+  '/api/cron(.*)', '/api/webhooks/stripe(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -368,6 +411,7 @@ Client components call `useVerticalConfig()` to get labels, sections, and featur
 
 | Enum | Values |
 |---|---|
+| `plan_tier` | `essential`, `pro`, `elite`, `agency` |
 | `vertical_type` | `smm_freelance`, `smm_agency` |
 | `deliverable_status` | `not_started`, `in_progress`, `pending_approval`, `approved`, `published` |
 | `client_tag` | `prospect`, `onboarding`, `active`, `at_risk`, `paused`, `churned` |
@@ -379,7 +423,7 @@ Client components call `useVerticalConfig()` to get labels, sections, and featur
 
 | Table | PK | Key FKs | Purpose |
 |---|---|---|---|
-| `orgs` | `id uuid` | — | Organization / workspace. One per user. `owner_id` = Clerk userId (text). |
+| `orgs` | `id uuid` | — | Organization / workspace. One per user. `owner_id` = Clerk userId (text). `plan_tier` = billing plan (default `essential`). `stripe_customer_id` = Stripe customer. `subscription_status` = Stripe subscription state (default `active`). `ui_meta jsonb` = one-time UI flags (e.g. `has_seen_tour`). |
 | `team_members` | `id uuid` | `org_id → orgs` | Agency team members. `active` boolean for soft deactivation. |
 | `clients` | `id uuid` | `org_id → orgs`, `account_manager_id → team_members` | Brand accounts / clients. `vertical_data jsonb` stores vertical-specific fields. `archived_at` for soft delete. |
 | `client_notes` | `id uuid` | `org_id → orgs`, `client_id → clients` | CRM notes on client profiles. `author_id` = Clerk userId. |
@@ -525,6 +569,20 @@ Invoice numbering: sequential `INV-NNNN` based on last invoice in org. Line item
 | `createOrg` | `auth()` directly | `orgs` | Welcome email via Resend (best-effort, non-fatal) |
 
 Note: `createOrg` uses `auth()` directly (not `requireOrgAccess`) because no org exists yet to verify ownership against. It checks for duplicate org creation before inserting.
+
+### Billing Actions (`lib/billing/actions.ts`)
+
+| Action | Auth Guard | Side Effects |
+|---|---|---|
+| `createCheckoutSession` | `requireOrgAccess` | Creates/retrieves Stripe customer; returns Stripe Checkout URL |
+| `createPortalSession` | `requireOrgAccess` | Returns Stripe Customer Portal URL |
+| `restorePurchases` | `requireOrgAccess` | Queries active Stripe subscription; updates `orgs.plan_tier` + syncs Clerk metadata |
+
+### Onboarding UI Action (`lib/onboarding-actions.ts`)
+
+| Action | Auth | Tables Written |
+|---|---|---|
+| `markUIMetaSeen(key)` | `getCurrentOrg()` | `orgs.ui_meta` — merges flag `{ [key]: true }` |
 
 ### Event System (`lib/analytics/fireEvent.ts`)
 
@@ -689,8 +747,9 @@ Server page (async, fetches all data)
 | `/clients/[id]` | `app/(dashboard)/clients/[id]/page.tsx` | `Client360ClientLoader` | `Client360Client` | `Client360Skeleton` |
 | `/invoices` | `app/(dashboard)/invoices/page.tsx` | `InvoicesClientLoader` | `InvoicesClient` | `InvoicesSkeleton` |
 | `/analytics` | `app/(dashboard)/analytics/page.tsx` | `AnalyticsClientLoader` | `AnalyticsClient` | `AnalyticsSkeleton` |
-| `/clients` | `app/(dashboard)/clients/page.tsx` | None (pure server) | — | None |
-| `/deliverables` | `app/(dashboard)/deliverables/page.tsx` | `DeliverablesDynamic` (`StatusBoardDynamic`, `CloseOutDialogDynamic`) | `StatusBoard`, `CloseOutDialog` | Inline pulse / null |
+| `/clients` | `app/(dashboard)/clients/page.tsx` | None (pure server) | — | `ClientsSkeleton` |
+| `/deliverables` | `app/(dashboard)/deliverables/page.tsx` | `DeliverablesDynamic` (`StatusBoardDynamic`, `CloseOutDialogDynamic`) | `StatusBoard`, `CloseOutDialog` | `DeliverablesSkeleton` |
+| `/billing` | `app/(dashboard)/billing/page.tsx` | None (pure server shell → passes props) | `BillingClient` | None |
 
 Shell components export explicit prop types (e.g. `DashboardClientProps`, `AnalyticsClientProps`) for loaders; avoid `ComponentProps<typeof dynamic(...)>` on heavy `dynamic()` imports.
 
@@ -731,9 +790,9 @@ RootLayout (app/layout.tsx)
 ```
 components/
 ├── ui/          Primitive building blocks (Radix-based, cva-styled, no business logic)
-├── shared/      Reusable domain-aware atoms (Avatar, StatusPill, Sparkline, Skeletons)
+├── shared/      Reusable domain-aware atoms (Avatar, StatusPill, Sparkline, Skeletons — incl. ClientsSkeleton, DeliverablesSkeleton)
 ├── brand/       Auth page shell (AuthShell, SeverlLogo)
-├── dashboard/   Dashboard-specific components (DashboardClient, LabelNav, Topbar, panels)
+├── dashboard/   Dashboard-specific components (DashboardClient, LabelNav, UserNav, Topbar, SettingsPanel, NavigationProgress, panels)
 ├── clients/     Client domain components (table, sheet, tabs, team management)
 ├── deliverables/ Deliverable board, kanban, row, close-out sheet
 └── invoices/    Batch billing + create invoice dialog
@@ -749,6 +808,8 @@ components/
 | **Supabase** | `@supabase/supabase-js` | `^2.48.0` | Postgres database | Two clients: session (Clerk JWT JWKS) + admin (service role). Env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
 | **Resend** | `resend` | `^3.2.0` | Transactional email | `lib/email/welcome.ts` — welcome email on org creation. Non-fatal if `RESEND_API_KEY` absent. Env: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` |
 | **Sentry** | `@sentry/nextjs` | `^8.0.0` | Error monitoring | `instrumentation.ts` (Node.js + Edge), `sentry.client.config.ts` (browser + Replay), `withSentryConfig` in `next.config.mjs`, `global-error.tsx`. Widespread `captureException` / `captureMessage` in actions and data loaders. Env: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN` |
+| **Stripe** | `stripe` | `^21.0.1` | Billing — Checkout, Customer Portal, webhooks | `lib/billing/stripe.ts` singleton. Checkout session + portal via `lib/billing/actions.ts`. Webhook at `POST /api/webhooks/stripe` (public route). Plan tier synced to `orgs.plan_tier` + Clerk user metadata. Env: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO/ELITE/AGENCY_BASE`, `NEXT_PUBLIC_APP_URL` |
+| **driver.js** | `driver.js` | `^1.4.0` | In-app onboarding tour | `lib/tour-guides.ts` — `startMainTour()` triggered on first login; tour completion writes `has_seen_tour` flag to `orgs.ui_meta` via `markUIMetaSeen()` |
 
 **`withSentryConfig` options:**
 ```js
@@ -772,7 +833,7 @@ Note: `next.config.mjs` sets `sourcemaps.deleteSourcemapsAfterUpload: true` for 
 
 ### Test Coverage
 
-Unit tests cover auth guards, client notes, batch invoice flows, and invoice server actions. **Gaps:** `lib/team/actions.ts`, deliverable actions, and most UI — **0 tests**.
+Unit tests cover: auth guards, client notes, batch invoice flows, invoice server actions, **tier-limit enforcement** (`lib/auth/tier-limits.test.ts`), **Stripe webhook handler** (`app/api/webhooks/stripe/route.test.ts`). **Gaps:** `lib/team/actions.ts`, deliverable actions, billing UI, and most component-level UI — **0 tests**.
 
 ### Operational
 
@@ -781,6 +842,8 @@ Unit tests cover auth guards, client notes, batch invoice flows, and invoice ser
 | Vercel Cron | Schedule `GET /api/cron/overdue-invoices` with `Authorization: Bearer ${CRON_SECRET}` |
 | Resend | Invoice-sent email runs when `contact_email` exists; verify domain/DNS in production |
 | `team_capacity` | Metric remains **`show: false`** for agency until computed in `getAnalyticsMetrics` |
+| Stripe | Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, price IDs, and `NEXT_PUBLIC_APP_URL` in production; register webhook endpoint in Stripe Dashboard |
+| `syncStripeTeamSeat` | Agency seat sync is wired; verify Stripe product/seat quantity configuration in production |
 
 ### Sentry / build
 
@@ -789,6 +852,27 @@ Legacy `sentry.server.config.ts` / `sentry.edge.config.ts` may duplicate `instru
 ### No TODO / FIXME sweep
 
 Occasional `TODO` in components (e.g. logo SVG); no systematic FIXME backlog.
+
+---
+
+## Delta from Previous Audit (2026-04-09)
+
+| Item | Details |
+|---|---|
+| **Billing / Stripe** | New `lib/billing/` module: `stripe.ts`, `actions.ts` (checkout, portal, restore), `tier-definitions.ts`, `plan-context.tsx`, `sync-clerk-metadata.ts`, `sync-stripe-seat.ts`. New `/billing` route (`BillingClient`). Stripe webhook at `POST /api/webhooks/stripe` (public route). |
+| **Plan tiers** | New `plan_tier` enum (`essential`, `pro`, `elite`, `agency`). `orgs` table gains `plan_tier`, `stripe_customer_id`, `subscription_status`, `ui_meta` columns. `lib/auth/tier-limits.ts` enforces per-tier client/deliverable/storage limits via `TierLimitError`. |
+| **`PlanProvider`** | Dashboard layout now wraps children in `PlanProvider` (client count + tier exposed via `usePlan()`) alongside existing `VerticalConfigProvider`. |
+| **Tour / onboarding** | `lib/tour-guides.ts` (driver.js), `lib/tour-context.tsx`, `lib/onboarding-actions.ts` (`markUIMetaSeen`). Tour completion stored in `orgs.ui_meta.has_seen_tour`. |
+| **Settings panel** | `components/dashboard/SettingsPanel.tsx` — in-app preferences dialog. `lib/prefs-context.tsx` (`usePrefs()`) stores density, currency, due days, etc. in localStorage. |
+| **UserNav** | `components/dashboard/UserNav.tsx` — avatar dropdown with Settings, Billing, Logout (replaces raw Clerk `UserButton` in sidebar). |
+| **NavigationProgress** | `components/dashboard/NavigationProgress.tsx` — thin top-of-viewport route transition bar. |
+| **TopbarTitleContext** | `components/dashboard/TopbarTitleContext.tsx` — context for dynamic topbar page title. |
+| **Loading states** | `loading.tsx` added for all dashboard routes: `/`, `/clients`, `/clients/[id]`, `/analytics`, `/deliverables`, `/invoices`. |
+| **New skeletons** | `ClientsSkeleton`, `DeliverablesSkeleton` added to `components/shared/`. |
+| **Verification email** | `lib/email/verification.ts` — Resend-based Clerk custom verification email template. |
+| **Middleware** | `/api/webhooks/stripe(.*)` added to `createRouteMatcher` public routes. |
+| **New tests** | `lib/auth/tier-limits.test.ts` (tier limit enforcement), `app/api/webhooks/stripe/route.test.ts` (Stripe webhook). |
+| **New deps** | `stripe ^21.0.1`, `driver.js ^1.4.0`. |
 
 ---
 

@@ -7,11 +7,22 @@ Social media manager operating system for freelancers and agencies.
 ## Key Files
 - `lib/auth-guard.ts` — `requireAuth()`, `requireOrgAccess(orgId)` — called as first line in every server action
 - `lib/auth.ts` — `getCurrentOrg()` — resolves org from Clerk session, redirects to /onboarding if none; wrapped in `React.cache()` so layout + pages share one Supabase call per request
+- `lib/auth/tier-limits.ts` — `checkClientLimit()`, `checkDeliverableLimit()`, `checkStorageLimit()` — call before creating resources; throws `TierLimitError` when limit reached
+- `lib/billing/tier-definitions.ts` — `TIER_LIMITS` record (essential/pro/elite/agency) + `TierLimitError` class
+- `lib/billing/actions.ts` — `createCheckoutSession()`, `createPortalSession()`, `restorePurchases()` — Stripe billing server actions
+- `lib/billing/plan-context.tsx` — `PlanProvider` + `usePlan()` React context — wraps dashboard layout, exposes `planTier`, `limits`, `atClientLimit`
+- `lib/billing/stripe.ts` — `stripe` singleton (Stripe v21, `STRIPE_SECRET_KEY`)
+- `lib/billing/sync-clerk-metadata.ts` — `syncPlanToClerkMetadata()` — patches Clerk user metadata with plan tier after upgrade/webhook
+- `lib/billing/sync-stripe-seat.ts` — `syncStripeTeamSeat()` — syncs team seat quantity with Stripe on team member changes
+- `lib/prefs-context.tsx` — `UserPrefs` type + `usePrefs()` hook — density, currency, due days, week start, etc. Stored in localStorage under `"severl:prefs"`
+- `lib/tour-guides.ts` — `startMainTour()` — driver.js-based onboarding tour; calls `markUIMetaSeen("has_seen_tour")` on close
+- `lib/tour-context.tsx` — tour state context
+- `lib/onboarding-actions.ts` — `markUIMetaSeen(key)` — marks `orgs.ui_meta` flags (e.g. `has_seen_tour`) in Supabase
 - `lib/supabase/server.ts` — `getSupabaseServerClient()` (Clerk JWT, RLS enforced) for reads, `getSupabaseAdminClient()` (service role, bypasses RLS) for writes
-- `lib/database.types.ts` — Row types and composite types for all 8 tables
+- `lib/database.types.ts` — Row types and composite types for all tables
 - `lib/vertical-config.tsx` — `VerticalConfigProvider` + `useVerticalConfig()` React context
-- `db/schema.sql` — DDL source of truth (8 tables, 5 enums, RLS via auth.jwt()->>'sub')
-- `middleware.ts` — Clerk v6 `clerkMiddleware()`; **`export const config` includes `runtime: 'nodejs'`** (Next.js 15.5+) so auth runs on the Node middleware runtime (avoids Vercel Edge bundler issues with Clerk). Public routes include `/api/cron(.*)` for cron endpoints.
+- `db/schema.sql` — DDL source of truth (tables, enums, RLS via auth.jwt()->>'sub')
+- `middleware.ts` — Clerk v6 `clerkMiddleware()`; **`export const config` includes `runtime: 'nodejs'`** (Next.js 15.5+). Public routes include `/api/cron(.*)` and **`/api/webhooks/stripe(.*)`**.
 - `instrumentation.ts` — Sentry init for Node.js + Edge runtimes
 - `app/layout.tsx` — root metadata (`title`/`description`), `app/icon.png` favicon (App Router convention)
 
@@ -29,6 +40,8 @@ Social media manager operating system for freelancers and agencies.
 
 ## Database
 8 tables: `orgs`, `team_members`, `clients`, `client_notes`, `deliverables`, `invoices`, `invoice_line_items`, `events`
+`orgs` now includes: `plan_tier plan_tier not null default 'essential'`, `stripe_customer_id text`, `subscription_status text not null default 'active'`, `ui_meta jsonb not null default '{}'` (stores `has_seen_tour` and similar one-time flags).
+`plan_tier` enum: `essential`, `pro`, `elite`, `agency`. Limits enforced in app layer via `lib/auth/tier-limits.ts`.
 All RLS policies use `auth.jwt()->>'sub'` for Clerk user ID. Admin client bypasses RLS; app layer enforces org scoping.
 
 ## Caching
@@ -43,15 +56,13 @@ All RLS policies use `auth.jwt()->>'sub'` for Clerk user ID. Admin client bypass
 ## Error Monitoring
 Sentry via `@sentry/nextjs` v8. Init in `instrumentation.ts` (server/edge) and `sentry.client.config.ts` (browser + Replay). `captureException` / `captureMessage` across actions and data layers (including analytics/invoice query failures). `global-error.tsx` catches unhandled errors.
 
-## Testing
-Vitest: auth guards, client-note tests, batch invoice tests, invoice action tests, and related action coverage. Deliverable/team UI remains mostly untested.
-
 ## Verticals
 Two verticals in `config/verticals/`: `smm_freelance` (solo) and `smm_agency` (team). Vertical resolved at org load, distributed via React context. Agency adds: team management, deliverable assignees, extra deliverable types. **`team_capacity` is configured but `show: false`** in agency analytics (metric not computed yet).
 
 ## API Routes (minimal)
 - `GET /api/invoices/[id]` — authenticated HTML invoice view (print/save as PDF in browser); Clerk `auth()` + org ownership check
 - `GET /api/cron/overdue-invoices` — cron; requires `Authorization: Bearer ${CRON_SECRET}`
+- `POST /api/webhooks/stripe` — Stripe webhook handler; verifies `STRIPE_WEBHOOK_SECRET`, updates `orgs.plan_tier` + `stripe_customer_id`, syncs Clerk metadata
 
 All other mutations use Server Actions.
 
@@ -71,6 +82,15 @@ All other mutations use Server Actions.
 - **Dashboard:** time-of-day greeting with `firstName`
 - Cross-route revalidation on mutations (including `/clients/[id]` for notes, archive, etc. where applicable)
 - `.gitignore` covers `.env*`, local AI dirs, caches, keys; `.env.example` documents vars including **`CRON_SECRET`**
+- **Billing/Stripe:** `/billing` route (`BillingClient`), `createCheckoutSession`, `createPortalSession`, `restorePurchases` server actions; Stripe webhook at `/api/webhooks/stripe`; `plan_tier` + `stripe_customer_id` on `orgs`; `PlanProvider` wraps dashboard layout
+- **Plan tiers + limits:** `essential` (2 clients / 15 deliverables), `pro` (10 / 100), `elite` (unlimited), `agency` (unlimited). `checkClientLimit`, `checkDeliverableLimit`, `checkStorageLimit` throw `TierLimitError` on violation.
+- **Settings panel:** `SettingsPanel` dialog (density, currency, due days, week start, notifications); user prefs via `usePrefs()` stored in localStorage
+- **Tour / onboarding:** `startMainTour()` (driver.js) triggered on first login; `markUIMetaSeen()` records seen flags in `orgs.ui_meta`
+- **Navigation progress bar:** `NavigationProgress` — thin top-of-viewport bar on route transitions
+- **UserNav:** `UserNav` component (replaces `UserButton` in sidebar) — avatar dropdown with Settings, Billing, Logout
+- **Loading states:** `loading.tsx` files for all dashboard routes (`/`, `/clients`, `/clients/[id]`, `/analytics`, `/deliverables`, `/invoices`)
+- **New skeletons:** `ClientsSkeleton`, `DeliverablesSkeleton`
+- **Verification email:** `lib/email/verification.ts` — Resend-based Clerk custom verification email
 
 ## Known Gaps (not yet addressed)
 - Cron: Vercel cron schedule + `CRON_SECRET` must be set in production for overdue automation
@@ -78,9 +98,15 @@ All other mutations use Server Actions.
 - `team_capacity` metric: hidden, not computed (flip `show: true` when logic exists)
 - Broader test coverage for deliverables, team, and invoice UI
 - ESLint: migrate off deprecated `next lint` when adopting flat `eslint.config` (Next 16 direction)
+- Stripe env vars (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO/ELITE/AGENCY_BASE`, `NEXT_PUBLIC_APP_URL`) must be set in production
+- `syncStripeTeamSeat` for agency seat billing is wired but verify Stripe product configuration in production
 
 ## Infrastructure Status
 - Clerk / Supabase / Sentry / Resend: configure per environment via `.env` (see `.env.example`)
 - Production deploy (e.g. Vercel): set env vars, `CRON_SECRET`, connect domain as needed
+- **Stripe:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_ELITE`, `STRIPE_PRICE_AGENCY_BASE`, `NEXT_PUBLIC_APP_URL`
 
-**Last reviewed:** 2026-03-26 — bump with [`architecture-overview.md`](./architecture-overview.md) on release or material changes.
+## Testing
+Vitest: auth guards, client-note tests, batch invoice tests, invoice action tests, **tier-limits tests** (`lib/auth/tier-limits.test.ts`), **Stripe webhook tests** (`app/api/webhooks/stripe/route.test.ts`). Deliverable/team UI remains mostly untested.
+
+**Last reviewed:** 2026-04-09 — bump with [`architecture-overview.md`](./architecture-overview.md) on release or material changes.
