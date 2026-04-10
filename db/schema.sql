@@ -163,10 +163,16 @@ create table if not exists clients (
   tag                 client_tag not null default 'prospect',
   platforms           text[] default '{}',
   vertical_data       jsonb default '{}'::jsonb,
+  brand_guide_token   text unique,        -- lazy-generated share token; NULL until first share
   archived_at         timestamptz,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );
+
+-- Migration (run once in Supabase SQL editor):
+-- ALTER TABLE clients ADD COLUMN IF NOT EXISTS brand_guide_token TEXT UNIQUE;
+-- CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_brand_guide_token
+--   ON clients (brand_guide_token) WHERE brand_guide_token IS NOT NULL;
 
 create index if not exists idx_clients_org_id
   on clients (org_id);
@@ -210,10 +216,25 @@ create table if not exists deliverables (
   assignee_id  uuid references team_members(id) on delete set null,
   due_date     date,
   notes        text,
+  approval_token    text unique,      -- lazily generated; cleared after approved
+  approval_sent_at  timestamptz,      -- when the approval request was last sent
+  approval_expires_at timestamptz,    -- 7-day TTL set at send time
+  approved_at       timestamptz,
+  approval_notes    text,
   archived_at  timestamptz,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+-- Migration (run once in Supabase SQL editor):
+-- ALTER TABLE deliverables
+--   ADD COLUMN IF NOT EXISTS approval_token      TEXT UNIQUE,
+--   ADD COLUMN IF NOT EXISTS approval_sent_at    TIMESTAMPTZ,
+--   ADD COLUMN IF NOT EXISTS approval_expires_at TIMESTAMPTZ,
+--   ADD COLUMN IF NOT EXISTS approved_at         TIMESTAMPTZ,
+--   ADD COLUMN IF NOT EXISTS approval_notes      TEXT;
+-- CREATE UNIQUE INDEX IF NOT EXISTS idx_deliverables_approval_token
+--   ON deliverables (approval_token) WHERE approval_token IS NOT NULL;
 
 create index if not exists idx_deliverables_org_id
   on deliverables (org_id);

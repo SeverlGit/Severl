@@ -1,6 +1,6 @@
 # Architecture Overview — Severl (SMM OS)
 
-**Date:** 2026-03-20 · **Last reviewed:** 2026-04-09
+**Date:** 2026-03-20 · **Last reviewed:** 2026-04-09 (updated post-implementation phases 1–3)
 **Auditor:** Claude Code (read-only, all source files read)
 **App name:** `severl-smm-os` (`package.json`)
 **Purpose:** Social media manager operating system — retainer, deliverable, and invoice management for SMM freelancers and agencies.
@@ -124,6 +124,12 @@ Business Dashboard/
 │   ├── global-error.tsx               Global error boundary — captures to Sentry
 │   ├── privacy/page.tsx               Public stub — Privacy Policy
 │   ├── terms/page.tsx                 Public stub — Terms of Service
+│   ├── brand/
+│   │   └── [token]/page.tsx           Public — shareable brand guide (no auth); lookup by brand_guide_token; 404 on invalid
+│   ├── approve/
+│   │   └── [token]/
+│   │       ├── page.tsx               Public — client approval page (no auth); handles expired/reviewed states
+│   │       └── ApproveClient.tsx      "use client" — Approve / Request Revisions UI with notes + confirmation states
 │   ├── api/
 │   │   ├── invoices/[id]/route.ts   GET — HTML invoice (auth + org check; print/PDF)
 │   │   └── cron/overdue-invoices/   GET — mark overdue (Bearer CRON_SECRET)
@@ -255,17 +261,19 @@ Business Dashboard/
 │   │   ├── fireEvent.ts               Event insert helper (15 event types)
 │   │   └── getAnalyticsData.ts        Analytics data fetching — getAnalyticsMetrics (4 parallel queries; MRR from active clients), getRevenueByClient, getRenewalPipeline, getDeliveryRateByClient
 │   ├── clients/
-│   │   ├── actions.ts                 10 client mutations
+│   │   ├── actions.ts                 11 client mutations (incl. generateBrandGuideToken)
 │   │   ├── getClient360.ts            Client profile data (8 fetch functions)
 │   │   └── getClientsData.ts          Client list fetch (explicit columns, no vertical_data)
 │   ├── dashboard/
 │   │   └── getHomeData.ts             Dashboard fetch — getMRRAndActiveCount, getDeliverablesBehind, getAtRiskCount, getOverdueInvoices, getDeliverablesThisWeek, getMRRTrend (points + current-month live fallback flag), getRecentInvoices, getUpcomingRenewalsList, getClientCountSparkline (3 cached); MRR sparkline derived from mrrTrend points; 30-day renewals derived from renewalsList
 │   ├── deliverables/
-│   │   ├── actions.ts                 6 deliverable mutations + getMonthCloseOutData
+│   │   ├── actions.ts                 8 deliverable mutations + getMonthCloseOutData (incl. sendForApproval)
+│   │   ├── approval-actions.ts        recordApproval() — public, no auth; validates token expiry + status; clears token on approved
 │   │   └── getDeliverableData.ts      getMonthlyDeliverables(), computeDeliverableStats()
 │   ├── email/
 │   │   ├── welcome.ts                 Resend welcome email template + send function
-│   │   └── verification.ts            Resend verification email (Clerk custom email provider)
+│   │   ├── verification.ts            Resend verification email (Clerk custom email provider)
+│   │   └── approval.ts                Resend approval request email — cream/rose branded HTML; 7-day expiry note; CTA → /approve/[token]
 │   ├── invoicing/
 │   │   ├── actions.ts                 Invoice mutations + createInvoice (draft + line item)
 │   │   ├── batchCreateRetainerInvoices.ts  Batch invoice + line item generation
@@ -316,6 +324,8 @@ Business Dashboard/
 | `/billing` | `app/(dashboard)/billing/page.tsx` | Server + client | Billing page — plan tier display, Stripe checkout/portal CTAs (`BillingClient`) |
 | `/privacy` | `app/privacy/page.tsx` | Server | Public stub — privacy policy |
 | `/terms` | `app/terms/page.tsx` | Server | Public stub — terms of service |
+| `/brand/[token]` | `app/brand/[token]/page.tsx` | Server (public) | Shareable client brand guide — lookup by `brand_guide_token`; 404 on invalid token; renders vertical intake fields read-only |
+| `/approve/[token]` | `app/approve/[token]/page.tsx` + `ApproveClient.tsx` | Server + client (public) | Client content approval — lookup by `approval_token`; handles expired/already-reviewed states; Approve / Request Revisions UI |
 
 **API routes (non-mutation):** `GET /api/invoices/[id]` returns a printable HTML invoice (auth required). `GET /api/cron/overdue-invoices` is for scheduled overdue updates (Bearer `CRON_SECRET`). `POST /api/webhooks/stripe` handles Stripe events (public — verified via `STRIPE_WEBHOOK_SECRET`). **All writes** use Next.js Server Actions.
 
@@ -329,6 +339,8 @@ Business Dashboard/
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)', '/sign-up(.*)', '/onboarding(.*)', '/privacy(.*)', '/terms(.*)',
   '/api/cron(.*)', '/api/webhooks/stripe(.*)',
+  '/brand/(.*)',    // shareable brand guide — no auth required
+  '/approve/(.*)', // client approval pages — no auth required
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -425,9 +437,9 @@ Client components call `useVerticalConfig()` to get labels, sections, and featur
 |---|---|---|---|
 | `orgs` | `id uuid` | — | Organization / workspace. One per user. `owner_id` = Clerk userId (text). `plan_tier` = billing plan (default `essential`). `stripe_customer_id` = Stripe customer. `subscription_status` = Stripe subscription state (default `active`). `ui_meta jsonb` = one-time UI flags (e.g. `has_seen_tour`). |
 | `team_members` | `id uuid` | `org_id → orgs` | Agency team members. `active` boolean for soft deactivation. |
-| `clients` | `id uuid` | `org_id → orgs`, `account_manager_id → team_members` | Brand accounts / clients. `vertical_data jsonb` stores vertical-specific fields. `archived_at` for soft delete. |
+| `clients` | `id uuid` | `org_id → orgs`, `account_manager_id → team_members` | Brand accounts / clients. `vertical_data jsonb` stores vertical-specific fields. `brand_guide_token text unique` — lazily generated share token (NULL until first share). `archived_at` for soft delete. |
 | `client_notes` | `id uuid` | `org_id → orgs`, `client_id → clients` | CRM notes on client profiles. `author_id` = Clerk userId. |
-| `deliverables` | `id uuid` | `org_id → orgs`, `client_id → clients`, `assignee_id → team_members` | Monthly deliverables. `month` always = first of month. `archived_at` for soft delete. |
+| `deliverables` | `id uuid` | `org_id → orgs`, `client_id → clients`, `assignee_id → team_members` | Monthly deliverables. `month` always = first of month. Approval workflow columns: `approval_token text unique` (cleared on approved), `approval_sent_at`, `approval_expires_at` (7-day TTL), `approved_at`, `approval_notes`. `archived_at` for soft delete. |
 | `invoices` | `id uuid` | `org_id → orgs`, `client_id → clients` | Invoice records. Unique `(org_id, invoice_number)`. `billing_month` always = first of month. |
 | `invoice_line_items` | `id uuid` | `invoice_id → invoices ON DELETE CASCADE` | Line item breakdown per invoice. Written by `batchCreateRetainerInvoices` and `createInvoice`. |
 | `events` | `id uuid` | `org_id → orgs`, `client_id → clients (nullable, SET NULL)` | Append-only analytics event log. `metadata jsonb`. |
@@ -518,6 +530,7 @@ All server actions follow this contract:
 | `updateClient` | `requireOrgAccess` | `clients` | None | `/clients`, `/clients/{id}`, `/`, `/analytics`, `dashboard-{orgId}` |
 | `updateClientRenewal` | `requireOrgAccess` | `clients` (`contract_renewal`, `tag→active`) | None | `/clients`, `/clients/{id}`, `/` |
 | `updateClientBrandGuide` | `requireOrgAccess` | `clients` (`vertical_data` merge) | None | `/clients/{id}` |
+| `generateBrandGuideToken` | `requireOrgAccess` | `clients` (`brand_guide_token`) | None | `/clients/{id}` |
 | `reassignAccountManager` | `requireOrgAccess` | `clients` (`account_manager_id`) | None | `/clients/{id}`, `/deliverables` |
 | `createClientNote` | `requireOrgAccess` (returns `userId`) | `client_notes` | None | `/clients/{id}` |
 | `updateClientNote` | `requireOrgAccess` | `client_notes` | None | `/clients`, `/clients/{id}` |
@@ -527,6 +540,7 @@ All server actions follow this contract:
 
 | Action | Auth Guard | Tables Written | Events Fired | Revalidates |
 |---|---|---|---|---|
+| `sendForApproval` | `requireOrgAccess` | `deliverables` (`status→pending_approval`, `approval_token`, `approval_sent_at`, `approval_expires_at`) | None | `/deliverables`, `dashboard-{orgId}` (+ Resend email if `contact_email` set) |
 | `updateDeliverableStatus` | `requireOrgAccess` | `deliverables` | `deliverable.status_changed` (+ `deliverable.completed` if published) | `/deliverables`, `/`, `/analytics` |
 | `createDeliverable` | `requireOrgAccess` | `deliverables` | `deliverable.created` | `/deliverables`, `/` |
 | `deleteDeliverable` | `requireOrgAccess` | `deliverables` (`archived_at`) | None | `/deliverables`, `/` |
@@ -535,6 +549,14 @@ All server actions follow this contract:
 | `getMonthCloseOutData` | `requireOrgAccess` | None (read) | None | None |
 
 Note: `getMonthCloseOutData` uses the `'use server'` file directive and calls `requireOrgAccess`, but is a data-fetch function, not a mutation. It is called directly from the page component as a server function.
+
+### Public Approval Action (`lib/deliverables/approval-actions.ts`)
+
+| Action | Auth | Tables Written | Revalidates |
+|---|---|---|---|
+| `recordApproval(token, decision, notes?)` | None (validates by token) | `deliverables` (`status`, `approved_at`, `approval_notes`, `approval_token`) | None (no revalidatePath — public page has no cached dashboard data) |
+
+Guards: returns `{ error }` if token not found, if `approval_expires_at` is past, or if `status !== 'pending_approval'`. On `approved`: clears `approval_token` (single-use). On `revision_requested`: keeps token, sets status back to `in_progress`.
 
 ### Invoice Actions (`lib/invoicing/actions.ts`)
 
@@ -839,6 +861,9 @@ Unit tests cover: auth guards, client notes, batch invoice flows, invoice server
 
 | Item | Notes |
 |---|---|
+| **DB migrations pending** | Run in Supabase SQL editor before deploying Phase 2/3 features: `ALTER TABLE clients ADD COLUMN IF NOT EXISTS brand_guide_token TEXT UNIQUE;` and 5 approval columns on `deliverables` (see `db/schema.sql` migration comments). |
+| Approval email deliverability | Resend domain verification must be confirmed in production before approval emails are live. |
+| `recordApproval` rate limiting | No IP-level rate limiting yet — 7-day token expiry is the primary guard. Add middleware rate limiting if abuse occurs. |
 | Vercel Cron | Schedule `GET /api/cron/overdue-invoices` with `Authorization: Bearer ${CRON_SECRET}` |
 | Resend | Invoice-sent email runs when `contact_email` exists; verify domain/DNS in production |
 | `team_capacity` | Metric remains **`show: false`** for agency until computed in `getAnalyticsMetrics` |
@@ -854,6 +879,14 @@ Legacy `sentry.server.config.ts` / `sentry.edge.config.ts` may duplicate `instru
 Occasional `TODO` in components (e.g. logo SVG); no systematic FIXME backlog.
 
 ---
+
+## Delta — Implementation Phases 1–3 (2026-04-09)
+
+| Item | Details |
+|---|---|
+| **Phase 1 — Essential tier limits** | `TIER_LIMITS.essential` bumped: clients `2 → 5`, deliverables `15 → 25`. `BillingClient.tsx` copy updated. `tier-limits.test.ts` updated (count assertions reflect new limits). No DB migration. |
+| **Phase 2 — Shareable brand guide** | `clients.brand_guide_token text unique` column added (migration required). `generateBrandGuideToken` server action in `lib/clients/actions.ts`. New public route `app/brand/[token]/page.tsx` — server component, admin client lookup, 404 on invalid, renders all vertical intake fields read-only with brand styling. `BrandGuideTab` gains `brandGuideToken` prop + share bar UI (Copy link / Regenerate with AlertDialog). `Client360Client` passes `brand_guide_token` down. `/brand/(.*)` added to middleware public routes. |
+| **Phase 3 — Content approval workflow** | 5 new columns on `deliverables` (migration required): `approval_token`, `approval_sent_at`, `approval_expires_at` (7-day TTL), `approved_at`, `approval_notes`. `sendForApproval` in `lib/deliverables/actions.ts`. `recordApproval` in new `lib/deliverables/approval-actions.ts` (public, no auth). `lib/email/approval.ts` — branded Resend template. New public route `app/approve/[token]/page.tsx` + `ApproveClient.tsx` (Approve / Request Revisions + confirmation states). `DeliverableCard` and `DeliverableRow` gain "Send for Approval" / "Resend" buttons. `getMonthlyDeliverables` query extended to fetch approval columns + `clients.contact_email/contact_name`. `/approve/(.*)` added to middleware public routes. `DeliverableWithClient.clients` pick extended with `contact_email`, `contact_name`. |
 
 ## Delta from Previous Audit (2026-04-09)
 

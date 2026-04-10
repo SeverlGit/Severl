@@ -96,6 +96,8 @@ function Column({
             status={d.status}
             dueDate={d.due_date}
             assigneeName={d.team_members?.name}
+            approvalSentAt={d.approval_sent_at ?? null}
+            contactEmail={d.clients?.contact_email ?? null}
             vertical={vertical}
             dragDisabled={dragDisabled}
           />

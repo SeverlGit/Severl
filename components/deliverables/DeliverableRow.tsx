@@ -9,9 +9,10 @@ import {
   restoreDeliverable,
   updateDeliverable,
   updateDeliverableAssignee,
+  sendForApproval,
 } from "@/lib/deliverables/actions";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Send, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -173,6 +174,28 @@ type Props = {
 export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, index, teamMembers }: Props) {
   const [editOpen, setEditOpen] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [isSending, startSending] = useTransition();
+
+  const isResend = deliverable.status === "pending_approval" && !!deliverable.approval_sent_at;
+  const showSendButton = deliverable.status === "in_progress" || isResend;
+
+  const handleSend = () => {
+    startSending(async () => {
+      const result = await sendForApproval(deliverable.id, orgId);
+      if ("error" in result) {
+        toast.error("Could not send for approval", { description: result.error });
+        return;
+      }
+      if (result.data.contactEmail) {
+        toast.success(isResend ? "Approval request resent" : "Approval request sent", {
+          description: `Sent to ${result.data.contactEmail}`,
+        });
+      } else {
+        navigator.clipboard.writeText(result.data.approvalUrl).catch(() => {});
+        toast.success("Link copied", { description: "No email on file — share the link manually." });
+      }
+    });
+  };
 
   const handleDelete = () => {
     startDeleteTransition(async () => {
@@ -238,6 +261,18 @@ export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, ind
       )}
 
       <div className="ml-1 flex shrink-0 items-center gap-0.5">
+        {showSendButton && (
+          <button
+            type="button"
+            disabled={isSending}
+            onClick={handleSend}
+            className="flex items-center gap-1 text-[11px] font-medium text-brand-rose opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 focus:outline-none hover:text-brand-rose-deep disabled:opacity-40 rounded px-1"
+            aria-label={isResend ? "Resend approval request" : "Send for approval"}
+          >
+            <Send className="h-3 w-3" />
+            {isSending ? "…" : isResend ? "Resend" : "Send"}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setEditOpen(true)}

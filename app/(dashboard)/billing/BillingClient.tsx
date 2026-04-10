@@ -25,7 +25,7 @@ const plans: PlanCard[] = [
     name: 'Essential',
     price: 'Free',
     description: 'Get started with the basics',
-    features: ['2 clients', '15 deliverables / month', '500 MB storage', 'Community support'],
+    features: ['5 clients', '25 deliverables / month', '500 MB storage', 'Community support'],
   },
   {
     tier: 'pro',

@@ -52,6 +52,7 @@ export type ClientRow = {
   tag: 'prospect' | 'onboarding' | 'active' | 'at_risk' | 'paused' | 'churned';
   platforms: string[];
   vertical_data: Record<string, any>;
+  brand_guide_token: string | null;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
@@ -77,6 +78,11 @@ export type DeliverableRow = {
   assignee_id: string | null;
   due_date: string | null;
   notes: string | null;
+  approval_token: string | null;
+  approval_sent_at: string | null;
+  approval_expires_at: string | null;
+  approved_at: string | null;
+  approval_notes: string | null;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
@@ -139,7 +145,7 @@ export type Client360 = ClientFull & {
 };
 
 export type DeliverableWithClient = DeliverableRow & {
-  clients: Pick<ClientRow, 'brand_name' | 'platforms' | 'tag' | 'retainer_amount' | 'archived_at'>;
+  clients: Pick<ClientRow, 'brand_name' | 'platforms' | 'tag' | 'retainer_amount' | 'archived_at' | 'contact_email' | 'contact_name'>;
   team_members: Pick<TeamMemberRow, 'name'> | { name: string } | null;
 };
 

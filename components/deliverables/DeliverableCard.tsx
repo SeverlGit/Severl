@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { AnyVerticalConfig } from "@/lib/vertical-config";
 import type { DeliverableStatus } from "@/lib/types";
 import { DeliverableStatusPill } from "@/components/dashboard/DeliverableStatusPill";
 import { DeliverableEditDialog } from "./DeliverableRow";
-import { Pencil } from "lucide-react";
+import { sendForApproval } from "@/lib/deliverables/actions";
+import { toast } from "sonner";
+import { Pencil, Send } from "lucide-react";
 
 type Props = {
   id: string;
@@ -18,6 +20,8 @@ type Props = {
   status: string;
   dueDate?: string | null;
   assigneeName?: string | null;
+  approvalSentAt?: string | null;
+  contactEmail?: string | null;
   vertical: AnyVerticalConfig;
   /** When true, drag-and-drop is disabled (e.g. during status update). */
   dragDisabled?: boolean;
@@ -32,10 +36,13 @@ export function DeliverableCard({
   status,
   dueDate,
   assigneeName,
+  approvalSentAt,
+  contactEmail,
   vertical,
   dragDisabled = false,
 }: Props) {
   const [editOpen, setEditOpen] = useState(false);
+  const [isSending, startSending] = useTransition();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
     disabled: dragDisabled,
@@ -52,6 +59,29 @@ export function DeliverableCard({
 
   const displayTitle = title || typeLabel;
   const isPastDue = dueDate && new Date(dueDate) < new Date();
+
+  const showSendButton = status === "in_progress" || (status === "pending_approval" && approvalSentAt);
+  const isResend = status === "pending_approval" && !!approvalSentAt;
+
+  const handleSend = () => {
+    startSending(async () => {
+      const result = await sendForApproval(id, orgId);
+      if ("error" in result) {
+        toast.error("Could not send for approval", { description: result.error });
+        return;
+      }
+      if (result.data.contactEmail) {
+        toast.success(isResend ? "Approval request resent" : "Approval request sent", {
+          description: `Sent to ${result.data.contactEmail}`,
+        });
+      } else {
+        toast.success("Link copied to clipboard", {
+          description: "No email on file — share the link manually.",
+        });
+        navigator.clipboard.writeText(result.data.approvalUrl).catch(() => {});
+      }
+    });
+  };
 
   return (
     <div
@@ -105,6 +135,25 @@ export function DeliverableCard({
           )}
         </div>
       </div>
+
+      {/* Send for approval action */}
+      {showSendButton && (
+        <div
+          className="border-t border-border px-3 py-1.5"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            disabled={isSending || dragDisabled}
+            onClick={(e) => { e.stopPropagation(); handleSend(); }}
+            className="flex items-center gap-1.5 text-[12px] text-brand-rose transition-colors hover:text-brand-rose-deep disabled:opacity-50"
+          >
+            <Send className="h-3 w-3" />
+            {isSending ? "Sending…" : isResend ? "Resend" : "Send for approval"}
+          </button>
+        </div>
+      )}
+
       <DeliverableEditDialog
         open={editOpen}
         onOpenChange={setEditOpen}

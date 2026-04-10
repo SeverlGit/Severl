@@ -310,6 +310,30 @@ export async function updateClientNote(params: {
   revalidatePath(`/clients/${params.clientId}`);
 }
 
+export async function generateBrandGuideToken(params: {
+  clientId: string;
+  orgId: string;
+}): Promise<{ data: string } | { error: string }> {
+  await requireOrgAccess(params.orgId);
+  const supabase = getSupabaseAdminClient();
+
+  const token = crypto.randomUUID().replace(/-/g, '');
+
+  const { error } = await supabase
+    .from('clients')
+    .update({ brand_guide_token: token })
+    .eq('id', params.clientId)
+    .eq('org_id', params.orgId);
+
+  if (error) {
+    Sentry.captureException(error);
+    return { error: 'Could not generate share link' };
+  }
+
+  revalidatePath(`/clients/${params.clientId}`);
+  return { data: token };
+}
+
 export async function deleteClientNote(params: {
   orgId: string;
   noteId: string;

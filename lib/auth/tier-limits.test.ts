@@ -30,7 +30,7 @@ describe('Tier Limits Validation', () => {
       // Mock org query
       mockSupabase.single.mockResolvedValueOnce({ data: { plan_tier: 'essential' } });
       // Mock client count query
-      mockSupabase.is.mockResolvedValueOnce({ count: 1 }); // 1 client currently, limit is 2
+      mockSupabase.is.mockResolvedValueOnce({ count: 1 }); // 1 client currently, limit is 5
 
       await expect(checkClientLimit('org_123')).resolves.toBeUndefined();
     });
@@ -39,7 +39,7 @@ describe('Tier Limits Validation', () => {
       // Mock org query
       mockSupabase.single.mockResolvedValue({ data: { plan_tier: 'essential' } });
       // Mock client count query
-      mockSupabase.is.mockResolvedValue({ count: 2 }); // 2 clients currently, limit is 2
+      mockSupabase.is.mockResolvedValue({ count: 5 }); // 5 clients currently, limit is 5
 
       await expect(checkClientLimit('org_123')).rejects.toThrow(TierLimitError);
       await expect(checkClientLimit('org_123')).rejects.toThrow(/ hit client limit for tier /);

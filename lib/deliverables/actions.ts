@@ -1,12 +1,73 @@
 'use server';
 
 import * as Sentry from '@sentry/nextjs';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 import { fireEvent } from '@/lib/analytics/fireEvent';
 import { requireOrgAccess } from '@/lib/auth-guard';
 import type { ClientRow } from '@/lib/database.types';
 import { checkDeliverableLimit, TierLimitError } from '@/lib/auth/tier-limits';
+import { sendApprovalEmail } from '@/lib/email/approval';
+
+type SendForApprovalResult =
+  | { data: { approvalUrl: string; contactEmail: string | null } }
+  | { error: string };
+
+export async function sendForApproval(
+  deliverableId: string,
+  orgId: string,
+): Promise<SendForApprovalResult> {
+  await requireOrgAccess(orgId);
+  const supabase = getSupabaseAdminClient();
+
+  const { data: deliverable } = await supabase
+    .from('deliverables')
+    .select('id, title, type, client_id, clients(brand_name, contact_email, contact_name)')
+    .eq('id', deliverableId)
+    .eq('org_id', orgId)
+    .single();
+
+  if (!deliverable) return { error: 'Deliverable not found' };
+
+  const token = crypto.randomUUID().replace(/-/g, '');
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const approvalUrl = `${appUrl}/approve/${token}`;
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error } = await supabase
+    .from('deliverables')
+    .update({
+      status: 'pending_approval',
+      approval_token: token,
+      approval_sent_at: new Date().toISOString(),
+      approval_expires_at: expiresAt,
+    })
+    .eq('id', deliverableId)
+    .eq('org_id', orgId);
+
+  if (error) {
+    Sentry.captureException(error);
+    return { error: error.message };
+  }
+
+  const client = deliverable.clients as unknown as { brand_name: string; contact_email: string | null; contact_name: string | null } | null;
+  const contactEmail = client?.contact_email ?? null;
+
+  if (contactEmail) {
+    await sendApprovalEmail({
+      to: contactEmail,
+      contactName: client?.contact_name ?? client?.brand_name ?? '',
+      brandName: client?.brand_name ?? '',
+      deliverableTitle: deliverable.title,
+      deliverableType: deliverable.type,
+      approvalUrl,
+    });
+  }
+
+  revalidatePath('/deliverables');
+  revalidateTag(`dashboard-${orgId}`);
+  return { data: { approvalUrl, contactEmail } };
+}
 
 export async function updateDeliverableStatus(params: {
   deliverableId: string;

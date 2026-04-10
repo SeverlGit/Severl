@@ -22,7 +22,7 @@ Social media manager operating system for freelancers and agencies.
 - `lib/database.types.ts` — Row types and composite types for all tables
 - `lib/vertical-config.tsx` — `VerticalConfigProvider` + `useVerticalConfig()` React context
 - `db/schema.sql` — DDL source of truth (tables, enums, RLS via auth.jwt()->>'sub')
-- `middleware.ts` — Clerk v6 `clerkMiddleware()`; **`export const config` includes `runtime: 'nodejs'`** (Next.js 15.5+). Public routes include `/api/cron(.*)` and **`/api/webhooks/stripe(.*)`**.
+- `middleware.ts` — Clerk v6 `clerkMiddleware()`; **`export const config` includes `runtime: 'nodejs'`** (Next.js 15.5+). Public routes include `/api/cron(.*)`, **`/api/webhooks/stripe(.*)`**, **`/brand/(.*)`** (shareable brand guide), and **`/approve/(.*)`** (client approval pages).
 - `instrumentation.ts` — Sentry init for Node.js + Edge runtimes
 - `app/layout.tsx` — root metadata (`title`/`description`), `app/icon.png` favicon (App Router convention)
 
@@ -41,6 +41,8 @@ Social media manager operating system for freelancers and agencies.
 ## Database
 8 tables: `orgs`, `team_members`, `clients`, `client_notes`, `deliverables`, `invoices`, `invoice_line_items`, `events`
 `orgs` now includes: `plan_tier plan_tier not null default 'essential'`, `stripe_customer_id text`, `subscription_status text not null default 'active'`, `ui_meta jsonb not null default '{}'` (stores `has_seen_tour` and similar one-time flags).
+`clients` now includes: `brand_guide_token text unique` — lazily generated share token; NULL until first share. Run migration: `ALTER TABLE clients ADD COLUMN IF NOT EXISTS brand_guide_token TEXT UNIQUE;`
+`deliverables` now includes: `approval_token text unique`, `approval_sent_at timestamptz`, `approval_expires_at timestamptz` (7-day TTL), `approved_at timestamptz`, `approval_notes text`. Run migration: `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS approval_token TEXT UNIQUE, ADD COLUMN IF NOT EXISTS approval_sent_at TIMESTAMPTZ, ADD COLUMN IF NOT EXISTS approval_expires_at TIMESTAMPTZ, ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ, ADD COLUMN IF NOT EXISTS approval_notes TEXT;`
 `plan_tier` enum: `essential`, `pro`, `elite`, `agency`. Limits enforced in app layer via `lib/auth/tier-limits.ts`.
 All RLS policies use `auth.jwt()->>'sub'` for Clerk user ID. Admin client bypasses RLS; app layer enforces org scoping.
 
@@ -66,6 +68,10 @@ Two verticals in `config/verticals/`: `smm_freelance` (solo) and `smm_agency` (t
 
 All other mutations use Server Actions.
 
+## Public Routes (no Clerk session required)
+- `/brand/[token]` — `app/brand/[token]/page.tsx` — server component; looks up client by `brand_guide_token` via admin client; renders all vertical intake fields read-only. Returns 404 on invalid token.
+- `/approve/[token]` — `app/approve/[token]/page.tsx` + `ApproveClient.tsx` — server component loads deliverable by `approval_token`; handles invalid/expired/already-reviewed states. Client component (`ApproveClient`) has Approve / Request Revisions flow with notes textarea and confirmation states. 7-day expiry enforced.
+
 ## What's Complete
 - Clerk v6 + Supabase native integration (no JWT templates)
 - RLS on all tables via `auth.jwt()->>'sub'`
@@ -83,7 +89,7 @@ All other mutations use Server Actions.
 - Cross-route revalidation on mutations (including `/clients/[id]` for notes, archive, etc. where applicable)
 - `.gitignore` covers `.env*`, local AI dirs, caches, keys; `.env.example` documents vars including **`CRON_SECRET`**
 - **Billing/Stripe:** `/billing` route (`BillingClient`), `createCheckoutSession`, `createPortalSession`, `restorePurchases` server actions; Stripe webhook at `/api/webhooks/stripe`; `plan_tier` + `stripe_customer_id` on `orgs`; `PlanProvider` wraps dashboard layout
-- **Plan tiers + limits:** `essential` (2 clients / 15 deliverables), `pro` (10 / 100), `elite` (unlimited), `agency` (unlimited). `checkClientLimit`, `checkDeliverableLimit`, `checkStorageLimit` throw `TierLimitError` on violation.
+- **Plan tiers + limits:** `essential` (5 clients / 25 deliverables), `pro` (10 / 100), `elite` (unlimited), `agency` (unlimited). `checkClientLimit`, `checkDeliverableLimit`, `checkStorageLimit` throw `TierLimitError` on violation.
 - **Settings panel:** `SettingsPanel` dialog (density, currency, due days, week start, notifications); user prefs via `usePrefs()` stored in localStorage
 - **Tour / onboarding:** `startMainTour()` (driver.js) triggered on first login; `markUIMetaSeen()` records seen flags in `orgs.ui_meta`
 - **Navigation progress bar:** `NavigationProgress` — thin top-of-viewport bar on route transitions
@@ -91,15 +97,20 @@ All other mutations use Server Actions.
 - **Loading states:** `loading.tsx` files for all dashboard routes (`/`, `/clients`, `/clients/[id]`, `/analytics`, `/deliverables`, `/invoices`)
 - **New skeletons:** `ClientsSkeleton`, `DeliverablesSkeleton`
 - **Verification email:** `lib/email/verification.ts` — Resend-based Clerk custom verification email
+- **Shareable brand guide:** `brand_guide_token` column on `clients`; `generateBrandGuideToken` server action in `lib/clients/actions.ts`; public route `/brand/[token]`; "Share with client" button in `BrandGuideTab` with copy + regenerate (AlertDialog confirmation).
+- **Client content approval workflow:** `approval_token`, `approval_sent_at`, `approval_expires_at`, `approved_at`, `approval_notes` on `deliverables`; `sendForApproval` in `lib/deliverables/actions.ts` (transitions to `pending_approval`, generates 7-day token, sends Resend email); `recordApproval` in `lib/deliverables/approval-actions.ts` (public, no auth — validates expiry, prevents double-submit, clears token on approved); approval email template in `lib/email/approval.ts`; public route `/approve/[token]`; "Send for Approval" / "Resend" buttons on `DeliverableCard` and `DeliverableRow`; kanban already shows "With client" label for `pending_approval` column.
 
 ## Known Gaps (not yet addressed)
-- Cron: Vercel cron schedule + `CRON_SECRET` must be set in production for overdue automation
-- `markInvoiceSent` / batch flow can send Resend email when client email exists — verify deliverability in prod
-- `team_capacity` metric: hidden, not computed (flip `show: true` when logic exists)
-- Broader test coverage for deliverables, team, and invoice UI
-- ESLint: migrate off deprecated `next lint` when adopting flat `eslint.config` (Next 16 direction)
-- Stripe env vars (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO/ELITE/AGENCY_BASE`, `NEXT_PUBLIC_APP_URL`) must be set in production
-- `syncStripeTeamSeat` for agency seat billing is wired but verify Stripe product configuration in production
+- **DB migrations not yet run:** Both `brand_guide_token` on `clients` and the 5 approval columns on `deliverables` must be migrated in Supabase before these features work in production. SQL is documented in `db/schema.sql` comments and in CURSOR_CONTEXT above.
+- **Approval email deliverability:** Not yet verified in prod. Test Resend domain verification in staging first.
+- `recordApproval` has no rate limiting — mitigated by 7-day token expiry, but consider IP rate limiting in production.
+- `syncStripeTeamSeat` for agency seat billing is wired but verify Stripe product configuration in production.
+- Cron: Vercel cron schedule + `CRON_SECRET` must be set in production for overdue automation.
+- `markInvoiceSent` / batch flow can send Resend email when client email exists — verify deliverability in prod.
+- `team_capacity` metric: hidden, not computed (flip `show: true` when logic exists).
+- Broader test coverage for deliverables, team, and invoice UI.
+- ESLint: migrate off deprecated `next lint` when adopting flat `eslint.config` (Next 16 direction).
+- Stripe env vars (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO/ELITE/AGENCY_BASE`, `NEXT_PUBLIC_APP_URL`) must be set in production.
 
 ## Infrastructure Status
 - Clerk / Supabase / Sentry / Resend: configure per environment via `.env` (see `.env.example`)

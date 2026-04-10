@@ -551,7 +551,7 @@ export default function Client360Client({ client, activity, deliverables, invoic
               </TabsContent>
 
               <TabsContent value="brand_guide" forceMount={activeTab === "brand_guide" ? true : undefined} className={activeTab !== "brand_guide" ? "hidden" : ""}>
-                <BrandGuideTab clientId={clientId} orgId={orgId} vertical={vertical} verticalData={client.vertical_data ?? {}} />
+                <BrandGuideTab clientId={clientId} orgId={orgId} vertical={vertical} verticalData={client.vertical_data ?? {}} brandGuideToken={client.brand_guide_token ?? null} />
               </TabsContent>
 
               <TabsContent value="team" forceMount={activeTab === "team" ? true : undefined} className={activeTab !== "team" ? "hidden" : ""}>
