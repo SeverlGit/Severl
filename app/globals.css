@@ -71,9 +71,12 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
-/* Form font inheritance */
+/* Form font inheritance + text color anchor */
 input, button, select, textarea, [role='button'], [role='listbox'] {
   font-family: inherit;
+}
+input, textarea, select {
+  color: var(--text-1);
 }
 
 a { text-decoration: none; }

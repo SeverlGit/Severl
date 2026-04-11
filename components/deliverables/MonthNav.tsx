@@ -4,23 +4,26 @@ import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Props = {
-  currentMonth: Date;
+  monthStr: string; // "YYYY-MM"
 };
 
-export function MonthNav({ currentMonth }: Props) {
+export function MonthNav({ monthStr }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const navigate = (delta: number) => {
-    const d = new Date(currentMonth);
-    d.setMonth(d.getMonth() + delta);
-    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const [y, m] = monthStr.split("-").map(Number);
+    // new Date(y, m-1+delta, 1) is always local-time — no UTC serialization issue
+    const next = new Date(y, m - 1 + delta, 1);
+    const iso = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
     const params = new URLSearchParams(searchParams.toString());
     params.set("month", iso);
     router.push(`/deliverables?${params.toString()}`);
   };
 
-  const label = currentMonth.toLocaleDateString(undefined, {
+  // Parse from integers so local-time Date is used — avoids UTC midnight → prev-day shift
+  const [y, m] = monthStr.split("-").map(Number);
+  const label = new Date(y, m - 1, 1).toLocaleDateString(undefined, {
     month: "long",
     year: "numeric",
   });

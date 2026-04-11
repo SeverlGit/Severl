@@ -88,12 +88,15 @@ export default async function DeliverablesPage({ searchParams }: Props) {
     };
   });
 
-  const monthLabel = currentMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const monthStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}`;
+  // Use integer construction (not ISO string) so month label is timezone-safe
+  const [mY, mM] = monthStr.split("-").map(Number);
+  const monthLabel = new Date(mY, mM - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
       <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <MonthNav currentMonth={currentMonth} />
+        <MonthNav monthStr={monthStr} />
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex border border-border bg-surface text-[14px] uppercase tracking-[0.04em]">
             <a
@@ -191,7 +194,7 @@ export default async function DeliverablesPage({ searchParams }: Props) {
               orgId={org.id}
               vertical={vertical}
               deliverables={deliverables}
-              currentMonth={currentMonth}
+              monthStr={monthStr}
             />
           )}
         </>

@@ -33,7 +33,7 @@ export function CalendarViewDynamic(props: {
   deliverables: DeliverableWithClient[];
   orgId: string;
   vertical: AnyVerticalConfig;
-  currentMonth: Date;
+  monthStr: string;
 }) {
   return <CalendarView {...props} />;
 }

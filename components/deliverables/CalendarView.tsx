@@ -11,7 +11,7 @@ type Props = {
   deliverables: DeliverableWithClient[];
   orgId: string;
   vertical: AnyVerticalConfig;
-  currentMonth: Date;
+  monthStr: string; // "YYYY-MM"
 };
 
 /** Returns the 7 Date objects for the week containing `date` (Mon–Sun). */
@@ -75,8 +75,12 @@ type EditTarget = {
   publishDate: string | null;
 };
 
-export function CalendarView({ deliverables, orgId, vertical, currentMonth }: Props) {
+export function CalendarView({ deliverables, orgId, vertical, monthStr }: Props) {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+
+  // Build local-time Date from integers — avoids UTC midnight → prev-day shift
+  const [mY, mM] = monthStr.split("-").map(Number);
+  const currentMonth = new Date(mY, mM - 1, 1);
 
   const weeks = getCalendarWeeks(currentMonth);
   const today = toYMD(new Date());
