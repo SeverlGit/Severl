@@ -15,7 +15,7 @@ export async function recordApproval(
 
   const { data: deliverable } = await supabase
     .from('deliverables')
-    .select('id, org_id, status, approval_expires_at')
+    .select('id, org_id, status, approval_expires_at, revision_round')
     .eq('approval_token', token)
     .maybeSingle();
 
@@ -30,6 +30,7 @@ export async function recordApproval(
   }
 
   const newStatus = decision === 'approved' ? 'approved' : 'in_progress';
+  const nextRound = (deliverable.revision_round ?? 0) + (decision === 'revision_requested' ? 1 : 0);
 
   const { error } = await supabase
     .from('deliverables')
@@ -37,12 +38,23 @@ export async function recordApproval(
       status: newStatus,
       approved_at: decision === 'approved' ? new Date().toISOString() : null,
       approval_notes: notes ?? null,
+      revision_round: nextRound,
       // Clear token on approved (single-use); leave it on revision so SMM can see notes context
       approval_token: decision === 'approved' ? null : token,
     })
     .eq('id', deliverable.id);
 
   if (error) return { error: error.message };
+
+  // Insert revision history record for paper trail
+  if (decision === 'revision_requested') {
+    await supabase.from('approval_revisions').insert({
+      deliverable_id: deliverable.id,
+      notes: notes ?? null,
+      round: nextRound,
+    });
+    // Non-fatal: if this fails, the deliverable status is already updated
+  }
 
   return { data: decision };
 }

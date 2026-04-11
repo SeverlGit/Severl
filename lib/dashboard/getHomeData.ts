@@ -243,6 +243,7 @@ export async function getHomeData(orgId: string) {
     recentInvoices,
     renewalsList,
     clientCountSparkline,
+    churnRiskScores,
   ] = await Promise.all([
     getMRRAndActiveCount(orgId),
     getDeliverablesBehind(orgId),
@@ -253,6 +254,7 @@ export async function getHomeData(orgId: string) {
     getRecentInvoices(orgId),
     getUpcomingRenewalsList(orgId),
     getClientCountSparkline(orgId),
+    getChurnRiskScores(orgId),
   ]);
 
   const { mrr, activeCount: activeClients } = mrrAndActive;
@@ -274,6 +276,7 @@ export async function getHomeData(orgId: string) {
     clientSparkline: clientCountSparkline,
     recentInvoices,
     renewalsList,
+    churnRiskScores,
   };
 }
 
@@ -332,4 +335,119 @@ export const getClientCountSparkline = (orgId: string) =>
     [`client-count-sparkline-${orgId}`],
     { revalidate: 60, tags: [`dashboard-${orgId}`] },
   )();
+
+export type ChurnRiskItem = {
+  clientId: string;
+  name: string;
+  score: number; // 0–100
+  topReason: string;
+  retainer_amount: number;
+};
+
+/**
+ * getChurnRiskScores — computes a churn risk score (0–100) for each active client.
+ *
+ * Scoring factors (each contributes up to 25 points):
+ * 1. Renewal proximity: < 14 days = 25, < 30 days = 15, < 60 days = 8, else 0
+ * 2. Overdue invoice: any overdue invoice = 25
+ * 3. High revision rate: any deliverable with revision_round >= 2 this month = 25
+ * 4. Low delivery rate: < 70% published this month = 25, < 85% = 10
+ *
+ * Returns top 5 by score descending.
+ */
+export async function getChurnRiskScores(orgId: string): Promise<ChurnRiskItem[]> {
+  const supabase = getSupabaseAdminClient();
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10);
+
+  const [clientsRes, invoicesRes, deliverablesRes] = await Promise.all([
+    supabase
+      .from('clients')
+      .select('id, brand_name, contract_renewal, retainer_amount')
+      .eq('org_id', orgId)
+      .eq('tag', 'active')
+      .is('archived_at', null),
+    supabase
+      .from('invoices')
+      .select('client_id, status')
+      .eq('org_id', orgId)
+      .eq('status', 'overdue'),
+    supabase
+      .from('deliverables')
+      .select('client_id, status, revision_round')
+      .eq('org_id', orgId)
+      .gte('month', monthStart)
+      .lt('month', monthEnd)
+      .is('archived_at', null),
+  ]);
+
+  if (!clientsRes.data) return [];
+
+  const overdueClients = new Set(
+    (invoicesRes.data ?? []).map((i) => i.client_id),
+  );
+
+  const delivByClient: Record<string, { total: number; published: number; maxRevRound: number }> = {};
+  for (const d of deliverablesRes.data ?? []) {
+    const cid = d.client_id;
+    if (!delivByClient[cid]) delivByClient[cid] = { total: 0, published: 0, maxRevRound: 0 };
+    delivByClient[cid].total++;
+    if (d.status === 'published') delivByClient[cid].published++;
+    if ((d.revision_round ?? 0) > delivByClient[cid].maxRevRound) {
+      delivByClient[cid].maxRevRound = d.revision_round ?? 0;
+    }
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const scored: ChurnRiskItem[] = clientsRes.data.map((client) => {
+    let score = 0;
+    const reasons: string[] = [];
+
+    // Factor 1: renewal proximity
+    if (client.contract_renewal) {
+      const renewDate = new Date(client.contract_renewal);
+      renewDate.setHours(0, 0, 0, 0);
+      const days = Math.ceil((renewDate.getTime() - today.getTime()) / 86_400_000);
+      if (days <= 14) { score += 25; reasons.push('Renewal in 2 weeks'); }
+      else if (days <= 30) { score += 15; reasons.push('Renewal due soon'); }
+      else if (days <= 60) { score += 8; }
+    }
+
+    // Factor 2: overdue invoice
+    if (overdueClients.has(client.id)) {
+      score += 25;
+      reasons.push('Overdue invoice');
+    }
+
+    // Factor 3: high revision count
+    const deliv = delivByClient[client.id];
+    if (deliv && deliv.maxRevRound >= 2) {
+      score += 25;
+      reasons.push('Multiple revisions');
+    }
+
+    // Factor 4: low delivery rate
+    if (deliv && deliv.total > 0) {
+      const pct = deliv.published / deliv.total;
+      if (pct < 0.7) { score += 25; reasons.push('Low delivery rate'); }
+      else if (pct < 0.85) { score += 10; }
+    }
+
+    return {
+      clientId: client.id,
+      name: client.brand_name,
+      score: Math.min(score, 100),
+      topReason: reasons[0] ?? 'Low risk',
+      retainer_amount: client.retainer_amount ?? 0,
+    };
+  });
+
+  return scored
+    .filter((c) => c.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
 

@@ -3,21 +3,26 @@ import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import { getCurrentOrg } from "@/lib/auth";
 import { getVerticalConfig } from "@/config/verticals";
-import { getAnalyticsMetrics, getRevenueByClient, getRenewalPipeline, getDeliveryRateByClient } from "@/lib/analytics/getAnalyticsData";
-import { getMRRTrend } from "@/lib/dashboard/getHomeData";
+import { getAnalyticsMetrics, getRevenueByClient, getRenewalPipeline, getDeliveryRateByClient, getCapacityMetrics, getRevenueForecast } from "@/lib/analytics/getAnalyticsData";
+import { getMRRTrend, getChurnRiskScores } from "@/lib/dashboard/getHomeData";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AnalyticsClientLoader } from "./AnalyticsClientLoader";
 
 export default async function AnalyticsPage() {
   const org = await getCurrentOrg();
 
-  const [metrics, mrrTrendResult, revenueByClient, renewalPipeline, deliveryRate] = await Promise.all([
+  const [metrics, mrrTrendResult, revenueByClient, renewalPipeline, deliveryRate, capacityMetrics, churnScores] = await Promise.all([
     getAnalyticsMetrics(org.id),
     getMRRTrend(org.id),
     getRevenueByClient(org.id),
     getRenewalPipeline(org.id),
     getDeliveryRateByClient(org.id),
+    getCapacityMetrics(org.id),
+    getChurnRiskScores(org.id),
   ]);
+
+  const churnScoreMap = Object.fromEntries(churnScores.map((c) => [c.clientId, c.score]));
+  const revenueForecast = await getRevenueForecast(org.id, 3, churnScoreMap);
 
   const mrrTrend = mrrTrendResult.points;
   const mrrTrendCurrentMonthLiveFallback = mrrTrendResult.currentMonthUsesLiveRetainers;
@@ -62,6 +67,8 @@ export default async function AnalyticsPage() {
       revenueByClient={revenueByClient}
       renewalPipeline={renewalPipeline}
       deliveryRate={deliveryRate}
+      capacityMetrics={capacityMetrics}
+      revenueForecast={revenueForecast}
     />
   );
 }

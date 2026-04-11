@@ -6,10 +6,14 @@ import { motion } from "framer-motion";
 import type { AnyVerticalConfig } from "@/lib/vertical-config";
 import type { InvoiceWithClient, BatchBillingClient } from "@/lib/database.types";
 import type { InvoiceClientOption } from "@/lib/invoicing/getInvoicesData";
-import { markInvoicePaid, voidInvoice, markInvoiceSent } from "@/lib/invoicing/actions";
+import { markInvoicePaid, voidInvoice, markInvoiceSent, createPaymentLink, exportInvoicesCsv } from "@/lib/invoicing/actions";
+import { usePlan } from "@/lib/billing/plan-context";
+import { useTour } from "@/lib/tour-context";
+import { startInvoicesTour } from "@/lib/tour-guides";
+import { UpgradePrompt } from "@/components/shared/UpgradePrompt";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { Search, X, Receipt, ExternalLink } from "lucide-react";
+import { Search, X, Receipt, ExternalLink, Link2, Download } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { BatchBillingDialog } from "@/components/invoices/BatchBillingDialog";
 import { CreateInvoiceDialog } from "@/components/invoices/CreateInvoiceDialog";
@@ -95,6 +99,8 @@ export default function InvoicesClient({
   invoiceClients,
 }: Props) {
   const router = useRouter();
+  const { canUsePaymentLinks, canExportCsv } = usePlan();
+  const { uiMeta, markLocalSeen } = useTour();
   const [searchValue, setSearchValue] = useState(search);
   const [isPending, startTransition] = useTransition();
   const [optimisticInvoices, updateOptimistic] = useOptimistic(
@@ -108,6 +114,15 @@ export default function InvoicesClient({
   const [voidConfirm, setVoidConfirm] = useState<InvoiceWithClient | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [paidDate, setPaidDate] = useState(new Date().toISOString().slice(0, 10));
+
+  useEffect(() => {
+    if (!uiMeta.has_seen_invoices_tour && (canUsePaymentLinks || canExportCsv)) {
+      const t = setTimeout(() => {
+        startInvoicesTour(() => markLocalSeen("has_seen_invoices_tour"));
+      }, 700);
+      return () => clearTimeout(t);
+    }
+  }, [uiMeta.has_seen_invoices_tour, canUsePaymentLinks, canExportCsv]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -158,6 +173,57 @@ export default function InvoicesClient({
     });
   };
 
+  const [paymentLinkPending, setPaymentLinkPending] = useState<string | null>(null);
+  const handleCopyPaymentLink = async (inv: InvoiceWithClient) => {
+    setPaymentLinkPending(inv.id);
+    try {
+      // If a payment link already exists on the invoice, copy it directly
+      if (inv.stripe_payment_link_url) {
+        await navigator.clipboard.writeText(inv.stripe_payment_link_url);
+        toast.success("Payment link copied", { description: `Send to ${inv.clients?.brand_name ?? "client"} to collect payment.` });
+        return;
+      }
+      const result = await createPaymentLink({ invoiceId: inv.id, orgId });
+      if ("error" in result) {
+        toast.error("Could not create payment link", { description: result.error });
+        return;
+      }
+      await navigator.clipboard.writeText(result.data);
+      toast.success("Payment link copied", { description: `Send to ${inv.clients?.brand_name ?? "client"} to collect payment.` });
+      router.refresh(); // reflect stripe_payment_link_url on the invoice row
+    } catch {
+      toast.error("Clipboard access denied", { description: "Copy the link from the invoice page instead." });
+    } finally {
+      setPaymentLinkPending(null);
+    }
+  };
+
+  const [exportPending, setExportPending] = useState(false);
+  const handleExportCsv = async () => {
+    setExportPending(true);
+    try {
+      const result = await exportInvoicesCsv({ orgId });
+      if ("error" in result) {
+        toast.error("Export failed", { description: result.error });
+        return;
+      }
+      const blob = new Blob([result.data], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `severl-invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Invoices exported");
+    } catch {
+      toast.error("Export failed", { description: "Please try again." });
+    } finally {
+      setExportPending(false);
+    }
+  };
+
   const navigateTab = (status: string) => {
     const params = new URLSearchParams();
     if (status !== "all") params.set("status", status);
@@ -176,6 +242,21 @@ export default function InvoicesClient({
           <p className="text-sm text-txt-muted">Track retainer billing, status, and cash collection.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {canExportCsv ? (
+            <Button
+              id="tour-invoice-export"
+              variant="ghost"
+              size="sm"
+              onClick={handleExportCsv}
+              disabled={exportPending}
+              className="h-8 gap-1.5 text-txt-muted hover:text-txt-primary"
+            >
+              <Download className="h-3.5 w-3.5" />
+              {exportPending ? "Exporting…" : "Export CSV"}
+            </Button>
+          ) : (
+            <UpgradePrompt featureName="CSV export" requiredTier="pro" compact />
+          )}
           <CreateInvoiceDialog orgId={orgId} verticalSlug={verticalSlug} clients={invoiceClients} />
           <BatchBillingDialog orgId={orgId} verticalSlug={verticalSlug} batchBillingLabel={vertical.invoicing.batchBillingLabel} clients={batchClients} />
         </div>
@@ -305,10 +386,36 @@ export default function InvoicesClient({
                           <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="text-txt-muted hover:text-danger">Void</Button>
                         </>}
                         {inv.status === "sent" && <>
+                          {canUsePaymentLinks ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={paymentLinkPending === inv.id}
+                              onClick={() => handleCopyPaymentLink(inv)}
+                              className="h-8 gap-1 px-2 text-txt-muted hover:text-brand-rose"
+                              title={inv.stripe_payment_link_url ? "Copy payment link" : "Generate payment link"}
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              {paymentLinkPending === inv.id ? "…" : inv.stripe_payment_link_url ? "Copy link" : "Pay link"}
+                            </Button>
+                          ) : null}
                           <Button variant="link" size="sm" onClick={() => setMarkPaidInvoice(inv)}>Mark paid</Button>
                           <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="text-txt-muted hover:text-danger">Void</Button>
                         </>}
                         {inv.status === "overdue" && <>
+                          {canUsePaymentLinks ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={paymentLinkPending === inv.id}
+                              onClick={() => handleCopyPaymentLink(inv)}
+                              className="h-8 gap-1 px-2 text-txt-muted hover:text-brand-rose"
+                              title={inv.stripe_payment_link_url ? "Copy payment link" : "Generate payment link"}
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              {paymentLinkPending === inv.id ? "…" : inv.stripe_payment_link_url ? "Copy link" : "Pay link"}
+                            </Button>
+                          ) : null}
                           <Button variant="danger" size="sm" onClick={() => setMarkPaidInvoice(inv)}>Mark paid</Button>
                           <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="text-txt-muted hover:text-danger">Void</Button>
                         </>}

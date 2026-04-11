@@ -1,6 +1,6 @@
 # Architecture Overview — Severl (SMM OS)
 
-**Date:** 2026-03-20 · **Last reviewed:** 2026-04-09 (updated post-implementation phases 1–3)
+**Date:** 2026-03-20 · **Last reviewed:** 2026-04-10 (updated post-implementation phases 1–8)
 **Auditor:** Claude Code (read-only, all source files read)
 **App name:** `severl-smm-os` (`package.json`)
 **Purpose:** Social media manager operating system — retainer, deliverable, and invoice management for SMM freelancers and agencies.
@@ -125,14 +125,25 @@ Business Dashboard/
 │   ├── privacy/page.tsx               Public stub — Privacy Policy
 │   ├── terms/page.tsx                 Public stub — Terms of Service
 │   ├── brand/
-│   │   └── [token]/page.tsx           Public — shareable brand guide (no auth); lookup by brand_guide_token; 404 on invalid
-│   ├── approve/
 │   │   └── [token]/
-│   │       ├── page.tsx               Public — client approval page (no auth); handles expired/reviewed states
-│   │       └── ApproveClient.tsx      "use client" — Approve / Request Revisions UI with notes + confirmation states
+│   │       └── page.tsx               Public — shareable brand guide (no auth); tracks view count/date; shows assets + PDF link; 404 on invalid
+│   ├── approve/
+│   │   ├── [token]/
+│   │   │   ├── page.tsx               Public — single-deliverable approval; handles expired/reviewed states
+│   │   │   └── ApproveClient.tsx      "use client" — Approve / Request Revisions UI; revision round tracking (Phase 4A)
+│   │   └── batch/[token]/
+│   │       └── page.tsx               Public — batch approval (Phase 4B); one token → multiple deliverables for one client
+│   ├── portal/
+│   │   └── [org-token]/[client-token]/
+│   │       ├── page.tsx               Public — client portal (Phase 8, Agency); notFound on bad tokens
+│   │       ├── layout.tsx             Portal shell — noindex, warm light background
+│   │       └── PortalClient.tsx       "use client" — tabbed portal (Brand / Approvals / Invoices / Activity)
 │   ├── api/
-│   │   ├── invoices/[id]/route.ts   GET — HTML invoice (auth + org check; print/PDF)
-│   │   └── cron/overdue-invoices/   GET — mark overdue (Bearer CRON_SECRET)
+│   │   ├── invoices/[id]/route.ts     GET — HTML invoice (auth + org check; print/PDF)
+│   │   ├── brand/[token]/pdf/route.ts GET — print-optimized HTML brand guide PDF export (public, Phase 5C)
+│   │   └── cron/
+│   │       ├── overdue-invoices/      GET — mark overdue + dunning sequences Day 7/14 (Bearer CRON_SECRET, Phase 7B)
+│   │       └── auto-billing/          GET — auto-create retainer invoices for qualifying orgs (Bearer CRON_SECRET, Phase 7A)
 │   ├── (dashboard)/                   Route group — auth-gated dashboard shell
 │   │   ├── layout.tsx                 Dashboard layout — getCurrentOrg(), VerticalConfigProvider, PlanProvider, LabelNav, Topbar
 │   │   ├── loading.tsx                Root dashboard loading state
@@ -195,15 +206,16 @@ Business Dashboard/
 │   │   ├── ClientSearchInput.tsx      Search input with URL param sync
 │   │   ├── ClientTagPill.tsx          Colored tag badge for client lifecycle status
 │   │   ├── ActivityTimeline.tsx       Event timeline from events table
-│   │   ├── BrandGuideTab.tsx          Vertical-specific brand guide fields editor
+│   │   ├── BrandGuideTab.tsx          Brand guide editor — fields + asset upload/grid + view stats + PDF link (Phase 5)
 │   │   ├── NotesTab.tsx               Client notes list + add/edit/delete
 │   │   ├── RenewalCountdown.tsx       Countdown to contract renewal with inline update
 │   │   └── TeamManagementDialog.tsx   Team member CRUD dialog (agency only)
 │   ├── deliverables/
-│   │   ├── StatusBoard.tsx            Kanban board — drag-and-drop across 5 status columns
+│   │   ├── StatusBoard.tsx            Kanban board — drag-and-drop; batch select + batch approval send (Phase 4B)
+│   │   ├── CalendarView.tsx           Week-strip calendar grid by client (Phase 3)
 │   │   ├── ClientSection.tsx          Deliverable list grouped by client
-│   │   ├── DeliverableCard.tsx        Kanban card for a deliverable
-│   │   ├── DeliverableRow.tsx         Table row for a deliverable
+│   │   ├── DeliverableCard.tsx        Kanban card — revision round badge R1/R2 (Phase 4A); publish_date picker
+│   │   ├── DeliverableRow.tsx         Table row — publish_date picker (Phase 3)
 │   │   ├── AddDeliverableRow.tsx      Inline add form for new deliverable
 │   │   ├── CloseOutDialog.tsx         Month close-out dialog with per-client completion
 │   │   ├── CompletionBar.tsx          Progress bar for deliverable completion
@@ -224,6 +236,7 @@ Business Dashboard/
 │   │   ├── Sparkline.tsx              Mini SVG sparkline chart
 │   │   ├── StatusPill.tsx             Generic status colored pill
 │   │   ├── Tag.tsx                    Semantic tone tag (green/red/amber/muted)
+│   │   └── UpgradePrompt.tsx          Inline rose-tinted upgrade nudge — featureName + requiredTier (Phase 1)
 │   └── ui/                            Radix-based primitives (cva-styled)
 │       ├── alert-dialog.tsx, avatar.tsx, badge.tsx, button.tsx
 │       ├── checkbox.tsx, dropdown-menu.tsx, input.tsx, popover.tsx
@@ -241,12 +254,12 @@ Business Dashboard/
 │   │   ├── tier-limits.ts             checkClientLimit(), checkDeliverableLimit(), checkStorageLimit(); re-exports TIER_LIMITS + TierLimitError
 │   │   └── tier-limits.test.ts        Vitest unit tests for tier limit enforcement
 │   ├── billing/
-│   │   ├── actions.ts                 createCheckoutSession(), createPortalSession(), restorePurchases()
-│   │   ├── plan-context.tsx           PlanProvider + usePlan() — planTier, limits, atClientLimit
+│   │   ├── actions.ts                 createCheckoutSession(), createPortalSession(), restorePurchases(), updateOrgBranding(), getAutoBillingSettings(), updateAutoBilling() (Phase 7)
+│   │   ├── plan-context.tsx           PlanProvider + usePlan() — planTier, limits, atClientLimit + all capability flags (Phase 1)
 │   │   ├── stripe.ts                  stripe singleton (Stripe v21)
 │   │   ├── sync-clerk-metadata.ts     syncPlanToClerkMetadata() — patches Clerk user publicMetadata
 │   │   ├── sync-stripe-seat.ts        syncStripeTeamSeat() — syncs agency seat quantity
-│   │   └── tier-definitions.ts        TIER_LIMITS record + TierLimitError class
+│   │   └── tier-definitions.ts        TIER_LIMITS record (all Phase 1 gates) + TierLimitError class
 │   ├── constants.ts                   DELIVERABLE_STATUS_COLORS, DELIVERABLE_STATUS_PCT, INVOICE_STATUS_COLORS
 │   ├── database.types.ts              Row types + composite types (incl. PlanTier, OrgUIMeta)
 │   ├── onboarding-actions.ts          markUIMetaSeen(key) — writes orgs.ui_meta flags
@@ -259,30 +272,37 @@ Business Dashboard/
 │   ├── supabase/server.ts             getSupabaseServerClient(), getSupabaseAdminClient()
 │   ├── analytics/
 │   │   ├── fireEvent.ts               Event insert helper (15 event types)
-│   │   └── getAnalyticsData.ts        Analytics data fetching — getAnalyticsMetrics (4 parallel queries; MRR from active clients), getRevenueByClient, getRenewalPipeline, getDeliveryRateByClient
+│   │   └── getAnalyticsData.ts        getAnalyticsMetrics, getRevenueByClient, getRenewalPipeline, getDeliveryRateByClient, getCapacityMetrics (Phase 6A), getRevenueForecast (Phase 6C)
 │   ├── clients/
-│   │   ├── actions.ts                 11 client mutations (incl. generateBrandGuideToken)
-│   │   ├── getClient360.ts            Client profile data (8 fetch functions)
+│   │   ├── actions.ts                 Client mutations: createClient, updateClient, archiveClient, updateClientTag, updateClientRenewal, updateClientBrandGuide, generateBrandGuideToken, reassignAccountManager, createClientNote, updateClientNote, deleteClientNote, uploadBrandAsset (Phase 5A), deleteBrandAsset (Phase 5A), generateClientPortalToken (Phase 8)
+│   │   ├── getBrandAssets.ts          getBrandAssets(), getBrandAssetsByToken(), trackBrandGuideView() (Phase 5)
+│   │   ├── getClient360.ts            Client profile data (8 fetch functions); includes brand_guide_token/view fields
 │   │   └── getClientsData.ts          Client list fetch (explicit columns, no vertical_data)
 │   ├── dashboard/
-│   │   └── getHomeData.ts             Dashboard fetch — getMRRAndActiveCount, getDeliverablesBehind, getAtRiskCount, getOverdueInvoices, getDeliverablesThisWeek, getMRRTrend (points + current-month live fallback flag), getRecentInvoices, getUpcomingRenewalsList, getClientCountSparkline (3 cached); MRR sparkline derived from mrrTrend points; 30-day renewals derived from renewalsList
+│   │   └── getHomeData.ts             Dashboard fetch — getHomeData(), getMRRTrend, getChurnRiskScores() (Phase 6B, exported); MRR sparkline; 30-day renewals
 │   ├── deliverables/
-│   │   ├── actions.ts                 8 deliverable mutations + getMonthCloseOutData (incl. sendForApproval)
-│   │   ├── approval-actions.ts        recordApproval() — public, no auth; validates token expiry + status; clears token on approved
-│   │   └── getDeliverableData.ts      getMonthlyDeliverables(), computeDeliverableStats()
+│   │   ├── actions.ts                 Deliverable mutations incl. sendForApproval; publish_date support (Phase 3)
+│   │   ├── approval-actions.ts        recordApproval() — public; validates expiry; inserts approval_revisions row + increments revision_round on revision_requested (Phase 4A)
+│   │   ├── batch-approval-actions.ts  sendBatchApproval(), recordBatchApproval() — batch token for multiple deliverables (Phase 4B)
+│   │   └── getDeliverableData.ts      getMonthlyDeliverables() incl. publish_date; computeDeliverableStats()
 │   ├── email/
-│   │   ├── welcome.ts                 Resend welcome email template + send function
+│   │   ├── welcome.ts                 Resend welcome email
 │   │   ├── verification.ts            Resend verification email (Clerk custom email provider)
-│   │   └── approval.ts                Resend approval request email — cream/rose branded HTML; 7-day expiry note; CTA → /approve/[token]
+│   │   ├── approval.ts                Resend approval request email; CTA → /approve/[token]
+│   │   ├── invoice-sent.ts            Resend invoice sent notification
+│   │   ├── invoice-reminder.ts        Resend 7-day overdue nudge (Phase 7B)
+│   │   └── invoice-overdue.ts         Resend 14-day overdue follow-up with firmer tone (Phase 7B)
 │   ├── invoicing/
-│   │   ├── actions.ts                 Invoice mutations + createInvoice (draft + line item)
-│   │   ├── batchCreateRetainerInvoices.ts  Batch invoice + line item generation
+│   │   ├── actions.ts                 markInvoicePaid, voidInvoice, markInvoiceSent, createInvoice, createPaymentLink (Phase 2), exportInvoicesCsv (Phase 2)
+│   │   ├── batchCreateRetainerInvoices.ts  Batch invoice + line item generation + invoice.sent emails
 │   │   ├── getBatchBillingData.ts     Active clients eligible for batch billing
 │   │   └── getInvoicesData.ts         Invoice list, summary, counts, active clients for manual create
+│   ├── portal/
+│   │   └── getPortalData.ts           getPortalData(orgToken, clientToken) — resolves org + client by tokens; parallel fetch brand/deliverables/invoices/activity (Phase 8)
 │   └── team/
 │       └── actions.ts                 4 team member mutations
 ├── db/
-│   └── schema.sql                     Postgres DDL source of truth (8 tables, 5 enums)
+│   └── schema.sql                     Postgres DDL source of truth (13 tables, 5 enums)
 ├── __tests__/
 │   ├── auth-guard.test.ts             5 tests for requireAuth/requireOrgAccess
 │   ├── actions/client-note.test.ts    2 tests for createClientNote auth pattern
@@ -297,7 +317,8 @@ Business Dashboard/
 │   └── bg.mp4                         Auth page background video
 ├── docs/                              Internal planning docs (not served)
 ├── audits/                            Audit reports
-├── middleware.ts                      Clerk route protection; `config.runtime: 'nodejs'` (Next 15.5+ Node middleware)
+├── vercel.json                        Cron schedules: overdue-invoices 02:00 UTC daily; auto-billing 06:00 UTC daily (Phase 7)
+├── middleware.ts                      Clerk route protection; public: /brand, /approve, /portal (Phase 8); `config.runtime: 'nodejs'`
 ├── instrumentation.ts                 Sentry init for Node.js + Edge runtimes
 ├── sentry.client.config.ts            Sentry client init (also has replay integration)
 ├── sentry.server.config.ts            Legacy — superseded by instrumentation.ts ⚠️
@@ -324,10 +345,12 @@ Business Dashboard/
 | `/billing` | `app/(dashboard)/billing/page.tsx` | Server + client | Billing page — plan tier display, Stripe checkout/portal CTAs (`BillingClient`) |
 | `/privacy` | `app/privacy/page.tsx` | Server | Public stub — privacy policy |
 | `/terms` | `app/terms/page.tsx` | Server | Public stub — terms of service |
-| `/brand/[token]` | `app/brand/[token]/page.tsx` | Server (public) | Shareable client brand guide — lookup by `brand_guide_token`; 404 on invalid token; renders vertical intake fields read-only |
-| `/approve/[token]` | `app/approve/[token]/page.tsx` + `ApproveClient.tsx` | Server + client (public) | Client content approval — lookup by `approval_token`; handles expired/already-reviewed states; Approve / Request Revisions UI |
+| `/brand/[token]` | `app/brand/[token]/page.tsx` | Server (public) | Shareable client brand guide — tracks view count; shows fields + assets + PDF download link; 404 on invalid token |
+| `/approve/[token]` | `app/approve/[token]/page.tsx` + `ApproveClient.tsx` | Server + client (public) | Single-deliverable approval — 7-day expiry; Approve / Request Revisions; revision round tracking (Phase 4A) |
+| `/approve/batch/[token]` | `app/approve/batch/[token]/page.tsx` | Server + client (public) | Batch approval — one token covers multiple deliverables for one client; per-item approve/revise + Approve all (Phase 4B) |
+| `/portal/[org-token]/[client-token]` | `app/portal/[org-token]/[client-token]/page.tsx` + `PortalClient.tsx` | Server + client (public) | Client portal (Agency only) — Brand guide, Approvals, Invoices, Activity tabs; Stripe Pay button; overdue alert (Phase 8) |
 
-**API routes (non-mutation):** `GET /api/invoices/[id]` returns a printable HTML invoice (auth required). `GET /api/cron/overdue-invoices` is for scheduled overdue updates (Bearer `CRON_SECRET`). `POST /api/webhooks/stripe` handles Stripe events (public — verified via `STRIPE_WEBHOOK_SECRET`). **All writes** use Next.js Server Actions.
+**API routes (non-mutation):** `GET /api/invoices/[id]` — printable HTML invoice (auth required). `GET /api/brand/[token]/pdf` — print-optimized brand guide HTML (public). `GET /api/cron/overdue-invoices` — mark overdue + dunning Day 7/14 (Bearer `CRON_SECRET`). `GET /api/cron/auto-billing` — auto-create retainer invoices (Bearer `CRON_SECRET`). `POST /api/webhooks/stripe` — Stripe events (public, verified via `STRIPE_WEBHOOK_SECRET`). **All writes** use Next.js Server Actions.
 
 ---
 
@@ -341,6 +364,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/cron(.*)', '/api/webhooks/stripe(.*)',
   '/brand/(.*)',    // shareable brand guide — no auth required
   '/approve/(.*)', // client approval pages — no auth required
+  '/portal/(.*)',  // client portal — no auth required (Phase 8)
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -435,14 +459,18 @@ Client components call `useVerticalConfig()` to get labels, sections, and featur
 
 | Table | PK | Key FKs | Purpose |
 |---|---|---|---|
-| `orgs` | `id uuid` | — | Organization / workspace. One per user. `owner_id` = Clerk userId (text). `plan_tier` = billing plan (default `essential`). `stripe_customer_id` = Stripe customer. `subscription_status` = Stripe subscription state (default `active`). `ui_meta jsonb` = one-time UI flags (e.g. `has_seen_tour`). |
+| `orgs` | `id uuid` | — | Organization / workspace. One per user. `owner_id` = Clerk userId. `plan_tier`, `stripe_customer_id`, `subscription_status`, `ui_meta jsonb`. `logo_url` — agency white-label (Phase 4C). `auto_billing_enabled bool` + `auto_billing_day int(1–28)` — auto-invoicing (Phase 7). `public_token text unique` — portal URL segment (Phase 8). |
 | `team_members` | `id uuid` | `org_id → orgs` | Agency team members. `active` boolean for soft deactivation. |
-| `clients` | `id uuid` | `org_id → orgs`, `account_manager_id → team_members` | Brand accounts / clients. `vertical_data jsonb` stores vertical-specific fields. `brand_guide_token text unique` — lazily generated share token (NULL until first share). `archived_at` for soft delete. |
-| `client_notes` | `id uuid` | `org_id → orgs`, `client_id → clients` | CRM notes on client profiles. `author_id` = Clerk userId. |
-| `deliverables` | `id uuid` | `org_id → orgs`, `client_id → clients`, `assignee_id → team_members` | Monthly deliverables. `month` always = first of month. Approval workflow columns: `approval_token text unique` (cleared on approved), `approval_sent_at`, `approval_expires_at` (7-day TTL), `approved_at`, `approval_notes`. `archived_at` for soft delete. |
-| `invoices` | `id uuid` | `org_id → orgs`, `client_id → clients` | Invoice records. Unique `(org_id, invoice_number)`. `billing_month` always = first of month. |
-| `invoice_line_items` | `id uuid` | `invoice_id → invoices ON DELETE CASCADE` | Line item breakdown per invoice. Written by `batchCreateRetainerInvoices` and `createInvoice`. |
-| `events` | `id uuid` | `org_id → orgs`, `client_id → clients (nullable, SET NULL)` | Append-only analytics event log. `metadata jsonb`. |
+| `clients` | `id uuid` | `org_id → orgs`, `account_manager_id → team_members` | Brand accounts. `vertical_data jsonb`, `brand_guide_token text unique` (lazy), `brand_guide_last_viewed_at` + `brand_guide_view_count int default 0` (Phase 5B). `archived_at` soft delete. |
+| `client_notes` | `id uuid` | `org_id → orgs`, `client_id → clients` | CRM notes. `author_id` = Clerk userId. |
+| `deliverables` | `id uuid` | `org_id → orgs`, `client_id → clients`, `assignee_id → team_members` | Monthly deliverables. `month` always = first of month. Approval cols: `approval_token`, `approval_sent_at`, `approval_expires_at` (7-day TTL), `approved_at`, `approval_notes`. `publish_date date` (Phase 3). `revision_round int default 0` (Phase 4A). `archived_at` soft delete. |
+| `invoices` | `id uuid` | `org_id → orgs`, `client_id → clients` | Invoice records. Unique `(org_id, invoice_number)`. `billing_month` always = first of month. `stripe_payment_link_url` + `stripe_payment_link_id` (Phase 2). `dunning_sent_at` + `dunning_stage int default 0` (Phase 7B: 0=none, 1=7d, 2=14d). |
+| `invoice_line_items` | `id uuid` | `invoice_id → invoices ON DELETE CASCADE` | Line item breakdown per invoice. |
+| `events` | `id uuid` | `org_id → orgs`, `client_id → clients (nullable)` | Append-only analytics event log. `metadata jsonb`. |
+| `approval_revisions` | `id uuid` | `deliverable_id → deliverables ON DELETE CASCADE` | Revision request history per deliverable. `notes`, `requested_at`, `round` (Phase 4A). |
+| `batch_approvals` | `id uuid` | `org_id → orgs`, `client_id → clients` | Batch approval token covering multiple deliverables. `deliverable_ids uuid[]`, `expires_at` (Phase 4B). |
+| `brand_assets` | `id uuid` | `client_id → clients ON DELETE CASCADE` | Brand guide file attachments. `type` (logo/font/image/color_palette/other), `file_url`, `file_size`. Files in Supabase Storage bucket `brand-assets` (Phase 5A). |
+| `client_portal_tokens` | `id uuid` | `client_id → clients ON DELETE CASCADE` | Per-client portal access token scoped to org. `last_accessed_at`, `access_count` (Phase 8). |
 
 ### Indexes
 
@@ -466,6 +494,12 @@ Client components call `useVerticalConfig()` to get labels, sections, and featur
 | `idx_events_org_id` | `events` | `org_id` | btree |
 | `idx_events_org_event_type` | `events` | `(org_id, event_type)` | btree |
 | `idx_events_org_client_id` | `events` | `(org_id, client_id)` | btree |
+| `idx_approval_revisions_deliverable_id` | `approval_revisions` | `deliverable_id` | btree |
+| `idx_batch_approvals_token` | `batch_approvals` | `token` | btree |
+| `idx_brand_assets_client_id` | `brand_assets` | `client_id` | btree |
+| `idx_brand_assets_org_id` | `brand_assets` | `org_id` | btree |
+| `idx_client_portal_tokens_token` | `client_portal_tokens` | `token` | btree |
+| `idx_client_portal_tokens_client_id` | `client_portal_tokens` | `client_id` | btree |
 
 ### RLS Strategy
 
@@ -507,7 +541,13 @@ The schema notes `-- Application layer must: Scope every Supabase query with .eq
 | `getRevenueByClient()` | `lib/analytics/getAnalyticsData.ts` | Server | `clients` | None |
 | `getRenewalPipeline()` | `lib/analytics/getAnalyticsData.ts` | Server | `clients` | None |
 | `getDeliveryRateByClient()` | `lib/analytics/getAnalyticsData.ts` | Server | `deliverables` + `clients` join | None |
+| `getCapacityMetrics()` | `lib/analytics/getAnalyticsData.ts` | Admin | `clients` + `deliverables` (parallel; Phase 6A) | None |
+| `getRevenueForecast()` | `lib/analytics/getAnalyticsData.ts` | Admin | `clients` (+ churnScores param; Phase 6C) | None |
 | `getMRRTrend()` (analytics page) | `lib/dashboard/getHomeData.ts` | Admin | Same as dashboard | `unstable_cache` 60s |
+| `getChurnRiskScores()` | `lib/dashboard/getHomeData.ts` | Admin | `clients` + `invoices` + `deliverables` (parallel; Phase 6B) | None |
+| `getBrandAssets()` | `lib/clients/getBrandAssets.ts` | Admin | `brand_assets` (Phase 5A) | None |
+| `getBrandAssetsByToken()` | `lib/clients/getBrandAssets.ts` | Admin | `clients` (by token) + `brand_assets` (Phase 5A) | None |
+| `getPortalData()` | `lib/portal/getPortalData.ts` | Admin | `orgs` + `client_portal_tokens` + `clients` + `brand_assets` + `deliverables` + `invoices` + `events` (parallel; Phase 8) | None |
 
 ---
 
@@ -535,6 +575,9 @@ All server actions follow this contract:
 | `createClientNote` | `requireOrgAccess` (returns `userId`) | `client_notes` | None | `/clients/{id}` |
 | `updateClientNote` | `requireOrgAccess` | `client_notes` | None | `/clients`, `/clients/{id}` |
 | `deleteClientNote` | `requireOrgAccess` | `client_notes` | None | `/clients/{id}` |
+| `uploadBrandAsset` | `requireOrgAccess` | `brand_assets` + Supabase Storage | None | `/clients/{id}` (Phase 5A) |
+| `deleteBrandAsset` | `requireOrgAccess` | `brand_assets` + Supabase Storage | None | `/clients/{id}` (Phase 5A) |
+| `generateClientPortalToken` | `requireOrgAccess` | `orgs` (`public_token`, lazy), `client_portal_tokens` | None | None — returns portal URL (Phase 8) |
 
 ### Deliverable Actions (`lib/deliverables/actions.ts`)
 
@@ -566,6 +609,8 @@ Guards: returns `{ error }` if token not found, if `approval_expires_at` is past
 | `voidInvoice` | `requireOrgAccess` | `invoices` | `invoice.voided` | `/invoices`, `/`, `/analytics` |
 | `markInvoiceSent` | `requireOrgAccess` | `invoices` | `invoice.sent` | `/invoices` (+ Resend email when client email exists) |
 | `createInvoice` | `requireOrgAccess` | `invoices`, `invoice_line_items` | `invoice.created` | `/invoices`, `/`, `/analytics`, `dashboard-{orgId}` |
+| `createPaymentLink` | `requireOrgAccess` (Pro+ check) | `invoices` (`stripe_payment_link_url/id`) | None | `/invoices` (Phase 2) |
+| `exportInvoicesCsv` | `requireOrgAccess` (Pro+ check) | None (read) | None | None — returns CSV blob (Phase 2) |
 
 ### Batch Invoice Action (`lib/invoicing/batchCreateRetainerInvoices.ts`)
 
@@ -599,6 +644,16 @@ Note: `createOrg` uses `auth()` directly (not `requireOrgAccess`) because no org
 | `createCheckoutSession` | `requireOrgAccess` | Creates/retrieves Stripe customer; returns Stripe Checkout URL |
 | `createPortalSession` | `requireOrgAccess` | Returns Stripe Customer Portal URL |
 | `restorePurchases` | `requireOrgAccess` | Queries active Stripe subscription; updates `orgs.plan_tier` + syncs Clerk metadata |
+| `updateOrgBranding` | `requireOrgAccess` | Updates `orgs.logo_url` (Elite+ white-label; Phase 4C) |
+| `getAutoBillingSettings` | `requireOrgAccess` | Returns `{ enabled, billingDay }` from `orgs` (Phase 7) |
+| `updateAutoBilling` | `requireOrgAccess` (Elite+ check) | Updates `orgs.auto_billing_enabled` + `auto_billing_day` (Phase 7) |
+
+### Deliverable Batch Actions (`lib/deliverables/batch-approval-actions.ts`)
+
+| Action | Auth Guard | Tables Written | Revalidates |
+|---|---|---|---|
+| `sendBatchApproval(deliverableIds, orgId)` | `requireOrgAccess` | `batch_approvals` | `/deliverables` (Phase 4B) |
+| `recordBatchApproval(token, decisions)` | None (token-validated) | `deliverables` (status, approval fields per item), `approval_revisions` | None (Phase 4B) |
 
 ### Onboarding UI Action (`lib/onboarding-actions.ts`)
 

@@ -109,17 +109,21 @@ end$$;
 -- ============================
 
 create table if not exists orgs (
-  id                  uuid primary key default gen_random_uuid(),
-  name                text not null,
-  vertical            vertical_type not null,
-  owner_id            text not null,
-  timezone            text not null default 'America/New_York',
-  plan_tier           plan_tier not null default 'essential',
-  stripe_customer_id  text,
-  subscription_status text not null default 'active',
-  ui_meta             jsonb not null default '{}'::jsonb,
-  created_at          timestamptz not null default now(),
-  updated_at          timestamptz not null default now()
+  id                   uuid primary key default gen_random_uuid(),
+  name                 text not null,
+  vertical             vertical_type not null,
+  owner_id             text not null,
+  timezone             text not null default 'America/New_York',
+  plan_tier            plan_tier not null default 'essential',
+  stripe_customer_id   text,
+  subscription_status  text not null default 'active',
+  ui_meta              jsonb not null default '{}'::jsonb,
+  logo_url             text,              -- Phase 4C: agency white-label logo for approval pages
+  auto_billing_enabled boolean not null default false,  -- Phase 7: auto-generate retainer invoices monthly
+  auto_billing_day     int check (auto_billing_day between 1 and 28),  -- UTC calendar day to fire
+  public_token         text unique,       -- Phase 8: stable org token for client portal URLs
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
 );
 
 create index if not exists idx_orgs_owner_id
@@ -163,7 +167,9 @@ create table if not exists clients (
   tag                 client_tag not null default 'prospect',
   platforms           text[] default '{}',
   vertical_data       jsonb default '{}'::jsonb,
-  brand_guide_token   text unique,        -- lazy-generated share token; NULL until first share
+  brand_guide_token         text unique,        -- lazy-generated share token; NULL until first share
+  brand_guide_last_viewed_at timestamptz,       -- Phase 5B: last time client viewed brand guide
+  brand_guide_view_count    int not null default 0,  -- Phase 5B: total views
   archived_at         timestamptz,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
@@ -173,6 +179,11 @@ create table if not exists clients (
 -- ALTER TABLE clients ADD COLUMN IF NOT EXISTS brand_guide_token TEXT UNIQUE;
 -- CREATE UNIQUE INDEX IF NOT EXISTS idx_clients_brand_guide_token
 --   ON clients (brand_guide_token) WHERE brand_guide_token IS NOT NULL;
+
+-- Phase 2 migration (invoice payment links):
+-- ALTER TABLE invoices
+--   ADD COLUMN IF NOT EXISTS stripe_payment_link_url TEXT,
+--   ADD COLUMN IF NOT EXISTS stripe_payment_link_id TEXT;
 
 create index if not exists idx_clients_org_id
   on clients (org_id);
@@ -221,10 +232,20 @@ create table if not exists deliverables (
   approval_expires_at timestamptz,    -- 7-day TTL set at send time
   approved_at       timestamptz,
   approval_notes    text,
+  -- Phase 3: optional publish date for calendar view
+  publish_date date,
+  -- Phase 4: tracks how many revision rounds a deliverable has gone through
+  revision_round int not null default 0,
   archived_at  timestamptz,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+-- Phase 3 migration (run once in Supabase SQL editor):
+-- ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS publish_date DATE;
+
+-- Phase 4 migration (run once in Supabase SQL editor):
+-- ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS revision_round INT NOT NULL DEFAULT 0;
 
 -- Migration (run once in Supabase SQL editor):
 -- ALTER TABLE deliverables
@@ -264,10 +285,14 @@ create table if not exists invoices (
   paid_date       date,
   payment_method  text,
   billing_month   date, -- first of month for monthly retainers
-  notes           text,
-  vertical        vertical_type not null,
-  created_at      timestamptz not null default now(),
-  updated_at      timestamptz not null default now()
+  notes                    text,
+  vertical                 vertical_type not null,
+  stripe_payment_link_url  text,         -- Stripe Payment Link URL (Pro+ feature)
+  stripe_payment_link_id   text,         -- Stripe Payment Link ID for deduplication
+  dunning_sent_at          timestamptz,  -- Phase 7: when the last dunning email was sent
+  dunning_stage            int not null default 0,  -- Phase 7: 0=none, 1=7-day, 2=14-day
+  created_at               timestamptz not null default now(),
+  updated_at               timestamptz not null default now()
 );
 
 create unique index if not exists uq_invoices_org_invoice_number
@@ -313,6 +338,146 @@ create table if not exists events (
 
 create index if not exists idx_events_org_id
   on events (org_id);
+
+-- ============================
+-- APPROVAL REVISIONS (Phase 4A)
+-- ============================
+
+-- Stores each revision request with its notes and round number.
+-- SMMs get a paper trail per deliverable.
+create table if not exists approval_revisions (
+  id             uuid primary key default gen_random_uuid(),
+  deliverable_id uuid not null references deliverables(id) on delete cascade,
+  notes          text,
+  requested_at   timestamptz not null default now(),
+  round          int not null default 1
+);
+
+create index if not exists idx_approval_revisions_deliverable_id
+  on approval_revisions (deliverable_id);
+
+-- Phase 4 migration (run once in Supabase SQL editor):
+-- CREATE TABLE IF NOT EXISTS approval_revisions (
+--   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   deliverable_id UUID NOT NULL REFERENCES deliverables(id) ON DELETE CASCADE,
+--   notes          TEXT,
+--   requested_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   round          INT NOT NULL DEFAULT 1
+-- );
+
+-- ============================
+-- BATCH APPROVALS (Phase 4B)
+-- ============================
+
+-- A single token covering multiple deliverables sent to one client at once.
+create table if not exists batch_approvals (
+  id              uuid primary key default gen_random_uuid(),
+  org_id          uuid not null references orgs(id) on delete restrict,
+  client_id       uuid not null references clients(id) on delete restrict,
+  token           text not null unique,
+  deliverable_ids uuid[] not null,
+  created_at      timestamptz not null default now(),
+  expires_at      timestamptz not null
+);
+
+create index if not exists idx_batch_approvals_token
+  on batch_approvals (token);
+
+-- Phase 4 migration (run once in Supabase SQL editor):
+-- CREATE TABLE IF NOT EXISTS batch_approvals (
+--   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   org_id          UUID NOT NULL REFERENCES orgs(id) ON DELETE RESTRICT,
+--   client_id       UUID NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
+--   token           TEXT NOT NULL UNIQUE,
+--   deliverable_ids UUID[] NOT NULL,
+--   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   expires_at      TIMESTAMPTZ NOT NULL
+-- );
+
+-- Phase 4C migration — agency white-label branding (run once in Supabase SQL editor):
+-- ALTER TABLE orgs ADD COLUMN IF NOT EXISTS logo_url TEXT;
+
+-- ============================
+-- BRAND ASSETS (Phase 5A)
+-- ============================
+
+-- Stores files uploaded to a client's brand guide (logos, fonts, images, etc.).
+-- Files live in Supabase Storage bucket: brand-assets, path: [org_id]/[client_id]/[uuid]-[filename]
+create table if not exists brand_assets (
+  id          uuid primary key default gen_random_uuid(),
+  client_id   uuid not null references clients(id) on delete cascade,
+  org_id      uuid not null,
+  name        text not null,
+  type        text not null,  -- 'logo' | 'font' | 'image' | 'color_palette' | 'other'
+  file_url    text not null,
+  file_size   int,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists idx_brand_assets_client_id
+  on brand_assets (client_id);
+
+create index if not exists idx_brand_assets_org_id
+  on brand_assets (org_id);
+
+-- Phase 5 migration (run once in Supabase SQL editor):
+-- CREATE TABLE IF NOT EXISTS brand_assets (
+--   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   client_id   UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+--   org_id      UUID NOT NULL,
+--   name        TEXT NOT NULL,
+--   type        TEXT NOT NULL,
+--   file_url    TEXT NOT NULL,
+--   file_size   INT,
+--   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+
+-- Phase 5B migration — brand guide view tracking (run once in Supabase SQL editor):
+-- ALTER TABLE clients
+--   ADD COLUMN IF NOT EXISTS brand_guide_last_viewed_at TIMESTAMPTZ,
+--   ADD COLUMN IF NOT EXISTS brand_guide_view_count INT NOT NULL DEFAULT 0;
+
+-- ============================
+-- CLIENT PORTAL TOKENS (Phase 8)
+-- ============================
+
+-- Each row grants a specific client access to their portal view.
+-- Agency orgs create one token per client. Token lookup enforces org scoping.
+create table if not exists client_portal_tokens (
+  id               uuid primary key default gen_random_uuid(),
+  client_id        uuid not null references clients(id) on delete cascade,
+  org_id           uuid not null,
+  token            text not null unique,
+  created_at       timestamptz not null default now(),
+  last_accessed_at timestamptz,
+  access_count     int not null default 0
+);
+
+create index if not exists idx_client_portal_tokens_token
+  on client_portal_tokens (token);
+
+create index if not exists idx_client_portal_tokens_client_id
+  on client_portal_tokens (client_id);
+
+-- Phase 7 migration (run once in Supabase SQL editor):
+-- ALTER TABLE orgs
+--   ADD COLUMN IF NOT EXISTS auto_billing_enabled BOOLEAN NOT NULL DEFAULT false,
+--   ADD COLUMN IF NOT EXISTS auto_billing_day INT CHECK (auto_billing_day BETWEEN 1 AND 28);
+-- ALTER TABLE invoices
+--   ADD COLUMN IF NOT EXISTS dunning_sent_at TIMESTAMPTZ,
+--   ADD COLUMN IF NOT EXISTS dunning_stage INT NOT NULL DEFAULT 0;
+
+-- Phase 8 migration (run once in Supabase SQL editor):
+-- ALTER TABLE orgs ADD COLUMN IF NOT EXISTS public_token TEXT UNIQUE;
+-- CREATE TABLE IF NOT EXISTS client_portal_tokens (
+--   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   client_id        UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+--   org_id           UUID NOT NULL,
+--   token            TEXT NOT NULL UNIQUE,
+--   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   last_accessed_at TIMESTAMPTZ,
+--   access_count     INT NOT NULL DEFAULT 0
+-- );
 
 create index if not exists idx_events_org_event_type
   on events (org_id, event_type);

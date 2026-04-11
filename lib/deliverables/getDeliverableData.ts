@@ -47,7 +47,7 @@ export async function getMonthlyDeliverables(
   const { data, error } = await supabase
     .from('deliverables')
     .select(
-      'id, org_id, client_id, month, type, title, status, assignee_id, due_date, notes, approval_token, approval_sent_at, approval_expires_at, approved_at, approval_notes, archived_at, clients!inner(brand_name, platforms, tag, retainer_amount, archived_at, contact_email, contact_name), team_members(name)'
+      'id, org_id, client_id, month, type, title, status, assignee_id, due_date, publish_date, notes, approval_token, approval_sent_at, approval_expires_at, approved_at, approval_notes, revision_round, archived_at, clients!inner(brand_name, platforms, tag, retainer_amount, archived_at, contact_email, contact_name), team_members(name)'
     )
     .eq('org_id', orgId)
     .eq('month', monthKey)

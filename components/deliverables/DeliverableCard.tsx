@@ -19,9 +19,11 @@ type Props = {
   title: string;
   status: string;
   dueDate?: string | null;
+  publishDate?: string | null;
   assigneeName?: string | null;
   approvalSentAt?: string | null;
   contactEmail?: string | null;
+  revisionRound?: number;
   vertical: AnyVerticalConfig;
   /** When true, drag-and-drop is disabled (e.g. during status update). */
   dragDisabled?: boolean;
@@ -35,9 +37,11 @@ export function DeliverableCard({
   title,
   status,
   dueDate,
+  publishDate,
   assigneeName,
   approvalSentAt,
   contactEmail,
+  revisionRound,
   vertical,
   dragDisabled = false,
 }: Props) {
@@ -115,6 +119,11 @@ export function DeliverableCard({
             {typeLabel}
           </span>
           <DeliverableStatusPill status={status as DeliverableStatus} label={status} />
+          {revisionRound != null && revisionRound > 0 && (
+            <span className="rounded-full bg-warning/20 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
+              R{revisionRound}
+            </span>
+          )}
         </div>
         <div className="line-clamp-2 text-[14px] text-txt-primary">{displayTitle}</div>
         <div className="mt-1 flex items-center justify-between">
@@ -162,6 +171,7 @@ export function DeliverableCard({
         initialTitle={displayTitle}
         initialType={type}
         initialDueDate={dueDate ?? null}
+        initialPublishDate={publishDate ?? null}
         vertical={vertical}
       />
     </div>

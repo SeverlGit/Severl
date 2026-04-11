@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
+import { getBrandAssetsByToken, trackBrandGuideView } from '@/lib/clients/getBrandAssets';
 import smmFreelanceConfig from '@/config/verticals/smm_freelance';
 import smmAgencyConfig from '@/config/verticals/smm_agency';
 import type { AnyVerticalConfig } from '@/lib/vertical-config';
 import type { Metadata } from 'next';
+import { FileText } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,10 +37,19 @@ export default async function BrandGuidePage({ params }: Props) {
 
   if (!client) notFound();
 
+  // Track view (non-blocking; fire-and-forget is fine here)
+  void trackBrandGuideView(token);
+
+  const [assets] = await Promise.all([
+    getBrandAssetsByToken(token),
+  ]);
+
   const vertical: AnyVerticalConfig =
     client.vertical === 'smm_agency' ? smmAgencyConfig : smmFreelanceConfig;
 
   const verticalData: Record<string, unknown> = client.vertical_data ?? {};
+
+  const pdfUrl = `/api/brand/${token}/pdf`;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F0EBE3', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}>
@@ -46,7 +57,6 @@ export default async function BrandGuidePage({ params }: Props) {
       <header style={{ backgroundColor: '#FAF7F4', borderBottom: '1px solid #DDD7CE' }} className="px-6 py-4">
         <div className="mx-auto max-w-3xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Severl logo mark */}
             <div
               className="flex h-7 w-7 items-center justify-center rounded-md text-white text-sm font-medium"
               style={{ background: 'linear-gradient(135deg, #C4909A 0%, #6B6178 100%)', fontFamily: 'var(--font-fraunces, serif)' }}
@@ -57,6 +67,18 @@ export default async function BrandGuidePage({ params }: Props) {
               Sent via Severl
             </span>
           </div>
+          <a
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+            style={{ borderColor: '#DDD7CE', color: '#6B6560', backgroundColor: '#FAF7F4' }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download PDF
+          </a>
         </div>
       </header>
 
@@ -71,6 +93,7 @@ export default async function BrandGuidePage({ params }: Props) {
           </h1>
         </div>
 
+        {/* Brand fields */}
         <div className="grid gap-4 md:grid-cols-2">
           {vertical.crm.intakeFields.map((field) => {
             const value = verticalData[field.key];
@@ -129,6 +152,43 @@ export default async function BrandGuidePage({ params }: Props) {
             );
           })}
         </div>
+
+        {/* Brand assets */}
+        {assets.length > 0 && (
+          <div className="mt-8">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.10em]" style={{ color: '#A09890' }}>
+              Assets
+            </p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {assets.map((asset) => (
+                <a
+                  key={asset.id}
+                  href={asset.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-2 rounded-lg p-3 transition-shadow hover:shadow-sm"
+                  style={{ backgroundColor: '#FFFFFF', border: '1px solid #DDD7CE' }}
+                >
+                  {(asset.type === 'logo' || asset.type === 'image') ? (
+                    <div className="flex h-20 items-center justify-center overflow-hidden rounded">
+                      <img
+                        src={asset.file_url}
+                        alt={asset.name}
+                        className="max-h-20 max-w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-20 items-center justify-center rounded" style={{ backgroundColor: '#F7ECED' }}>
+                      <FileText className="h-8 w-8" style={{ color: '#C4909A' }} />
+                    </div>
+                  )}
+                  <p className="truncate text-xs font-medium" style={{ color: '#1A1714' }}>{asset.name}</p>
+                  <p className="text-[10px] capitalize" style={{ color: '#A09890' }}>{asset.type.replace('_', ' ')}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         <p className="mt-10 text-center text-xs" style={{ color: '#C4BAB0' }}>
           This brand guide is shared securely via{' '}

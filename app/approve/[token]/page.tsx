@@ -27,24 +27,35 @@ export default async function ApprovePage({ params }: Props) {
 
   const { data: deliverable } = await supabase
     .from('deliverables')
-    .select('id, title, type, status, approval_expires_at, clients(brand_name)')
+    .select('id, title, type, status, approval_expires_at, org_id, clients(brand_name)')
     .eq('approval_token', token)
     .maybeSingle();
 
   // Invalid token
   if (!deliverable) {
-    return <ReviewShell><InvalidState reason="not-found" /></ReviewShell>;
+    return <ReviewShell orgName={null} orgLogoUrl={null}><InvalidState reason="not-found" /></ReviewShell>;
   }
+
+  // Fetch org for white-label branding
+  const { data: org } = await supabase
+    .from('orgs')
+    .select('name, logo_url, plan_tier')
+    .eq('id', deliverable.org_id)
+    .maybeSingle();
+
+  const tierAllowsWhiteLabel = ['elite', 'agency'].includes(org?.plan_tier ?? '');
+  const orgName = tierAllowsWhiteLabel ? (org?.name ?? null) : null;
+  const orgLogoUrl = tierAllowsWhiteLabel ? (org?.logo_url ?? null) : null;
 
   // Expired
   if (deliverable.approval_expires_at && new Date(deliverable.approval_expires_at) < new Date()) {
-    return <ReviewShell><InvalidState reason="expired" /></ReviewShell>;
+    return <ReviewShell orgName={orgName} orgLogoUrl={orgLogoUrl}><InvalidState reason="expired" /></ReviewShell>;
   }
 
   // Already reviewed
   if (deliverable.status !== 'pending_approval') {
     return (
-      <ReviewShell>
+      <ReviewShell orgName={orgName} orgLogoUrl={orgLogoUrl}>
         <InvalidState
           reason={deliverable.status === 'approved' ? 'approved' : 'reviewed'}
         />
@@ -55,7 +66,7 @@ export default async function ApprovePage({ params }: Props) {
   const brandName = (deliverable.clients as { brand_name?: string } | null)?.brand_name ?? '';
 
   return (
-    <ReviewShell>
+    <ReviewShell orgName={orgName} orgLogoUrl={orgLogoUrl}>
       <ApproveClient
         token={token}
         deliverableTitle={deliverable.title}
@@ -66,18 +77,38 @@ export default async function ApprovePage({ params }: Props) {
   );
 }
 
-function ReviewShell({ children }: { children: React.ReactNode }) {
+function ReviewShell({
+  children,
+  orgName,
+  orgLogoUrl,
+}: {
+  children: React.ReactNode;
+  orgName: string | null;
+  orgLogoUrl: string | null;
+}) {
+  const showWhiteLabel = !!(orgName || orgLogoUrl);
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F0EBE3', fontFamily: 'var(--font-dm-sans, system-ui, sans-serif)' }}>
       <header style={{ backgroundColor: '#FAF7F4', borderBottom: '1px solid #DDD7CE' }} className="px-6 py-4">
         <div className="mx-auto max-w-2xl flex items-center gap-3">
-          <div
-            className="flex h-7 w-7 items-center justify-center rounded-md text-white text-sm font-medium"
-            style={{ background: 'linear-gradient(135deg, #C4909A 0%, #6B6178 100%)', fontFamily: 'var(--font-fraunces, serif)' }}
-          >
-            S
-          </div>
-          <span className="text-xs" style={{ color: '#6B6560' }}>Sent via Severl</span>
+          {showWhiteLabel && orgLogoUrl ? (
+            <img
+              src={orgLogoUrl}
+              alt={orgName ?? ''}
+              className="h-7 w-7 rounded-md object-contain"
+            />
+          ) : (
+            <div
+              className="flex h-7 w-7 items-center justify-center rounded-md text-white text-sm font-medium"
+              style={{ background: 'linear-gradient(135deg, #C4909A 0%, #6B6178 100%)', fontFamily: 'var(--font-fraunces, serif)' }}
+            >
+              {showWhiteLabel && orgName ? orgName[0].toUpperCase() : 'S'}
+            </div>
+          )}
+          <span className="text-xs" style={{ color: '#6B6560' }}>
+            {showWhiteLabel && orgName ? orgName : 'Sent via Severl'}
+          </span>
         </div>
       </header>
       <main className="mx-auto max-w-2xl px-6 py-12">{children}</main>

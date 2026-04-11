@@ -60,8 +60,17 @@ export function startMainTour() {
       {
         element: "#tour-nav-invoices",
         popover: {
-          title: "Automate Billing",
-          description: "Generate and send invoices. Retainers can be billed out in batches.",
+          title: "Billing & Invoices",
+          description: "Generate, send, and collect on retainer invoices. Add Stripe payment links for card payments, export to CSV for accounting, and auto-send invoices on a recurring schedule.",
+          side: "right",
+          align: "start"
+        }
+      },
+      {
+        element: "#tour-nav-analytics",
+        popover: {
+          title: "Business Health",
+          description: "Track MRR trends, renewal pipeline, delivery rates, capacity per client, and 90-day revenue forecasts. Churn risk scores surface which clients need attention.",
           side: "right",
           align: "start"
         }
@@ -70,7 +79,7 @@ export function startMainTour() {
         element: "#tour-nav-settings",
         popover: {
           title: "Settings & Options",
-          description: "Configure your currency, invoice defaults, display density, and account details.",
+          description: "Configure currency, invoice defaults, display density, auto-billing schedule, and agency branding for client-facing approval pages.",
           side: "right",
           align: "end"
         }
@@ -122,6 +131,126 @@ export function startAddClientTour(onComplete: () => void) {
         }
       }
     ]
+  });
+
+  tour.drive();
+}
+
+/**
+ * Triggers the contextual analytics tour (capacity + forecast).
+ * Call when user visits /analytics and hasn't seen it yet.
+ */
+export function startAnalyticsTour(onComplete: () => void) {
+  const tour = driver({
+    ...brandTheme,
+    allowClose: true,
+    onDestroyStarted: () => {
+      tour.destroy();
+      onComplete();
+      markUIMetaSeen("has_seen_analytics_tour");
+    },
+    steps: [
+      {
+        popover: {
+          title: "Analytics v2",
+          description: "Your dashboard now includes capacity metrics, churn risk scores, and a 90-day revenue forecast — not just raw MRR.",
+          side: "over",
+          align: "center",
+        },
+      },
+      {
+        element: "#tour-analytics-capacity",
+        popover: {
+          title: "Capacity — $/deliverable",
+          description: "See how much each client is worth per deliverable. Spot under- and over-serviced accounts at a glance.",
+          side: "top",
+          align: "start",
+        },
+      },
+      {
+        element: "#tour-analytics-forecast",
+        popover: {
+          title: "90-day MRR Forecast",
+          description: "Projected revenue accounting for at-risk renewals. Clients with a high churn score reduce the forecast for months their contract expires.",
+          side: "top",
+          align: "start",
+        },
+      },
+    ],
+  });
+
+  tour.drive();
+}
+
+/**
+ * Triggers the contextual invoices feature tour (payment links + CSV export).
+ * Call when user visits /invoices and hasn't seen it yet.
+ */
+export function startInvoicesTour(onComplete: () => void) {
+  const tour = driver({
+    ...brandTheme,
+    allowClose: true,
+    onDestroyStarted: () => {
+      tour.destroy();
+      onComplete();
+      markUIMetaSeen("has_seen_invoices_tour");
+    },
+    steps: [
+      {
+        element: "#tour-invoice-export",
+        popover: {
+          title: "Export to CSV",
+          description: "Download all invoices as a CSV for your accountant or bookkeeping software. Available on Pro and above.",
+          side: "bottom",
+          align: "end",
+        },
+      },
+      {
+        popover: {
+          title: "Stripe Payment Links",
+          description: "Open any invoice and use 'Generate payment link' to create a Stripe-hosted checkout URL. Paste it into your email and clients can pay by card instantly. Available on Pro and above.",
+          side: "over",
+          align: "center",
+        },
+      },
+      {
+        popover: {
+          title: "Auto-Dunning",
+          description: "Overdue invoices automatically receive a friendly reminder at 7 days and a firmer follow-up at 14 days — both with a payment link attached. No manual chasing needed.",
+          side: "over",
+          align: "center",
+        },
+      },
+    ],
+  });
+
+  tour.drive();
+}
+
+/**
+ * Triggers the client portal tour for a specific client page.
+ * Call when user visits /clients/[id] and hasn't seen it yet (Agency plan only).
+ */
+export function startClientPortalTour(onComplete: () => void) {
+  const tour = driver({
+    ...brandTheme,
+    allowClose: true,
+    onDestroyStarted: () => {
+      tour.destroy();
+      onComplete();
+      markUIMetaSeen("has_seen_portal_tour");
+    },
+    steps: [
+      {
+        element: "#tour-client-portal",
+        popover: {
+          title: "Client Portal",
+          description: "Generate a private link for this client. They'll see their brand guide, pending approvals, invoices, and recent activity — all in one branded page.",
+          side: "bottom",
+          align: "start",
+        },
+      },
+    ],
   });
 
   tour.drive();

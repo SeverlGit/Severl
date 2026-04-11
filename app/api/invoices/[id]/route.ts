@@ -327,10 +327,24 @@ export async function GET(
 
     <div class="payment-section">
       <div class="section-title">Payment instructions</div>
-      <p class="tax-note" style="margin-top:8px;">
-        Please contact <strong>${orgName}</strong> for payment details.
-        Include invoice number <strong>${escapeHtml(inv.invoice_number)}</strong> as your payment reference.
-      </p>
+      ${inv.stripe_payment_link_url
+        ? `<div style="margin-top:10px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <a href="${escapeHtml(inv.stripe_payment_link_url)}" target="_blank" rel="noopener noreferrer"
+               style="display:inline-block;background:var(--rose);color:#fff;text-decoration:none;
+                      font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+                      padding:9px 20px;border-radius:5px;letter-spacing:0.01em;">
+              Pay with card ↗
+            </a>
+            <p class="tax-note" style="margin:0;">
+              Secure payment powered by Stripe.
+              Include <strong>${escapeHtml(inv.invoice_number)}</strong> as your reference.
+            </p>
+          </div>`
+        : `<p class="tax-note" style="margin-top:8px;">
+            Please contact <strong>${orgName}</strong> for payment details.
+            Include invoice number <strong>${escapeHtml(inv.invoice_number)}</strong> as your payment reference.
+          </p>`
+      }
     </div>
 
     <div class="terms-section">

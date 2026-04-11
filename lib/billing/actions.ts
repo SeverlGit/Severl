@@ -199,3 +199,118 @@ export async function restorePurchases(orgId: string): Promise<ActionResult<{ ti
     return { error: err instanceof Error ? err.message : 'Unexpected error during purchase restoration.' };
   }
 }
+
+/**
+ * getAutoBillingSettings — returns the org's current auto-billing config.
+ * Safe to call from client components; does not expose sensitive data.
+ */
+export async function getAutoBillingSettings(
+  orgId: string,
+): Promise<{ enabled: boolean; billingDay: number | null } | { error: string }> {
+  try {
+    await requireOrgAccess(orgId);
+    const supabase = getSupabaseAdminClient();
+    const { data: org, error } = await supabase
+      .from('orgs')
+      .select('auto_billing_enabled, auto_billing_day')
+      .eq('id', orgId)
+      .single();
+
+    if (error || !org) return { error: 'Organization not found' };
+    return { enabled: Boolean(org.auto_billing_enabled), billingDay: org.auto_billing_day ?? null };
+  } catch (err) {
+    Sentry.captureException(err);
+    return { error: err instanceof Error ? err.message : 'Something went wrong' };
+  }
+}
+
+/**
+ * updateAutoBilling — toggles auto-recurring invoice generation for an org.
+ * Requires Elite+ tier (autoRecurringInvoices feature gate).
+ */
+export async function updateAutoBilling(params: {
+  orgId: string;
+  enabled: boolean;
+  billingDay: number | null;
+}): Promise<{ success: true } | { error: string }> {
+  try {
+    await requireOrgAccess(params.orgId);
+    const supabase = getSupabaseAdminClient();
+
+    const { data: org, error: orgError } = await supabase
+      .from('orgs')
+      .select('plan_tier')
+      .eq('id', params.orgId)
+      .single();
+
+    if (orgError || !org) return { error: 'Organization not found' };
+
+    const { TIER_LIMITS } = await import('@/lib/billing/tier-definitions');
+    const limits = TIER_LIMITS[org.plan_tier as import('@/lib/database.types').PlanTier];
+    if (!limits.autoRecurringInvoices) {
+      return { error: 'Auto-recurring invoices require the Elite plan or higher.' };
+    }
+
+    if (params.billingDay !== null && (params.billingDay < 1 || params.billingDay > 28)) {
+      return { error: 'Billing day must be between 1 and 28.' };
+    }
+
+    const { error } = await supabase
+      .from('orgs')
+      .update({
+        auto_billing_enabled: params.enabled,
+        auto_billing_day: params.enabled ? (params.billingDay ?? 1) : null,
+      })
+      .eq('id', params.orgId);
+
+    if (error) {
+      Sentry.captureException(error);
+      return { error: error.message };
+    }
+
+    revalidateTag(`dashboard-${params.orgId}`);
+    return { success: true };
+  } catch (err) {
+    Sentry.captureException(err);
+    return { error: err instanceof Error ? err.message : 'Something went wrong' };
+  }
+}
+
+/**
+ * updateOrgBranding — saves agency white-label branding (logo URL) to the org record.
+ * Requires Elite+ tier (white-label feature gate).
+ */
+export async function updateOrgBranding(params: {
+  orgId: string;
+  logoUrl: string | null;
+}): Promise<{ success: true } | { error: string }> {
+  try {
+    await requireOrgAccess(params.orgId);
+    const supabase = getSupabaseAdminClient();
+
+    // Validate URL format if provided
+    if (params.logoUrl) {
+      try {
+        new URL(params.logoUrl);
+      } catch {
+        return { error: 'Invalid logo URL' };
+      }
+    }
+
+    const { error } = await supabase
+      .from('orgs')
+      .update({ logo_url: params.logoUrl ?? null })
+      .eq('id', params.orgId);
+
+    if (error) {
+      Sentry.captureException(error);
+      return { error: error.message };
+    }
+
+    revalidateTag(`dashboard-${params.orgId}`);
+    return { success: true };
+  } catch (err) {
+    Sentry.captureException(err);
+    return { error: err instanceof Error ? err.message : 'Something went wrong' };
+  }
+}

@@ -25,11 +25,11 @@ import {
   ExternalLink,
   XCircle,
 } from "lucide-react";
-import { createPortalSession } from "@/lib/billing/actions";
+import { createPortalSession, updateOrgBranding, getAutoBillingSettings, updateAutoBilling } from "@/lib/billing/actions";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useTour } from "@/lib/tour-context";
-import { FileText, ShieldCheck } from "lucide-react";
+import { FileText, ShieldCheck, RefreshCw } from "lucide-react";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
@@ -291,9 +291,150 @@ function SecurityContent() {
   );
 }
 
+// ─── Auto-Billing Section (Elite+) ────────────────────────────────────────────
+
+function AutoBillingSection({ orgId }: { orgId: string }) {
+  const { canAutoRecurringInvoices } = usePlan();
+  const [enabled, setEnabled] = useState(false);
+  const [billingDay, setBillingDay] = useState<number>(1);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+
+  useEffect(() => {
+    if (!canAutoRecurringInvoices) return;
+    getAutoBillingSettings(orgId).then((res) => {
+      if ("error" in res) return;
+      setEnabled(res.enabled);
+      setBillingDay(res.billingDay ?? 1);
+    });
+  }, [orgId, canAutoRecurringInvoices]);
+
+  if (!canAutoRecurringInvoices) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    const result = await updateAutoBilling({
+      orgId,
+      enabled,
+      billingDay: enabled ? billingDay : null,
+    });
+    setSaving(false);
+    setStatus("error" in result ? "error" : "saved");
+    setTimeout(() => setStatus("idle"), 2000);
+  };
+
+  return (
+    <div id="tour-auto-billing" className="mt-2">
+      <SectionLabel>
+        <span className="inline-flex items-center gap-1.5">
+          <RefreshCw className="h-3 w-3" /> Auto-invoicing
+        </span>
+      </SectionLabel>
+      <div className="rounded-md border border-border bg-surface px-3">
+        <SettingRow
+          label="Auto-generate retainer invoices"
+          description="Automatically creates and sends retainer invoices to all active clients each month."
+        >
+          <Toggle checked={enabled} onChange={setEnabled} />
+        </SettingRow>
+        {enabled && (
+          <SettingRow
+            label="Billing day"
+            description="UTC calendar day (1–28) to generate invoices each month."
+          >
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={28}
+                value={billingDay}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!Number.isNaN(v) && v >= 1 && v <= 28) setBillingDay(v);
+                }}
+                className="h-8 w-16 rounded border border-border bg-transparent px-2 text-center text-[12px] text-txt-primary outline-none focus:border-brand-rose"
+              />
+              <span className="text-[11px] text-txt-muted">of the month</span>
+            </div>
+          </SettingRow>
+        )}
+        <div className="flex items-center justify-end gap-2 py-2">
+          {status === "saved" && (
+            <span className="text-[11px] text-success">Saved!</span>
+          )}
+          {status === "error" && (
+            <span className="text-[11px] text-danger">Failed to save</span>
+          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="h-8 rounded bg-brand-rose px-3 text-[12px] font-medium text-white disabled:opacity-50 hover:bg-brand-rose-deep transition-colors"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Agency Branding Section (Elite+) ─────────────────────────────────────────
+
+function AgencyBrandingSection({ orgId }: { orgId: string }) {
+  const { canWhitelabelApprovals } = usePlan();
+  const [logoUrl, setLogoUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
+
+  if (!canWhitelabelApprovals) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    const result = await updateOrgBranding({ orgId, logoUrl: logoUrl.trim() || null });
+    setSaving(false);
+    setStatus("error" in result ? "error" : "saved");
+    setTimeout(() => setStatus("idle"), 2000);
+  };
+
+  return (
+    <div className="mt-2">
+      <SectionLabel>
+        <span className="inline-flex items-center gap-1.5">
+          <Shield className="h-3 w-3" /> Agency branding
+        </span>
+      </SectionLabel>
+      <div className="rounded-md border border-border bg-surface px-3">
+        <SettingRow
+          label="Logo URL"
+          description="Replaces the Severl logo on approval and batch approval pages sent to clients."
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="url"
+              value={logoUrl}
+              onChange={(e) => { setLogoUrl(e.target.value); setStatus("idle"); }}
+              placeholder="https://your-logo-url.com/logo.png"
+              className="h-8 w-56 rounded border border-border bg-transparent px-2 text-[12px] text-txt-primary placeholder-txt-hint outline-none focus:border-brand-rose"
+            />
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="h-8 rounded bg-brand-rose px-3 text-[12px] font-medium text-white disabled:opacity-50 hover:bg-brand-rose-deep transition-colors"
+            >
+              {saving ? "Saving…" : status === "saved" ? "Saved!" : "Save"}
+            </button>
+          </div>
+        </SettingRow>
+      </div>
+    </div>
+  );
+}
+
 // ─── Tab: App Settings ────────────────────────────────────────────────────────
 
-function AppSettingsContent() {
+function AppSettingsContent({ orgId }: { orgId: string }) {
   const { prefs, setPref } = usePrefs();
   const { openTour } = useTour();
   const [draft, setDraft] = useState<UserPrefs>(prefs);
@@ -448,6 +589,9 @@ function AppSettingsContent() {
           </div>
         </div>
       </div>
+
+      <AutoBillingSection orgId={orgId} />
+      <AgencyBrandingSection orgId={orgId} />
 
       {/* Sticky Save Footer */}
       <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-border bg-panel py-4 px-2">
@@ -763,7 +907,7 @@ export function SettingsPanel({ open, onOpenChange, orgId }: Props) {
             <main className="relative flex-1 overflow-y-auto px-8 py-6 bg-panel">
               {tab === "profile"  && <ProfileContent />}
               {tab === "security" && <SecurityContent />}
-              {tab === "app"      && <AppSettingsContent />}
+              {tab === "app"      && <AppSettingsContent orgId={orgId} />}
               {tab === "billing"  && <BillingSettingsContent onOpenChange={onOpenChange} orgId={orgId} />}
             </main>
           </div>

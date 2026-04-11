@@ -24,6 +24,7 @@ export default async function DashboardHomePage() {
     clientSparkline,
     recentInvoices,
     renewalsList,
+    churnRiskScores,
   } = await getHomeData(org.id);
 
   const latest = mrrTrend[mrrTrend.length - 1]?.mrr ?? 0;
@@ -52,6 +53,7 @@ export default async function DashboardHomePage() {
       clientsLabel={vertical.crm.clientsLabel}
       mrrSparkline={mrrSparkline}
       clientSparkline={clientSparkline}
+      churnRiskScores={churnRiskScores}
     />
   );
 }

@@ -14,12 +14,12 @@ import { MonthNav } from "@/components/deliverables/MonthNav";
 import { ClientSection } from "@/components/deliverables/ClientSection";
 import { AlertStrip } from "@/components/dashboard/AlertStrip";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { CloseOutDialogDynamic, StatusBoardDynamic } from "./DeliverablesDynamic";
+import { CloseOutDialogDynamic, StatusBoardDynamic, CalendarViewDynamic } from "./DeliverablesDynamic";
 
 type Props = {
   searchParams: Promise<{
     month?: string;
-    view?: "client" | "status";
+    view?: "client" | "status" | "calendar";
   }>;
 };
 
@@ -27,7 +27,7 @@ export default async function DeliverablesPage({ searchParams }: Props) {
   const sp = await searchParams;
   const org = await getCurrentOrg();
   const vertical = getVerticalConfig(org.vertical);
-  const view = sp.view === "status" ? "status" : "client";
+  const view = sp.view === "status" ? "status" : sp.view === "calendar" ? "calendar" : "client";
 
   const now = new Date();
   const monthParam = sp.month;
@@ -108,6 +108,12 @@ export default async function DeliverablesPage({ searchParams }: Props) {
             >
               By status
             </a>
+            <a
+              href={`/deliverables?month=${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}&view=calendar`}
+              className={`px-3 py-1.5 ${view === "calendar" ? "bg-surface-hover text-brand-rose-deep" : "text-txt-muted"}`}
+            >
+              Calendar
+            </a>
           </div>
           <CloseOutDialogDynamic
             orgId={org.id}
@@ -178,6 +184,15 @@ export default async function DeliverablesPage({ searchParams }: Props) {
                 deliverables={deliverables}
               />
             </div>
+          )}
+
+          {view === "calendar" && (
+            <CalendarViewDynamic
+              orgId={org.id}
+              vertical={vertical}
+              deliverables={deliverables}
+              currentMonth={currentMonth}
+            />
           )}
         </>
       )}

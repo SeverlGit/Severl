@@ -10,6 +10,9 @@ export type OrgUIMeta = {
   has_seen_first_client?: boolean;
   has_seen_first_invoice?: boolean;
   has_seen_first_deliverable?: boolean;
+  has_seen_analytics_tour?: boolean;
+  has_seen_invoices_tour?: boolean;
+  has_seen_portal_tour?: boolean;
 };
 
 export type OrgRow = {
@@ -22,6 +25,10 @@ export type OrgRow = {
   stripe_customer_id: string | null;
   subscription_status: string;
   ui_meta: OrgUIMeta;
+  logo_url: string | null;
+  auto_billing_enabled: boolean;
+  auto_billing_day: number | null;
+  public_token: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -53,9 +60,22 @@ export type ClientRow = {
   platforms: string[];
   vertical_data: Record<string, any>;
   brand_guide_token: string | null;
+  brand_guide_last_viewed_at: string | null;
+  brand_guide_view_count: number;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type BrandAssetRow = {
+  id: string;
+  client_id: string;
+  org_id: string;
+  name: string;
+  type: 'logo' | 'font' | 'image' | 'color_palette' | 'other';
+  file_url: string;
+  file_size: number | null;
+  created_at: string;
 };
 
 export type ClientNoteRow = {
@@ -77,15 +97,45 @@ export type DeliverableRow = {
   status: 'not_started' | 'in_progress' | 'pending_approval' | 'approved' | 'published';
   assignee_id: string | null;
   due_date: string | null;
+  publish_date: string | null;
   notes: string | null;
   approval_token: string | null;
   approval_sent_at: string | null;
   approval_expires_at: string | null;
   approved_at: string | null;
   approval_notes: string | null;
+  revision_round: number;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type ApprovalRevisionRow = {
+  id: string;
+  deliverable_id: string;
+  notes: string | null;
+  requested_at: string;
+  round: number;
+};
+
+export type BatchApprovalRow = {
+  id: string;
+  org_id: string;
+  client_id: string;
+  token: string;
+  deliverable_ids: string[];
+  created_at: string;
+  expires_at: string;
+};
+
+export type ClientPortalTokenRow = {
+  id: string;
+  client_id: string;
+  org_id: string;
+  token: string;
+  created_at: string;
+  last_accessed_at: string | null;
+  access_count: number;
 };
 
 export type InvoiceRow = {
@@ -102,6 +152,10 @@ export type InvoiceRow = {
   billing_month: string | null;
   notes: string | null;
   vertical: 'smm_freelance' | 'smm_agency';
+  stripe_payment_link_url: string | null;
+  stripe_payment_link_id: string | null;
+  dunning_sent_at: string | null;
+  dunning_stage: number;
   created_at: string;
   updated_at: string;
 };

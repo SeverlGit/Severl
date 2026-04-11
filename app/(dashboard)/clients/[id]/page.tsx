@@ -11,6 +11,7 @@ import {
   getTeamMembersAll,
   getTeamMemberDeliverableCount,
 } from "@/lib/clients/getClient360";
+import { getBrandAssets } from "@/lib/clients/getBrandAssets";
 import { Client360ClientLoader } from "./Client360ClientLoader";
 
 type Props = {
@@ -25,7 +26,7 @@ export default async function ClientProfilePage({ params, searchParams }: Props)
   const vertical = getVerticalConfig(org.vertical);
   const showTeam = vertical.crm.profileSections.includes("team");
 
-  const [client, activity, deliverables, invoices, notes, teamMembers, teamMembersAll, teamCounts] = await Promise.all([
+  const [client, activity, deliverables, invoices, notes, teamMembers, teamMembersAll, teamCounts, brandAssets] = await Promise.all([
     getClient360(clientId, org.id),
     getClientActivity(clientId, org.id),
     getClientDeliverables(clientId, org.id, new Date()),
@@ -34,6 +35,7 @@ export default async function ClientProfilePage({ params, searchParams }: Props)
     showTeam ? getTeamMembers(org.id) : Promise.resolve([]),
     showTeam ? getTeamMembersAll(org.id) : Promise.resolve([]),
     showTeam ? getTeamMemberDeliverableCount(org.id) : Promise.resolve({}),
+    getBrandAssets(clientId, org.id),
   ]);
 
   if (!client) {
@@ -57,6 +59,7 @@ export default async function ClientProfilePage({ params, searchParams }: Props)
       teamMembers={teamMembers}
       teamMembersForManagement={teamMembersAll}
       teamDeliverableCounts={teamCounts as Record<string, number>}
+      brandAssets={brandAssets}
     />
   );
 }

@@ -18,7 +18,7 @@ export async function getClient360(
   const { data, error } = await supabase
     .from('clients')
     .select(
-      'id, org_id, vertical, brand_name, contact_name, contact_email, account_manager_id, retainer_amount, billing_cycle, contract_start, contract_renewal, tag, platforms, vertical_data, archived_at, created_at, updated_at, team_members(name, email), invoices!left(total, status, created_at, billing_month), deliverables!left(id, status, month)'
+      'id, org_id, vertical, brand_name, contact_name, contact_email, account_manager_id, retainer_amount, billing_cycle, contract_start, contract_renewal, tag, platforms, vertical_data, brand_guide_token, brand_guide_last_viewed_at, brand_guide_view_count, archived_at, created_at, updated_at, team_members(name, email), invoices!left(total, status, created_at, billing_month), deliverables!left(id, status, month)'
     )
     .eq('id', clientId)
     .eq('org_id', orgId)

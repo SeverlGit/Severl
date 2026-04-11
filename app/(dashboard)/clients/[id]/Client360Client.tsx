@@ -30,7 +30,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
-import { archiveClient, reassignAccountManager } from "@/lib/clients/actions";
+import { archiveClient, reassignAccountManager, generateClientPortalToken } from "@/lib/clients/actions";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -46,14 +46,18 @@ import {
 import { createDeliverable } from "@/lib/deliverables/actions";
 import { markInvoicePaid, markInvoiceSent, voidInvoice } from "@/lib/invoicing/actions";
 import type { DeliverableStatus, InvoiceStatus } from "@/lib/types";
-import { Archive, ArrowLeft, ArrowRight, ExternalLink, Pencil } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, ExternalLink, Pencil, Share2 } from "lucide-react";
 import { useTopbarDetailTitle } from "@/components/dashboard/TopbarTitleContext";
+import { usePlan } from "@/lib/billing/plan-context";
+import { useTour } from "@/lib/tour-context";
+import { startClientPortalTour } from "@/lib/tour-guides";
 import type {
   Client360,
   DeliverableRow,
   InvoiceRow,
   ClientNoteRow,
   TeamMemberRow,
+  BrandAssetRow,
 } from "@/lib/database.types";
 
 const TAB_LABELS: Record<string, string> = {
@@ -79,16 +83,20 @@ type Props = {
   teamMembers: Pick<TeamMemberRow, "id" | "name" | "email" | "role" | "active">[];
   teamMembersForManagement?: Pick<TeamMemberRow, "id" | "name" | "email" | "role" | "active">[];
   teamDeliverableCounts: Record<string, number>;
+  brandAssets?: BrandAssetRow[];
 };
 
 export type Client360ClientProps = Props;
 
-export default function Client360Client({ client, activity, deliverables, invoices, notes, vertical, orgId, verticalSlug, clientId, activeTab, teamMembers, teamMembersForManagement = [], teamDeliverableCounts }: Props) {
+export default function Client360Client({ client, activity, deliverables, invoices, notes, vertical, orgId, verticalSlug, clientId, activeTab, teamMembers, teamMembersForManagement = [], teamDeliverableCounts, brandAssets = [] }: Props) {
   const router = useRouter();
   const { setDetailTitle } = useTopbarDetailTitle();
+  const { canAccessClientPortal } = usePlan();
+  const { uiMeta, markLocalSeen } = useTour();
   const tabs = vertical.crm.profileSections;
   const platforms: string[] = client.platforms ?? [];
   const [editOpen, setEditOpen] = useState(false);
+  const [portalPending, setPortalPending] = useState(false);
   const [, startTransition] = useTransition();
   const [addDeliverablePending, startAddDeliverable] = useTransition();
   const [invoicePendingId, setInvoicePendingId] = useState<string | null>(null);
@@ -106,6 +114,15 @@ export default function Client360Client({ client, activity, deliverables, invoic
   }, []);
 
   const verticalAction = verticalSlug as "smm_freelance" | "smm_agency";
+
+  useEffect(() => {
+    if (canAccessClientPortal && !uiMeta.has_seen_portal_tour) {
+      const t = setTimeout(() => {
+        startClientPortalTour(() => markLocalSeen("has_seen_portal_tour"));
+      }, 800);
+      return () => clearTimeout(t);
+    }
+  }, [canAccessClientPortal, uiMeta.has_seen_portal_tour]);
 
   const handleQuickAddDeliverable = () => {
     if (!quickType) return;
@@ -206,6 +223,23 @@ export default function Client360Client({ client, activity, deliverables, invoic
     });
   };
 
+  const handleSharePortal = async () => {
+    setPortalPending(true);
+    try {
+      const result = await generateClientPortalToken({ clientId, orgId });
+      if ("error" in result) {
+        toast.error(result.error);
+      } else {
+        await navigator.clipboard.writeText(result.data);
+        toast.success("Portal link copied to clipboard");
+      }
+    } catch {
+      toast.error("Could not generate portal link");
+    } finally {
+      setPortalPending(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 p-5">
       <Link href="/clients" className="group flex w-fit items-center gap-1.5 text-[13px] text-txt-hint transition-colors hover:text-white">
@@ -242,6 +276,18 @@ export default function Client360Client({ client, activity, deliverables, invoic
                 <Pencil className="h-3.5 w-3.5" />
                 Edit
               </button>
+              {canAccessClientPortal && (
+                <button
+                  id="tour-client-portal"
+                  type="button"
+                  onClick={handleSharePortal}
+                  disabled={portalPending}
+                  className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs text-brand-rose border border-brand-rose/30 transition-colors hover:bg-brand-rose-dim disabled:opacity-50"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  {portalPending ? "Generating…" : "Share portal"}
+                </button>
+              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <button
@@ -551,7 +597,16 @@ export default function Client360Client({ client, activity, deliverables, invoic
               </TabsContent>
 
               <TabsContent value="brand_guide" forceMount={activeTab === "brand_guide" ? true : undefined} className={activeTab !== "brand_guide" ? "hidden" : ""}>
-                <BrandGuideTab clientId={clientId} orgId={orgId} vertical={vertical} verticalData={client.vertical_data ?? {}} brandGuideToken={client.brand_guide_token ?? null} />
+                <BrandGuideTab
+                  clientId={clientId}
+                  orgId={orgId}
+                  vertical={vertical}
+                  verticalData={client.vertical_data ?? {}}
+                  brandGuideToken={client.brand_guide_token ?? null}
+                  brandAssets={brandAssets}
+                  viewCount={(client as any).brand_guide_view_count ?? 0}
+                  lastViewedAt={(client as any).brand_guide_last_viewed_at ?? null}
+                />
               </TabsContent>
 
               <TabsContent value="team" forceMount={activeTab === "team" ? true : undefined} className={activeTab !== "team" ? "hidden" : ""}>

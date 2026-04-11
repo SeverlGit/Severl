@@ -123,6 +123,7 @@ export async function createDeliverable(params: {
   type: string;
   title: string;
   dueDate?: string | null;
+  publishDate?: string | null;
   vertical: 'smm_freelance' | 'smm_agency';
 }) {
   await requireOrgAccess(params.orgId);
@@ -149,6 +150,7 @@ export async function createDeliverable(params: {
       title: params.title || params.type,
       status: 'not_started',
       due_date: params.dueDate ?? null,
+      publish_date: params.publishDate ?? null,
     })
     .select('id, client_id, status')
     .maybeSingle();
@@ -178,6 +180,7 @@ export async function updateDeliverable(params: {
   title: string;
   type: string;
   dueDate: string;
+  publishDate?: string;
 }): Promise<{ success: true } | { error: string }> {
   await requireOrgAccess(params.orgId);
   const supabase = getSupabaseAdminClient();
@@ -189,6 +192,9 @@ export async function updateDeliverable(params: {
         title: params.title.trim() || params.type,
         type: params.type,
         due_date: params.dueDate.trim() ? params.dueDate : null,
+        publish_date: params.publishDate !== undefined
+          ? (params.publishDate.trim() ? params.publishDate : null)
+          : undefined,
       })
       .eq('id', params.deliverableId)
       .eq('org_id', params.orgId);

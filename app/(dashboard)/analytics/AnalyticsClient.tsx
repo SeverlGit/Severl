@@ -1,15 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, PieChart, Calendar, BarChart3 } from "lucide-react";
+import { TrendingUp, PieChart, Calendar, BarChart3, Zap } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { AnyVerticalConfig } from "@/lib/vertical-config";
 import type { MRRTrendPoint } from "@/lib/dashboard/getHomeData";
 import type { RevenueByClientItem, DeliveryRateByClientItem } from "@/lib/database.types";
 import type { ClientRow } from "@/lib/database.types";
+import type { CapacityMetricItem, RevenueForecastPoint } from "@/lib/analytics/getAnalyticsData";
 import { formatCurrency, daysUntil, renewalUrgency } from "@/lib/utils";
+import { useTour } from "@/lib/tour-context";
+import { startAnalyticsTour } from "@/lib/tour-guides";
 
 const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
@@ -23,6 +26,8 @@ type Props = {
   revenueByClient: RevenueByClientItem[];
   renewalPipeline: RenewalPipelineItem[];
   deliveryRate: DeliveryRateByClientItem[];
+  capacityMetrics?: CapacityMetricItem[];
+  revenueForecast?: RevenueForecastPoint[];
 };
 
 export type AnalyticsClientProps = Props;
@@ -35,10 +40,22 @@ export default function AnalyticsClient({
   revenueByClient,
   renewalPipeline,
   deliveryRate,
+  capacityMetrics = [],
+  revenueForecast = [],
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const period = searchParams.get("period") ?? "6m";
+  const { uiMeta, markLocalSeen } = useTour();
+
+  useEffect(() => {
+    if (!uiMeta.has_seen_analytics_tour && (capacityMetrics.length > 0 || revenueForecast.length > 0)) {
+      const t = setTimeout(() => {
+        startAnalyticsTour(() => markLocalSeen("has_seen_analytics_tour"));
+      }, 600);
+      return () => clearTimeout(t);
+    }
+  }, [uiMeta.has_seen_analytics_tour, capacityMetrics.length, revenueForecast.length]);
 
   const periods = [
     { key: "1m", label: "1M" },
@@ -244,6 +261,79 @@ export default function AnalyticsClient({
           </motion.section>
         </div>
       </section>
+
+      {/* Capacity metrics — effective $/deliverable per client */}
+      {capacityMetrics.length > 0 && (
+        <motion.section id="tour-analytics-capacity" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-surface px-4 py-4">
+          <h2 className="mb-3 text-[12px] font-medium text-txt-secondary">
+            Capacity — $/deliverable this month
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="pb-2 text-left font-medium text-txt-muted">Client</th>
+                  <th className="pb-2 text-right font-medium text-txt-muted">Retainer</th>
+                  <th className="pb-2 text-right font-medium text-txt-muted">Deliverables</th>
+                  <th className="pb-2 text-right font-medium text-txt-muted">$/item</th>
+                  <th className="pb-2 text-right font-medium text-txt-muted">vs avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                {capacityMetrics.map((c) => {
+                  const aboveAvg = c.vs_avg >= 0;
+                  const vsClass = aboveAvg ? "text-success" : "text-danger";
+                  return (
+                    <tr key={c.id} className="border-b border-border last:border-0">
+                      <td className="py-2 text-txt-secondary">{c.brand_name}</td>
+                      <td className="py-2 text-right tabular-nums text-txt-primary">{formatCurrency(c.retainer_amount)}</td>
+                      <td className="py-2 text-right tabular-nums text-txt-muted">{c.deliverable_count}</td>
+                      <td className="py-2 text-right font-mono tabular-nums text-txt-primary">{c.deliverable_count > 0 ? formatCurrency(c.per_deliverable) : "—"}</td>
+                      <td className={`py-2 text-right font-mono tabular-nums ${c.deliverable_count > 0 ? vsClass : "text-txt-hint"}`}>
+                        {c.deliverable_count > 0 ? `${aboveAvg ? "+" : ""}${formatCurrency(Math.abs(c.vs_avg))}` : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </motion.section>
+      )}
+
+      {/* Revenue forecast — 90-day projection */}
+      {revenueForecast.length > 0 && (
+        <motion.section id="tour-analytics-forecast" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease }} className="rounded-md border border-border bg-surface px-4 py-4">
+          <h2 className="mb-1 flex items-center gap-1.5 text-[12px] font-medium text-txt-secondary">
+            <Zap className="h-3.5 w-3.5 text-brand-rose" />
+            90-day MRR forecast
+          </h2>
+          <p className="mb-3 text-[11px] text-txt-muted">Projected from current MRR minus at-risk renewals.</p>
+          <div className="flex flex-col gap-2">
+            {revenueForecast.map((point) => {
+              const maxMrr = Math.max(...revenueForecast.map((p) => p.projected_mrr), 1);
+              const pct = (point.projected_mrr / maxMrr) * 100;
+              const hasRisk = point.at_risk_revenue > 0;
+              return (
+                <div key={point.month} className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 text-[11px] text-txt-muted">{point.label}</span>
+                  <div className="h-[6px] flex-1 rounded-full bg-border">
+                    <div className="h-full rounded-full bg-success/70" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="flex w-28 shrink-0 items-center justify-end gap-1.5">
+                    <span className="font-mono text-[12px] tabular-nums text-txt-primary">{formatCurrency(point.projected_mrr)}</span>
+                    {hasRisk && (
+                      <span className="text-[10px] text-danger" title={`${point.renewals_due} renewal(s) at risk`}>
+                        -{formatCurrency(point.at_risk_revenue)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.section>
+      )}
     </div>
   );
 }

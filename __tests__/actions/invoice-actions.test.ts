@@ -1,5 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('@/lib/billing/stripe', () => ({
+  stripe: { paymentLinks: { create: vi.fn() } },
+}));
+
+vi.mock('@/lib/auth/tier-limits', () => ({
+  checkFeatureAccess: vi.fn().mockResolvedValue(undefined),
+  TierLimitError: class TierLimitError extends Error {
+    userMessage: string;
+    constructor(msg: string, userMsg: string) {
+      super(msg);
+      this.name = 'TierLimitError';
+      this.userMessage = userMsg;
+    }
+  },
+}));
+
 vi.mock('@/lib/auth-guard', () => ({
   requireOrgAccess: vi.fn().mockResolvedValue('user_123'),
 }));

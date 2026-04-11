@@ -19,6 +19,7 @@ import type {
   DeliverableWithClientForWeek,
   RecentInvoiceWithClient,
 } from "@/lib/database.types";
+import type { ChurnRiskItem } from "@/lib/dashboard/getHomeData";
 
 // Local hex palette for progress bars / inline color badges
 const DELIVERABLE_BAR_COLORS: Record<DeliverableStatus, string> = {
@@ -88,6 +89,7 @@ type Props = {
   clientsLabel: string;
   mrrSparkline: number[];
   clientSparkline: number[];
+  churnRiskScores?: ChurnRiskItem[];
 };
 
 export type DashboardClientProps = Props;
@@ -239,7 +241,8 @@ function BusinessPulse({
   renewalsCount,
   overdue,
   recentInvoices,
-}: Pick<Props, "mrr" | "deliverablesBehind" | "deliverablesWeek" | "renewalsCount" | "overdue" | "recentInvoices">) {
+  churnRiskScores = [],
+}: Pick<Props, "mrr" | "deliverablesBehind" | "deliverablesWeek" | "renewalsCount" | "overdue" | "recentInvoices" | "churnRiskScores">) {
   const mrrPct = Math.min((mrr / 10000) * 100, 100);
   const deliveryTotal = Math.max(deliverablesWeek.length, 1);
   const deliveryPct = Math.max(0, Math.min(100, ((deliveryTotal - deliverablesBehind) / deliveryTotal) * 100));
@@ -279,6 +282,35 @@ function BusinessPulse({
           </div>
         ))}
       </div>
+
+      {churnRiskScores.length > 0 && (
+        <div className="border-t border-border px-4 py-3">
+          <span className="mb-2 block font-sans text-[10px] font-semibold uppercase tracking-[0.10em] text-txt-muted">
+            Churn risk
+          </span>
+          <div className="flex flex-col gap-1.5">
+            {churnRiskScores.map((c) => {
+              const riskColor =
+                c.score >= 75 ? "text-danger" : c.score >= 50 ? "text-warning" : "text-txt-muted";
+              const dotColor =
+                c.score >= 75 ? "bg-danger" : c.score >= 50 ? "bg-warning" : "bg-success";
+              return (
+                <Link
+                  key={c.clientId}
+                  href={`/clients/${c.clientId}`}
+                  className="flex items-center justify-between gap-2 hover:opacity-80 transition-opacity"
+                >
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
+                  <span className="flex-1 truncate text-[11px] text-txt-secondary">{c.name}</span>
+                  <span className={`font-mono text-[10px] font-medium tabular-nums ${riskColor}`}>
+                    {c.score}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {recentInvoices.length > 0 && (
         <div className="border-t border-border px-4 py-3">
@@ -338,6 +370,7 @@ export function DashboardClient({
   clientsLabel,
   mrrSparkline,
   clientSparkline,
+  churnRiskScores = [],
 }: Props) {
   const hours = new Date().getHours();
   const timeOfDay = hours < 12 ? "morning" : hours < 17 ? "afternoon" : "evening";
@@ -653,6 +686,7 @@ export function DashboardClient({
             renewalsCount={renewalsCount}
             overdue={overdue}
             recentInvoices={recentInvoices}
+            churnRiskScores={churnRiskScores}
           />
         </aside>
       </div>

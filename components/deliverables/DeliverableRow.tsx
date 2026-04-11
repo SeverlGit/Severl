@@ -57,6 +57,7 @@ export function DeliverableEditDialog({
   initialTitle,
   initialType,
   initialDueDate,
+  initialPublishDate,
   vertical,
 }: {
   open: boolean;
@@ -66,12 +67,14 @@ export function DeliverableEditDialog({
   initialTitle: string;
   initialType: string;
   initialDueDate: string | null;
+  initialPublishDate?: string | null;
   vertical: AnyVerticalConfig;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [type, setType] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [publishDate, setPublishDate] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const typeOptions = useMemo(() => {
@@ -85,8 +88,9 @@ export function DeliverableEditDialog({
       setTitle(initialTitle);
       setType(initialType);
       setDueDate(initialDueDate ? initialDueDate.slice(0, 10) : "");
+      setPublishDate(initialPublishDate ? initialPublishDate.slice(0, 10) : "");
     }
-  }, [open, initialTitle, initialType, initialDueDate]);
+  }, [open, initialTitle, initialType, initialDueDate, initialPublishDate]);
 
   const handleSave = () => {
     if (!type) return;
@@ -97,6 +101,7 @@ export function DeliverableEditDialog({
         title: title.trim() || type,
         type,
         dueDate: dueDate.trim() ? dueDate : "",
+        publishDate: publishDate.trim() ? publishDate : "",
       });
       if ("error" in result) {
         toast.error(result.error);
@@ -145,6 +150,15 @@ export function DeliverableEditDialog({
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+              className="h-9 text-[13px]"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-txt-hint">Publish date</span>
+            <Input
+              type="date"
+              value={publishDate}
+              onChange={(e) => setPublishDate(e.target.value)}
               className="h-9 text-[13px]"
             />
           </div>
@@ -317,6 +331,7 @@ export function DeliverableRow({ deliverable, orgId, vertical, verticalSlug, ind
         initialTitle={editTitle}
         initialType={deliverable.type}
         initialDueDate={deliverable.due_date}
+        initialPublishDate={(deliverable as any).publish_date ?? null}
         vertical={vertical}
       />
     </motion.div>
