@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Users } from "lucide-react";
+import { Users, SearchX, UserCheck } from "lucide-react";
 import { ClientRow } from "./ClientRow";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { ClientWithManager } from "@/lib/database.types";
@@ -9,31 +9,70 @@ import type { ClientWithManager } from "@/lib/database.types";
 type Props = {
   clients: ClientWithManager[];
   filter: string;
+  search: string;
+  totalClients: number;
+  activeClients: number;
   orgId: string;
   verticalSlug: "smm_freelance" | "smm_agency";
   showAccountManager: boolean;
   emptyStateAction?: React.ReactNode;
 };
 
-export function ClientTable({ clients, filter, orgId, verticalSlug, showAccountManager, emptyStateAction }: Props) {
-  const emptyMessage = (() => {
-    switch (filter) {
-      case "at_risk":
-        return "No at-risk clients right now — things are looking good.";
-      case "prospect":
-        return "No prospects yet. Add potential clients to track them.";
-      case "onboarding":
-        return "No clients in onboarding right now.";
-      case "paused":
-        return "No paused clients.";
-      case "churned":
-        return "No churned clients. Keep it that way.";
-      default:
-        return "No clients yet. Add your first one to get started.";
-    }
-  })();
+export function ClientTable({ clients, filter, search, totalClients, activeClients, orgId, verticalSlug, showAccountManager, emptyStateAction }: Props) {
+  const colSpan = showAccountManager ? 7 : 6;
 
-  const isFullEmpty = filter === "all" || !filter;
+  const emptyContent = (() => {
+    // 1. Search returned nothing
+    if (search && clients.length === 0) {
+      return (
+        <EmptyState
+          icon={<SearchX strokeWidth={1.25} />}
+          title={`No results for "${search}"`}
+          description="Try a different brand name, contact name, or email address."
+        />
+      );
+    }
+
+    // 2. Has clients but none are active/onboarding — can't start deliverables
+    if (!search && (filter === "all" || !filter) && totalClients > 0 && activeClients === 0) {
+      return (
+        <EmptyState
+          icon={<UserCheck strokeWidth={1.25} />}
+          title="No active clients yet"
+          description="You have clients, but none are set to Active or Onboarding. Update a client's tag to Active to start tracking deliverables."
+        />
+      );
+    }
+
+    // 3. No clients at all
+    if (!search && (filter === "all" || !filter) && totalClients === 0) {
+      return (
+        <EmptyState
+          icon={<Users strokeWidth={1.25} />}
+          title="No clients yet"
+          description="Add your first client to start tracking retainers and deliverables."
+          actionNode={emptyStateAction}
+        />
+      );
+    }
+
+    // 4. Filter tab with no matches
+    const filterMessage: Record<string, string> = {
+      at_risk:    "No at-risk clients right now — things are looking good.",
+      prospect:   "No prospects yet. Add potential clients to track them.",
+      onboarding: "No clients in onboarding right now.",
+      paused:     "No paused clients.",
+      churned:    "No churned clients. Keep it that way.",
+      active:     "No active clients. Set a client's tag to Active to get started.",
+    };
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[14px] font-medium text-txt-muted">
+          {filterMessage[filter] ?? "No clients match this filter."}
+        </span>
+      </div>
+    );
+  })();
 
   return (
     <div className="mt-2 overflow-hidden rounded-lg border border-border">
@@ -54,22 +93,8 @@ export function ClientTable({ clients, filter, orgId, verticalSlug, showAccountM
         <tbody className="divide-y divide-border">
           {clients.length === 0 && (
             <tr>
-              <td
-                className="px-3 py-16 text-center align-middle"
-                colSpan={showAccountManager ? 7 : 6}
-              >
-                {isFullEmpty ? (
-                  <EmptyState
-                    icon={<Users strokeWidth={1.25} />}
-                    title="No clients yet"
-                    description="Add your first client to start tracking retainers and deliverables."
-                    actionNode={emptyStateAction}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-[14px] font-medium text-txt-muted">{emptyMessage}</span>
-                  </div>
-                )}
+              <td className="px-3 py-16 text-center align-middle" colSpan={colSpan}>
+                {emptyContent}
               </td>
             </tr>
           )}

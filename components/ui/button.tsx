@@ -13,6 +13,7 @@ const buttonVariants = cva(
         ghost:     "bg-surface-hover text-txt-secondary hover:bg-border",
         outline:   "border border-brand-rose/25 bg-brand-rose-dim text-brand-rose-deep hover:bg-brand-rose/20",
         danger:    "bg-danger text-white hover:bg-danger/90",
+        success:   "bg-success text-white hover:bg-success/90 active:scale-[0.98]",
         link:      "text-brand-rose-deep underline-offset-4 hover:underline p-0 h-auto",
         // legacy alias kept for backwards-compatibility
         terminal:  "bg-brand-plum-dim text-brand-plum-deep hover:bg-brand-plum/20",

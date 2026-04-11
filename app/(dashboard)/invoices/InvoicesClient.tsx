@@ -13,7 +13,7 @@ import { startInvoicesTour } from "@/lib/tour-guides";
 import { UpgradePrompt } from "@/components/shared/UpgradePrompt";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { Search, X, Receipt, ExternalLink, Link2, Download } from "lucide-react";
+import { Search, X, Receipt, ExternalLink, Link2, Download, CheckCircle2, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { BatchBillingDialog } from "@/components/invoices/BatchBillingDialog";
 import { CreateInvoiceDialog } from "@/components/invoices/CreateInvoiceDialog";
@@ -383,7 +383,7 @@ export default function InvoicesClient({
                           >
                             {isPending ? 'Sending…' : 'Mark sent'}
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="text-txt-muted hover:text-danger">Void</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="border border-danger/40 text-danger hover:bg-danger/10 hover:border-danger/70">Void</Button>
                         </>}
                         {inv.status === "sent" && <>
                           {canUsePaymentLinks ? (
@@ -399,8 +399,8 @@ export default function InvoicesClient({
                               {paymentLinkPending === inv.id ? "…" : inv.stripe_payment_link_url ? "Copy link" : "Pay link"}
                             </Button>
                           ) : null}
-                          <Button variant="link" size="sm" onClick={() => setMarkPaidInvoice(inv)}>Mark paid</Button>
-                          <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="text-txt-muted hover:text-danger">Void</Button>
+                          <Button variant="success" size="sm" onClick={() => setMarkPaidInvoice(inv)}>Mark paid</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="border border-danger/40 text-danger hover:bg-danger/10 hover:border-danger/70">Void</Button>
                         </>}
                         {inv.status === "overdue" && <>
                           {canUsePaymentLinks ? (
@@ -416,8 +416,8 @@ export default function InvoicesClient({
                               {paymentLinkPending === inv.id ? "…" : inv.stripe_payment_link_url ? "Copy link" : "Pay link"}
                             </Button>
                           ) : null}
-                          <Button variant="danger" size="sm" onClick={() => setMarkPaidInvoice(inv)}>Mark paid</Button>
-                          <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="text-txt-muted hover:text-danger">Void</Button>
+                          <Button variant="success" size="sm" onClick={() => setMarkPaidInvoice(inv)}>Mark paid</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setVoidConfirm(inv)} className="border border-danger/40 text-danger hover:bg-danger/10 hover:border-danger/70">Void</Button>
                         </>}
                         {inv.status === "paid" && <span className="text-[12px] text-txt-muted">Paid</span>}
                         {inv.status === "voided" && <span className="text-[12px] text-txt-muted">Voided</span>}
@@ -434,9 +434,15 @@ export default function InvoicesClient({
       <Sheet open={!!markPaidInvoice} onOpenChange={(v) => { if (!v) setMarkPaidInvoice(null); }}>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Mark as paid</SheetTitle>
+            <SheetTitle className="flex items-center gap-2 text-success">
+              <CheckCircle2 className="h-5 w-5" />
+              Mark as paid
+            </SheetTitle>
             <SheetDescription>
-              {markPaidInvoice?.invoice_number} · {markPaidInvoice?.clients?.brand_name} · {formatCurrency(markPaidInvoice?.total ?? 0)}
+              <span className="font-medium text-txt-primary">{formatCurrency(markPaidInvoice?.total ?? 0)}</span>
+              {" "}from{" "}
+              <span className="font-medium text-txt-primary">{markPaidInvoice?.clients?.brand_name}</span>
+              {" "}· {markPaidInvoice?.invoice_number}
             </SheetDescription>
           </SheetHeader>
           <div className="flex flex-col gap-4 px-5 py-4">
@@ -462,7 +468,7 @@ export default function InvoicesClient({
           </div>
           <SheetFooter>
             <Button variant="ghost" onClick={() => setMarkPaidInvoice(null)}>Cancel</Button>
-            <Button disabled={isPending} onClick={handleMarkPaid}>
+            <Button variant="success" disabled={isPending} onClick={handleMarkPaid}>
               {isPending ? 'Confirming…' : 'Confirm payment'}
             </Button>
           </SheetFooter>
@@ -470,17 +476,26 @@ export default function InvoicesClient({
       </Sheet>
 
       <AlertDialog open={!!voidConfirm} onOpenChange={(v) => { if (!v) setVoidConfirm(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Void this invoice?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This cannot be undone. {voidConfirm?.invoice_number} for {voidConfirm?.clients?.brand_name} will be marked voided.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+        <AlertDialogContent className="border-danger/40">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-danger/10">
+              <AlertTriangle className="h-5 w-5 text-danger" />
+            </div>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-danger">Void {voidConfirm?.invoice_number}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This is permanent and cannot be undone.{" "}
+                <span className="font-medium text-txt-primary">{formatCurrency(voidConfirm?.total ?? 0)}</span>
+                {" "}from{" "}
+                <span className="font-medium text-txt-primary">{voidConfirm?.clients?.brand_name}</span>
+                {" "}will be removed from your outstanding balance and cannot be re-activated.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleVoid} disabled={isPending}>
-              {isPending ? "Voiding..." : "Void invoice"}
+            <AlertDialogAction onClick={handleVoid} disabled={isPending} className="bg-danger hover:bg-danger/90 text-white">
+              {isPending ? "Voiding…" : "Yes, void this invoice"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

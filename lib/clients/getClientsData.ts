@@ -1,6 +1,26 @@
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import type { ClientWithManager } from '@/lib/database.types';
 
+export async function getClientCounts(
+  orgId: string
+): Promise<{ total: number; active: number }> {
+  const supabase = getSupabaseServerClient();
+  const [totalRes, activeRes] = await Promise.all([
+    supabase
+      .from('clients')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId)
+      .is('archived_at', null),
+    supabase
+      .from('clients')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId)
+      .is('archived_at', null)
+      .in('tag', ['active', 'onboarding']),
+  ]);
+  return { total: totalRes.count ?? 0, active: activeRes.count ?? 0 };
+}
+
 export async function getClients(
   orgId: string,
   filter?: string,

@@ -1,7 +1,7 @@
 import React from "react";
 import { getCurrentOrg } from "@/lib/auth";
 import { getVerticalConfig } from "@/config/verticals";
-import { getClients } from "@/lib/clients/getClientsData";
+import { getClients, getClientCounts } from "@/lib/clients/getClientsData";
 import { AddClientDialog } from "@/components/clients/AddClientDialog";
 import { ClientTable } from "@/components/clients/ClientTable";
 import { ClientSearchInput } from "@/components/clients/ClientSearchInput";
@@ -23,7 +23,10 @@ export default async function ClientsPage({ searchParams }: Props) {
   const filter = (sp.filter as string) || "all";
   const search = sp.search || "";
 
-  const clients = await getClients(org.id, filter, search);
+  const [clients, counts] = await Promise.all([
+    getClients(org.id, filter, search),
+    getClientCounts(org.id),
+  ]);
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -83,6 +86,9 @@ export default async function ClientsPage({ searchParams }: Props) {
         <ClientTable
           clients={clients}
           filter={filter}
+          search={search}
+          totalClients={counts.total}
+          activeClients={counts.active}
           orgId={org.id}
           verticalSlug={org.vertical}
           showAccountManager={vertical.crm.profileSections.includes("team")}
